@@ -1,0 +1,60 @@
+name: Build and Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionTag:
+        description: Version
+        required: true
+        type: string
+
+jobs:
+  build_and_publish:
+    name: Build package, draft release and publish
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout changes
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.ref }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 'lts/*'
+        registry-url: https://registry.npmjs.org/
+
+    - name: Bump version to ${{ github.event.inputs.versionTag }}
+      run: |
+        npm version ${{ github.event.inputs.versionTag }} --allow-same-version --no-git-tag-version
+
+    - name: Build package
+      run: |
+        npm install
+        npm run build
+        git status
+
+    - name: Commit and push changes
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: 'Build ${{ github.event.inputs.versionTag }}'
+        tagging_message: ${{ github.event.inputs.versionTag }}
+        skip_fetch: true
+        skip_checkout: true
+
+    - name: Create draft release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.event.inputs.versionTag }}
+        draft: true
+        prerelease: ${{ contains(github.event.inputs.versionTag, '-rc.') }}
+        files: dist/*
+        fail_on_unmatched_files: true
+        generate_release_notes: true
+
+    - name: Publish package to npm
+      run: npm publish --access public
+      if: ${{ !contains(github.event.inputs.versionTag, '-rc.') }}
+      env:
+        NODE_AUTH_TOKEN: ${{secrets.NPM_ACCESS_TOKEN}}
