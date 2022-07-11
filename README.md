@@ -127,7 +127,7 @@ You can find a detailed guide on how to configure Blu for your own device in thi
 
 The playground offers you a way to explore examples and test the [Blu API](#blu-api) through your browser’s console. The playground’s source is hosted at [maxherrmann/blu-playground](https://github.com/maxherrmann/blu-playground).
 
-[**➡️ Open the Playground**](https://maxherrmann.github.io/blu-playground/)
+[**➡️ Open the Playground**](https://playground.blu.js.org/)
 
 ## Blu API
 
