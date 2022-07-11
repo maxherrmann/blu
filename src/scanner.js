@@ -1,8 +1,20 @@
+const bluetooth = require("./bluetooth.js")
+
 const BluError = require("../utils/bluError.js")
 
 class Scanner {
 	getDevice() {
 		return new Promise(async (resolve, reject) => {
+			if (!bluetooth.isSupported) {
+				reject(
+					new BluError(
+						"Blu is not compatible with this browser."
+					)
+				)
+
+				return
+			}
+
 			try {
 				const { scannerConfig, deviceType } = require("./configuration.js")
 
