@@ -22,19 +22,19 @@ class Bluetooth extends EventEmitter {
 					"bluetooth-disabled"
 				)
 			})
+
+			this.on("bluetooth-disabled", () => {
+				this.#connectedDevices.clear()
+			})
+
+			this.on("device-connected", device => {
+				this.#connectedDevices.add(device)
+			})
+
+			this.on("device-disconnected", device => {
+				this.#connectedDevices.delete(device)
+			})
 		}
-
-		this.on("bluetooth-disabled", () => {
-			this.#connectedDevices.clear()
-		})
-
-		this.on("device-connected", device => {
-			this.#connectedDevices.add(device)
-		})
-
-		this.on("device-disconnected", device => {
-			this.#connectedDevices.delete(device)
-		})
 	}
 
 	get isSupported() {
