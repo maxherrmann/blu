@@ -13,7 +13,7 @@
 	"scripts": {
 		"build": "genversion src/version.js -d && npx webpack --config webpack.config.js"
 	},
-	"homepage": "https://github.com/maxherrmann/blu#readme",
+	"homepage": "https://blu.js.org/",
 	"bugs": "https://github.com/maxherrmann/blu/issues",
 	"repository": {
 		"type": "git",
