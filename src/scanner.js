@@ -31,10 +31,10 @@ class Scanner {
 		// Compatibility: https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/getDevices#browser_compatibility
 
 		return new Promise(async (resolve, reject) => {
-			if (typeof globalThis.navigator.bluetooth.getDevices !== "function") {
+			if (typeof globalThis.navigator?.bluetooth?.getDevices !== "function") {
 				reject(
 					new ScannerError(
-						"Scanner.getPairedDevices() is not supported by this browser."
+						"This feature is not supported by this browser."
 					)
 				)
 
