@@ -1,4 +1,4 @@
-name: Build and Publish
+name: Build
 
 on:
   workflow_dispatch:
@@ -9,8 +9,8 @@ on:
         type: string
 
 jobs:
-  build_and_publish:
-    name: Build package, draft release and publish
+  build:
+    name: Build package and draft release
     runs-on: ubuntu-latest
 
     steps:
@@ -52,9 +52,3 @@ jobs:
         files: dist/*
         fail_on_unmatched_files: true
         generate_release_notes: true
-
-    - name: Publish package to npm
-      run: npm publish --access public
-      if: ${{ !contains(github.event.inputs.versionTag, '-rc.') }}
-      env:
-        NODE_AUTH_TOKEN: ${{secrets.NPM_ACCESS_TOKEN}}
