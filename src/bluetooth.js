@@ -54,11 +54,17 @@ class Bluetooth extends EventEmitter {
 	}
 
 	isAvailable() {
-		if (!this.isSupported) {
-			return false
-		}
-
-		return globalThis.navigator.bluetooth.getAvailability()
+		return new Promise(resolve => {
+			if (this.isSupported) {
+				globalThis.navigator.bluetooth.getAvailability()
+				.then(available => {
+					resolve(available)
+				})
+			}
+			else {
+				resolve(false)
+			}
+		})
 	}
 
 	enableDataTransferLogging() {
