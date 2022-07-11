@@ -267,7 +267,7 @@ class Device extends EventEmitter {
 
 				if (ensureCompleteInterface && interfaceIncomplete) {
 					throw new DeviceBluetoothInterfaceIncompleteError(
-						`The device’s interface is incomplete. ` +
+						`The device’s Bluetooth interface is incomplete. ` +
 						`Make sure that your service descriptions are correct or set ` +
 						`the argument "ensureCompleteInterface" to "false" when calling` +
 						`"device.connect()" to ignore this error.`
@@ -356,7 +356,7 @@ class Device extends EventEmitter {
 			catch(error) {
 				reject(
 					new DeviceBluetoothInterfaceDiscoveryError(
-						"Could not discover the device’s interface.",
+						"Could not discover the device’s Bluetooth interface.",
 						error
 					)
 				)
