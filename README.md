@@ -4,7 +4,7 @@
 
 ## Compatibility
 
-The Blu Framework is built upon the [Web Bluetooth API](https://webbluetoothcg.github.io/web-bluetooth/) and thus requires the browser it runs on to support it. Some specific functionality may only be available in some browsers.
+The Blu Framework is built upon the [Web Bluetooth API](https://webbluetoothcg.github.io/web-bluetooth/) and thus requires the browser it runs on to support it. Some specific functionality may only be available in certain browsers.
 
 [➡️ Can I use Web Bluetooth?](https://caniuse.com/web-bluetooth)
 
@@ -16,13 +16,13 @@ You can **download** the latest version of Blu here:
 Blu is hosted on the **jsDelivr CDN**:
 <br>[**blu.esm.min.js (ESM Minified)**](https://cdn.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.esm.min.js)
 
-Blu module is also available on **NPM**:
+Blu is also available as an **NPM** module:
 <br>[**@blu.js/blu**](https://www.npmjs.com/package/@blu.js/blu)
 
 > Looking for a place to explore usage examples or test the Blu Framework?
 <br>Check out the [playground](#blu-playground) instead!
 
-### Add Blu to your existing project
+### Add Blu to your project
 
 #### Web
 
