@@ -24,3 +24,6 @@ jobs:
       run: npm publish --access public
       env:
         NODE_AUTH_TOKEN: ${{secrets.NPM_ACCESS_TOKEN}}
+
+    - name: Purge jsDelivr CDN cache
+      run: curl https://purge.jsdelivr.net/npm/@blu.js/blu@latest
