@@ -52,3 +52,6 @@ jobs:
         files: dist/*
         fail_on_unmatched_files: true
         generate_release_notes: true
+
+    - name: Purge jsDelivr CDN cache
+      run: curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest
