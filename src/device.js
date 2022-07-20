@@ -1,4 +1,5 @@
 const logger = require("./logger.js")
+const configuration = require("./configuration.js")
 const Bluetooth = require("./bluetooth.js")
 const Service = require("./service.js")
 const Characteristic = require("./characteristic.js")
@@ -52,18 +53,8 @@ class Device extends EventEmitter {
 
 	async onceReady() {}
 
-	connect(ensureCompleteBluetoothInterface = true) {
+	connect() {
 		return new Promise(async (resolve, reject) => {
-			if (typeof ensureCompleteBluetoothInterface !== "boolean") {
-				reject(
-					new DeviceOperationError(
-						`Argument "ensureCompleteBluetoothInterface" must be of type "boolean".`
-					)
-				)
-
-				return
-			}
-
 			try {
 				await this._bluetoothDevice.gatt.connect()
 			}
@@ -79,7 +70,7 @@ class Device extends EventEmitter {
 			}
 
 			try {
-				await this.#discoverBluetoothInterface(ensureCompleteBluetoothInterface)
+				await this.#discoverBluetoothInterface()
 
 				this._bluetoothDevice.addEventListener(
 					"gattserverdisconnected",
@@ -170,7 +161,7 @@ class Device extends EventEmitter {
 		}
 	}
 
-	async #discoverBluetoothInterface(ensureCompleteInterface) {
+	async #discoverBluetoothInterface() {
 		return new Promise(async (resolve, reject) => {
 			try {
 				let interfaceIncomplete = false
@@ -265,12 +256,13 @@ class Device extends EventEmitter {
 					}
 				}
 
-				if (ensureCompleteInterface && interfaceIncomplete) {
+				if (configuration.ensureCompleteDeviceBluetoothInterface && interfaceIncomplete) {
 					throw new DeviceBluetoothInterfaceIncompleteError(
 						`The device’s Bluetooth interface is incomplete. ` +
-						`Make sure that your service descriptions are correct or set ` +
-						`the argument "ensureCompleteInterface" to "false" when calling` +
-						`"device.connect()" to ignore this error.`
+						`Make sure that your service descriptions are correct or configure ` +
+						`Blu to ignore incomplete device Bluetooth interfaces by setting the ` +
+						`configuration property "ensureCompleteDeviceBluetoothInterface" ` +
+						`to "false" before calling "device.connect()".`
 					)
 				}
 
