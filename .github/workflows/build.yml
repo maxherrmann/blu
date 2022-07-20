@@ -51,7 +51,10 @@ jobs:
         prerelease: ${{ contains(github.event.inputs.versionTag, '-rc.') }}
         files: dist/*
         fail_on_unmatched_files: true
-        generate_release_notes: true
 
     - name: Purge jsDelivr CDN cache
-      run: curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest
+      run: |
+        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.esm.min.js
+        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.esm.min.js.map
+        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.umd.min.js
+        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.umd.min.js.map
