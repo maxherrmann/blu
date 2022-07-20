@@ -4,9 +4,14 @@ const BluError = require("../utils/bluError.js")
 const isSubclass = require("../utils/isSubclass.js")
 
 class Configuration {
-	#scannerConfig = { acceptAllDevices: true }
-	#deviceType = Device
-	#autoListenToNotifiableCharacteristics = true
+	#scannerConfig
+	#deviceType
+	#ensureCompleteDeviceBluetoothInterface
+	#autoListenToNotifiableCharacteristics
+
+	constructor() {
+		this.restoreDefaults()
+	}
 
 	get scannerConfig() {
 		return this.#scannerConfig
@@ -16,8 +21,19 @@ class Configuration {
 		return this.#deviceType
 	}
 
+	get ensureCompleteDeviceBluetoothInterface() {
+		return this.#ensureCompleteDeviceBluetoothInterface
+	}
+
 	get autoListenToNotifiableCharacteristics() {
 		return this.#autoListenToNotifiableCharacteristics
+	}
+
+	restoreDefaults() {
+		this.#scannerConfig = { acceptAllDevices: true }
+		this.#deviceType = Device
+		this.#ensureCompleteDeviceBluetoothInterface = true
+		this.#autoListenToNotifiableCharacteristics = true
 	}
 
 	use(scannerConfig, deviceType) {
@@ -54,14 +70,36 @@ class Configuration {
 		this.#deviceType = deviceType
 	}
 
-	setAutoListenToNotifiableCharacteristics(value) {
-		if (typeof value !== "boolean") {
+	set(configuration) {
+		if (typeof configuration !== "object") {
 			throw new BluConfigurationError(
-				`Argument "value" must be of type "boolean".`
+				`Argument "configuration" must be an object.`
 			)
 		}
 
-		this.#autoListenToNotifiableCharacteristics = value
+		let value
+
+		if (value = configuration.ensureCompleteDeviceBluetoothInterface) {
+			if (typeof value !== "boolean") {
+				throw new BluConfigurationError(
+					`Configuration property "ensureCompleteDeviceBluetoothInterface" ` +
+					`must be of type "boolean".`
+				)
+			}
+
+			this.#ensureCompleteDeviceBluetoothInterface = value
+		}
+
+		if (value = configuration.autoListenToNotifiableCharacteristics) {
+			if (typeof value !== "boolean") {
+				throw new BluConfigurationError(
+					`Configuration property "autoListenToNotifiableCharacteristics" ` +
+					`must be of type "boolean".`
+				)
+			}
+
+			this.#autoListenToNotifiableCharacteristics = value
+		}
 	}
 }
 
