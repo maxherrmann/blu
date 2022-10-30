@@ -1,6 +1,7 @@
 const logger = require("./logger.js")
 const configuration = require("./configuration.js")
-const Bluetooth = require("./bluetooth.js")
+const bluetooth = require("./bluetooth.js")
+
 const Service = require("./service.js")
 const Characteristic = require("./characteristic.js")
 const Descriptor = require("./descriptor.js")
@@ -125,17 +126,17 @@ class Device extends EventEmitter {
 	async #initialize() {
 		this.on("connected", () => {
 			logger.log("Connected.", this)
-			Bluetooth.emit("device-connected", this)
+			bluetooth.emit("device-connected", this)
 		})
 
 		this.on("connection-lost", () => {
 			logger.warn("Connection lost.", this)
-			Bluetooth.emit("device-connection-lost", this)
+			bluetooth.emit("device-connection-lost", this)
 		})
 
 		this.on("disconnected", () => {
 			logger.log("Disconnected.", this)
-			Bluetooth.emit("device-disconnected", this)
+			bluetooth.emit("device-disconnected", this)
 		})
 
 		if (typeof this._bluetoothDevice.watchAdvertisements === "function") {
