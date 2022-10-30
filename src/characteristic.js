@@ -49,10 +49,6 @@ class Characteristic extends EventEmitter {
 	}
 
 	get hasExpectedProperties() {
-		if (this.description === undefined) {
-			return
-		}
-
 		return this.properties.string === this.description.expectedIndicators
 	}
 
