@@ -6,6 +6,11 @@ const Service = require("./service.js")
 const Characteristic = require("./characteristic.js")
 const Descriptor = require("./descriptor.js")
 const GATTOperationQueue = require("./gattOperationQueue.js")
+const {
+	ServiceDescription,
+	CharacteristicDescription,
+	DescriptorDescription
+} = require("./descriptions.js")
 
 const BluError = require("../utils/bluError.js")
 const EventEmitter = require("../utils/eventEmitter.js")
@@ -179,7 +184,7 @@ class Device extends EventEmitter {
 							serviceDescription
 						)
 
-						if (serviceDescription.type !== Service) {
+						if (service.description.identifier) {
 							this[service.description.identifier] = service
 						}
 
@@ -207,7 +212,7 @@ class Device extends EventEmitter {
 									characteristicDescription
 								)
 
-								if (characteristicDescription.type !== Characteristic) {
+								if (characteristic.description.identifier) {
 									service[characteristic.description.identifier] = characteristic
 								}
 
@@ -236,7 +241,7 @@ class Device extends EventEmitter {
 											descriptorDescription
 										)
 
-										if (descriptorDescription.type !== Descriptor) {
+										if (descriptor.description.identifier) {
 											characteristic[descriptor.description.identifier] = descriptor
 										}
 
@@ -270,7 +275,11 @@ class Device extends EventEmitter {
 				let services = await this._bluetoothDevice.gatt.getPrimaryServices()
 
 				for (let service of services) {
-					service = new Service(this, service)
+					service = new Service(
+						this,
+						service,
+						new ServiceDescription(service.uuid)
+					)
 
 					if (
 						!this.services.find(describedService => {
@@ -283,7 +292,11 @@ class Device extends EventEmitter {
 					let characteristics = await service._bluetoothService.getCharacteristics()
 
 					for (let characteristic of characteristics) {
-						characteristic = new Characteristic(service, characteristic)
+						characteristic = new Characteristic(
+							service,
+							characteristic,
+							new CharacteristicDescription(characteristic.uuid)
+						)
 
 						if (
 							!service.characteristics.find(describedCharacteristic => {
@@ -310,7 +323,11 @@ class Device extends EventEmitter {
 						}
 
 						for (let descriptor of descriptors) {
-							descriptor = new Descriptor(characteristic, descriptor)
+							descriptor = new Descriptor(
+								characteristic,
+								descriptor,
+								new DescriptorDescription(descriptor.uuid)
+							)
 
 							if (
 								!characteristic.descriptors.find(describedDescriptor => {

@@ -6,35 +6,60 @@ const isArray = require("../utils/isArray.js")
 const isSubclass = require("../utils/isSubclass.js")
 const BluError = require("../utils/bluError.js")
 
-class ServiceDescription {
-	name
-	identifier
-	type
+class Description {
 	uuid
-	characteristics
+	identifier
+	name
 
-	constructor(name, identifier, type, uuid, characteristicDescriptions) {
+	constructor(
+		uuid,
+		identifier = null,
+		name = "Unspecified Entity"
+	) {
+		if (typeof uuid !== "string" && typeof uuid !== "number") {
+			throw new DescriptionConstructionError(
+				`Argument "uuid" must be either of type "string" or "number".`
+			)
+		}
+
+		if (typeof uuid === "string") {
+			uuid = uuid.toLowerCase()
+		}
+
+		if (identifier !== null && typeof identifier !== "string") {
+			throw new DescriptionConstructionError(
+				`Argument "identifier" must be either "null" or of type "string".`
+			)
+		}
+
 		if (typeof name !== "string") {
-			throw new ServiceDescriptionConstructionError(
+			throw new DescriptionConstructionError(
 				`Argument "name" must be of type "string".`
 			)
 		}
 
-		if (typeof identifier !== "string") {
-			throw new ServiceDescriptionConstructionError(
-				`Argument "identifier" must be of type "string".`
-			)
-		}
+		this.uuid = uuid
+		this.identifier = identifier
+		this.name = name
+	}
+}
+
+class ServiceDescription extends Description {
+	type
+	characteristics
+
+	constructor(
+		uuid,
+		identifier,
+		name = "Unspecified Service",
+		type = Service,
+		characteristicDescriptions = []
+	) {
+		super(uuid, identifier, name)
 
 		if (!isSubclass(type, Service)) {
 			throw new ServiceDescriptionConstructionError(
 				`Argument "type" must be a class that is or extends "Service".`
-			)
-		}
-
-		if (typeof uuid !== "string" && typeof uuid !== "number") {
-			throw new ServiceDescriptionConstructionError(
-				`Argument "uuid" must be either of type "string" or "number".`
 			)
 		}
 
@@ -50,48 +75,29 @@ class ServiceDescription {
 			)
 		}
 
-		if (typeof uuid === "string") {
-			uuid = uuid.toLowerCase()
-		}
-
-		this.name = name
-		this.identifier = identifier
 		this.type = type
-		this.uuid = uuid
 		this.characteristics = characteristicDescriptions
 	}
 }
 
-class CharacteristicDescription {
-	name
-	identifier
+class CharacteristicDescription extends Description {
 	type
-	uuid
 	descriptors
 	expectedIndicators
 
-	constructor(name, identifier, type, uuid, descriptorDescriptions, expectedIndicators) {
-		if (typeof name !== "string") {
-			throw new CharacteristicDescriptionConstructionError(
-				`Argument "name" must be of type "string".`
-			)
-		}
-
-		if (typeof identifier !== "string") {
-			throw new ServiceDescriptionConstructionError(
-				`Argument "identifier" must be of type "string".`
-			)
-		}
+	constructor(
+		uuid,
+		identifier,
+		name = "Unspecified Characteristic",
+		type = Characteristic,
+		descriptorDescriptions = [],
+		expectedIndicators = null
+	) {
+		super(uuid, identifier, name)
 
 		if (!isSubclass(type, Characteristic)) {
 			throw new CharacteristicDescriptionConstructionError(
 				`Argument "type" must be a class that is or extends "Characteristic".`
-			)
-		}
-
-		if (typeof uuid !== "string" && typeof uuid !== "number") {
-			throw new CharacteristicDescriptionConstructionError(
-				`Argument "uuid" must be either of type "string" or "number".`
 			)
 		}
 
@@ -107,51 +113,39 @@ class CharacteristicDescription {
 			)
 		}
 
-		if (typeof expectedIndicators !== "string") {
+		if (expectedIndicators !== null && typeof expectedIndicators !== "string") {
 			throw new CharacteristicDescriptionConstructionError(
-				`Argument "expectedIndicators" must be either "undefined" ` +
+				`Argument "expectedIndicators" must be either "null" ` +
 				`or of type "string".`
 			)
 		}
 
-		if (!expectedIndicators.match(/^[R-][W-][w-][N-]$/)) {
+		if (
+			typeof expectedIndicators === "string" &&
+			!expectedIndicators.match(/^[R-][W-][w-][N-]$/)
+		) {
 			throw new CharacteristicDescriptionConstructionError(
 				`Argument "expectedIndicators" contains a string ` +
 				`that is incorrectly formatted.`
 			)
 		}
 
-		if (typeof uuid === "string") {
-			uuid = uuid.toLowerCase()
-		}
-
-		this.name = name
-		this.identifier = identifier
 		this.type = type
-		this.uuid = uuid
 		this.descriptors = descriptorDescriptions
 		this.expectedIndicators = expectedIndicators ?? null
 	}
 }
 
-class DescriptorDescription {
-	name
-	identifier
+class DescriptorDescription extends Description {
 	type
-	uuid
 
-	constructor(name, identifier, type, uuid) {
-		if (typeof name !== "string") {
-			throw new DescriptorDescriptionConstructionError(
-				`Argument "name" must be of type "string".`
-			)
-		}
-
-		if (typeof identifier !== "string") {
-			throw new ServiceDescriptionConstructionError(
-				`Argument "identifier" must be of type "string".`
-			)
-		}
+	constructor(
+		uuid,
+		identifier = null,
+		name = "Unspecified Descriptor",
+		type = Descriptor
+	) {
+		super(uuid, identifier, name)
 
 		if (!isSubclass(type, Descriptor)) {
 			throw new DescriptorDescriptionConstructionError(
@@ -159,23 +153,11 @@ class DescriptorDescription {
 			)
 		}
 
-		if (typeof uuid !== "string" && typeof uuid !== "number") {
-			throw new DescriptorDescriptionConstructionError(
-				`Argument "uuid" must be either of type "string" or "number".`
-			)
-		}
-
-		if (typeof uuid === "string") {
-			uuid = uuid.toLowerCase()
-		}
-
-		this.name = name
-		this.identifier = identifier
 		this.type = type
-		this.uuid = uuid
 	}
 }
 
+class DescriptionConstructionError extends BluError {}
 class ServiceDescriptionConstructionError extends BluError {}
 class CharacteristicDescriptionConstructionError extends BluError {}
 class DescriptorDescriptionConstructionError extends BluError {}
