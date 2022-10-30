@@ -194,7 +194,8 @@ class Device extends EventEmitter {
 						interfaceIncomplete = true
 
 						logger.warn(
-							`Could not discover "${serviceDescription.name}".`,
+							`Could not discover "${serviceDescription.name}" ` +
+							`(${serviceDescription.uuid}).`,
 							this
 						)
 					}
@@ -223,7 +224,9 @@ class Device extends EventEmitter {
 
 								logger.warn(
 									`Could not discover "${characteristicDescription.name}" ` +
-									`in "${serviceDescription.name}".`,
+									`(${characteristicDescription.uuid}) ` +
+									`in "${serviceDescription.name}" ` +
+									`(${serviceDescription.uuid}).`,
 									this
 								)
 							}
@@ -252,7 +255,9 @@ class Device extends EventEmitter {
 
 										logger.warn(
 											`Could not discover "${descriptorDescription.name}" ` +
-											`in "${characteristicDescription.name}".`,
+											`(${descriptorDescription.uuid}) ` +
+											`in "${characteristicDescription.name}" ` +
+											`(${characteristicDescription.uuid}).`,
 											this
 										)
 									}
