@@ -66,9 +66,9 @@ class EventEmitter {
 	}
 
 	once(channel, callback) {
-		let onceCallback = () => {
+		let onceCallback = (...payload) => {
 			this.off(channel, onceCallback)
-			callback()
+			callback(...payload)
 		}
 
 		this.on(channel, onceCallback)
