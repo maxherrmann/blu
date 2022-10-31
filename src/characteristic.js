@@ -1,5 +1,5 @@
 const logger = require("./logger.js")
-const Bluetooth = require("./bluetooth.js")
+const bluetooth = require("./bluetooth.js")
 
 const Request = require("./request.js")
 const Response = require("./response.js")
@@ -31,7 +31,7 @@ class Characteristic extends EventEmitter {
 		this._bluetoothCharacteristic = bluetoothCharacteristic
 
 		this.on("notification", response => {
-			if (Bluetooth.isDataTransferLoggingEnabled) {
+			if (bluetooth.isDataTransferLoggingEnabled) {
 				logger.target.debug(
 					`${this.description.name}: Notification received:`,
 					response
@@ -49,10 +49,6 @@ class Characteristic extends EventEmitter {
 	}
 
 	get hasExpectedProperties() {
-		if (this.description === undefined) {
-			return
-		}
-
 		return this.properties.string === this.description.expectedIndicators
 	}
 
@@ -76,7 +72,7 @@ class Characteristic extends EventEmitter {
 					return this._bluetoothCharacteristic.readValue()
 				})
 
-				if (Bluetooth.isDataTransferLoggingEnabled) {
+				if (bluetooth.isDataTransferLoggingEnabled) {
 					logger.target.debug(
 						`${this.description.name}: Read value:`,
 						this.value
@@ -179,7 +175,7 @@ class Characteristic extends EventEmitter {
 			}
 
 			try {
-				if (Bluetooth.isDataTransferLoggingEnabled) {
+				if (bluetooth.isDataTransferLoggingEnabled) {
 					logger.target.debug(
 						`${this.description.name}: Write:`,
 						value
@@ -241,7 +237,7 @@ class Characteristic extends EventEmitter {
 				return
 			}
 
-			if (Bluetooth.isDataTransferLoggingEnabled) {
+			if (bluetooth.isDataTransferLoggingEnabled) {
 				logger.target.debug(
 					`${this.description.name}: Request:`,
 					request

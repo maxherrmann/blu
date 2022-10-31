@@ -1,5 +1,5 @@
 const logger = require("./logger.js")
-const Bluetooth = require("./bluetooth.js")
+const bluetooth = require("./bluetooth.js")
 
 const Response = require("./response.js")
 
@@ -38,7 +38,7 @@ class Descriptor {
 					return this._bluetoothDescriptor.readValue()
 				})
 
-				if (Bluetooth.isDataTransferLoggingEnabled) {
+				if (bluetooth.isDataTransferLoggingEnabled) {
 					logger.target.debug(
 						`${this.description.name}: Read value:`,
 						this.value
@@ -118,7 +118,7 @@ class Descriptor {
 			}
 
 			try {
-				if (Bluetooth.isDataTransferLoggingEnabled) {
+				if (bluetooth.isDataTransferLoggingEnabled) {
 					logger.target.debug(
 						`${this.description.name}: Write:`,
 						value
