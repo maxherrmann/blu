@@ -77,28 +77,43 @@ class Configuration {
 			)
 		}
 
-		let value
+		if (
+			Object.getOwnPropertyNames(configuration).every(propertyName => {
+				return [
+					"ensureCompleteDeviceBluetoothInterface",
+					"autoListenToNotifiableCharacteristics"
+				]
+				.includes(propertyName)
+			})
+		) {
+			if (Object.hasOwn(configuration, "ensureCompleteDeviceBluetoothInterface")) {
+				if (typeof configuration.ensureCompleteDeviceBluetoothInterface !== "boolean") {
+					throw new BluConfigurationError(
+						`Configuration property "ensureCompleteDeviceBluetoothInterface" ` +
+						`must be of type "boolean".`
+					)
+				}
 
-		if (value = configuration.ensureCompleteDeviceBluetoothInterface) {
-			if (typeof value !== "boolean") {
-				throw new BluConfigurationError(
-					`Configuration property "ensureCompleteDeviceBluetoothInterface" ` +
-					`must be of type "boolean".`
-				)
+				this.#ensureCompleteDeviceBluetoothInterface =
+					configuration.ensureCompleteDeviceBluetoothInterface
 			}
 
-			this.#ensureCompleteDeviceBluetoothInterface = value
+			if (Object.hasOwn(configuration, "autoListenToNotifiableCharacteristics")) {
+				if (typeof configuration.autoListenToNotifiableCharacteristics !== "boolean") {
+					throw new BluConfigurationError(
+						`Configuration property "autoListenToNotifiableCharacteristics" ` +
+						`must be of type "boolean".`
+					)
+				}
+
+				this.#autoListenToNotifiableCharacteristics =
+					configuration.autoListenToNotifiableCharacteristics
+			}
 		}
-
-		if (value = configuration.autoListenToNotifiableCharacteristics) {
-			if (typeof value !== "boolean") {
-				throw new BluConfigurationError(
-					`Configuration property "autoListenToNotifiableCharacteristics" ` +
-					`must be of type "boolean".`
-				)
-			}
-
-			this.#autoListenToNotifiableCharacteristics = value
+		else {
+			throw new BluConfigurationError(
+				`Argument "configuration" must contain an object with valid configuration options.`
+			)
 		}
 	}
 }
