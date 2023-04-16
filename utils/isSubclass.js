@@ -1,5 +1,3 @@
-function isSubclass(subject, classToTest) {
+export default function isSubclass(subject, classToTest) {
 	return subject.prototype instanceof classToTest || subject === classToTest
 }
-
-module.exports = isSubclass

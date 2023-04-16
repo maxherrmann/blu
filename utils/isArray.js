@@ -1,5 +1,3 @@
-function isArray(subject) {
+export default function isArray(subject) {
 	return Array.isArray(subject)
 }
-
-module.exports = isArray

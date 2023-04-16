@@ -1,6 +1,6 @@
-const EventEmitter = require("../utils/eventEmitter.js")
+import EventEmitter from "../utils/eventEmitter.js"
 
-class Service extends EventEmitter {
+export default class Service extends EventEmitter {
 	device
 	description
 	characteristics
@@ -23,5 +23,3 @@ class Service extends EventEmitter {
 
 	async onceReady() {}
 }
-
-module.exports = Service

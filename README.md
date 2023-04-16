@@ -10,17 +10,20 @@ The Blu Framework is built upon the [Web Bluetooth API](https://webbluetoothcg.g
 
 ## Installation
 
-You can **download** the latest version of Blu here:
-<br>[**blu.esm.min.js (ESM Minified)**](https://github.com/maxherrmann/blu/releases/latest/download/blu.esm.min.js)
+### NPM
 
-Blu is hosted on the **jsDelivr CDN**:
-<br>[**blu.esm.min.js (ESM Minified)**](https://cdn.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.esm.min.js)
+```sh
+npm install @blu.js/blu --save
+```
 
-Blu is also available as an **NPM** module:
-<br>[**@blu.js/blu**](https://www.npmjs.com/package/@blu.js/blu)
+### Download
 
-> Looking for a place to explore usage examples or test the Blu Framework?
-<br>Check out the [playground](#blu-playground) instead!
+- [**blu.min.js** (ECMAScript Module)](https://github.com/maxherrmann/blu/releases/latest/download/blu.min.js)
+- [**blu.min.cjs** (CommonJS Module)](https://github.com/maxherrmann/blu/releases/latest/download/blu.min.cjs)
+
+### CDN
+
+You can use CDNs like [jsDelivr](https://www.jsdelivr.com/?docs=gh) or [UNPKG](https://unpkg.com/) to access Blu directly from the web.
 
 ### Add Blu to your project
 
@@ -29,20 +32,12 @@ Blu is also available as an **NPM** module:
 ```js
 // my-module.js
 
-import blu from "./blu.esm.min.js"
+import blu from "@blu.js/blu"
 // or
-import { bluetooth, configuration, scanner /* … */ } from "./blu.esm.min.js"
+import { bluetooth, configuration, scanner /* … */ } from "@blu.js/blu"
 ```
 
 #### Node.js
-
-##### Installation
-
-```sh
-npm install @blu.js/blu --save
-```
-
-##### Usage
 
 ```js
 // my-module.cjs
@@ -92,16 +87,18 @@ blu.scanner.getDevice()
 
 ### Integration
 
-The Blu Framework is available as an [ECMAScript](https://nodejs.org/api/esm.html#modules-ecmascript-modules) and [UMD](https://github.com/umdjs/umd) module that you can add to your project, allowing you to use its API to interact with Bluetooth Low Energy devices.
+The Blu Framework is a hybrid ECMAScript/CommonJS module that exports the following…
 
-The module’s default export is an object with the following properties:
-- [`bluetooth: Bluetooth`](https://github.com/maxherrmann/blu/wiki/bluetooth)
-- [`configuration: Configuration`](https://github.com/maxherrmann/blu/wiki/configuration)
-- [`logger: Logger`](https://github.com/maxherrmann/blu/wiki/logger)
-- [`scanner: Scanner`](https://github.com/maxherrmann/blu/wiki/scanner)
-- `version: String`: The framework’s version.
+#### Properties
 
-The default export also exposes the following classes:
+- `bluetooth:` [`Bluetooth`](https://github.com/maxherrmann/blu/wiki/bluetooth)
+- `configuration:` [`Configuration`](https://github.com/maxherrmann/blu/wiki/configuration)
+- `logger:` [`Logger`](https://github.com/maxherrmann/blu/wiki/logger)
+- `scanner:` [`Scanner`](https://github.com/maxherrmann/blu/wiki/scanner)
+- `version:` [`String`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)
+
+#### Classes
+
 - [`ServiceDescription`](https://github.com/maxherrmann/blu/wiki/ServiceDescription)
 - [`CharacteristicDescription`](https://github.com/maxherrmann/blu/wiki/CharacteristicDescription)
 - [`DescriptorDescription`](https://github.com/maxherrmann/blu/wiki/DescriptorDescription)

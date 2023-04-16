@@ -1,8 +1,8 @@
-const logger = require("../src/logger.js")
+import logger from "../src/logger.js"
 
-const BluError = require("./bluError.js")
+import BluError from "./bluError.js"
 
-class EventEmitter {
+export default class EventEmitter {
 	#strictMode
 	#listeners = new Map()
 	#mutedChannels = new Set()
@@ -180,5 +180,3 @@ class EventEmitter {
 }
 
 class EventEmitterError extends BluError {}
-
-module.exports = EventEmitter

@@ -1,10 +1,10 @@
-const Service = require("./service.js")
-const Characteristic = require("./characteristic.js")
-const Descriptor = require("./descriptor.js")
+import Service from "./service.js"
+import Characteristic from "./characteristic.js"
+import Descriptor from "./descriptor.js"
 
-const isArray = require("../utils/isArray.js")
-const isSubclass = require("../utils/isSubclass.js")
-const BluError = require("../utils/bluError.js")
+import isArray from "../utils/isArray.js"
+import isSubclass from "../utils/isSubclass.js"
+import BluError from "../utils/bluError.js"
 
 class Description {
 	uuid
@@ -44,7 +44,7 @@ class Description {
 	}
 }
 
-class ServiceDescription extends Description {
+export class ServiceDescription extends Description {
 	type
 	characteristics
 
@@ -80,7 +80,7 @@ class ServiceDescription extends Description {
 	}
 }
 
-class CharacteristicDescription extends Description {
+export class CharacteristicDescription extends Description {
 	type
 	descriptors
 	expectedIndicators
@@ -136,7 +136,7 @@ class CharacteristicDescription extends Description {
 	}
 }
 
-class DescriptorDescription extends Description {
+export class DescriptorDescription extends Description {
 	type
 
 	constructor(
@@ -161,9 +161,3 @@ class DescriptionConstructionError extends BluError {}
 class ServiceDescriptionConstructionError extends BluError {}
 class CharacteristicDescriptionConstructionError extends BluError {}
 class DescriptorDescriptionConstructionError extends BluError {}
-
-module.exports = {
-	ServiceDescription: ServiceDescription,
-	CharacteristicDescription: CharacteristicDescription,
-	DescriptorDescription: DescriptorDescription
-}

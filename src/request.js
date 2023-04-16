@@ -1,9 +1,9 @@
-const Response = require("./response.js")
+import Response from "./response.js"
 
-const BluError = require("../utils/bluError.js")
-const isTypedArray = require("../utils/isTypedArray.js")
+import BluError from "../utils/bluError.js"
+import isTypedArray from "../utils/isTypedArray.js"
 
-class Request {
+export default class Request {
 	responseType = Response
 	data
 
@@ -29,5 +29,3 @@ class Request {
 }
 
 class RequestConstructionError extends BluError {}
-
-module.exports = Request

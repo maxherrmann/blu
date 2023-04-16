@@ -1,5 +1,3 @@
-function isTypedArray(subject) {
+export default function isTypedArray(subject) {
 	return ArrayBuffer.isView(subject)
 }
-
-module.exports = isTypedArray

@@ -1,4 +1,4 @@
-class BluError extends Error {
+export default class BluError extends Error {
 	constructor(message, underlyingError) {
 		super(message, { cause: underlyingError })
 
@@ -13,5 +13,3 @@ class BluError extends Error {
 		}
 	}
 }
-
-module.exports = BluError
