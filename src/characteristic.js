@@ -1,15 +1,15 @@
-const logger = require("./logger.js")
-const bluetooth = require("./bluetooth.js")
+import logger from "./logger.js"
+import bluetooth from "./bluetooth.js"
 
-const Request = require("./request.js")
-const Response = require("./response.js")
+import Request from "./request.js"
+import Response from "./response.js"
 
-const BluError = require("../utils/bluError.js")
-const EventEmitter = require("../utils/eventEmitter.js")
-const isArray = require("../utils/isArray.js")
-const isTypedArray = require("../utils/isTypedArray.js")
+import BluError from "../utils/bluError.js"
+import EventEmitter from "../utils/eventEmitter.js"
+import isArray from "../utils/isArray.js"
+import isTypedArray from "../utils/isTypedArray.js"
 
-class Characteristic extends EventEmitter {
+export default class Characteristic extends EventEmitter {
 	service
 	description
 	properties
@@ -466,5 +466,3 @@ class CharacteristicOperationError extends BluError {
 }
 
 class NotificationTimeoutError extends BluError {}
-
-module.exports = Characteristic

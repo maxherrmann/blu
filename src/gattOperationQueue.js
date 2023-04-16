@@ -1,7 +1,7 @@
-const EventEmitter = require("../utils/eventEmitter.js")
-const BluError = require("../utils/bluError.js")
+import EventEmitter from "../utils/eventEmitter.js"
+import BluError from "../utils/bluError.js"
 
-class GATTOperationQueue extends EventEmitter {
+export default class GATTOperationQueue extends EventEmitter {
 	#operationTimeout = 5000
 	#isGATTOperationInProgress = false
 
@@ -66,5 +66,3 @@ class GATTOperationQueue extends EventEmitter {
 
 class GATTOperationQueueError extends BluError {}
 class GATTOperationError extends BluError {}
-
-module.exports = GATTOperationQueue

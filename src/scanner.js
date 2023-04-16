@@ -1,6 +1,7 @@
-const bluetooth = require("./bluetooth.js")
+import bluetooth from "./bluetooth.js"
+import configuration from "./configuration.js"
 
-const BluError = require("../utils/bluError.js")
+import BluError from "../utils/bluError.js"
 
 class Scanner {
 	getDevice() {
@@ -16,11 +17,11 @@ class Scanner {
 			}
 
 			try {
-				const { scannerConfig, deviceType } = require("./configuration.js")
+				let device = await globalThis.navigator.bluetooth.requestDevice(
+					configuration.scannerConfig
+				)
 
-				let device = await globalThis.navigator.bluetooth.requestDevice(scannerConfig)
-
-				device = device === undefined ? null : new deviceType(device)
+				device = device === undefined ? null : new configuration.deviceType(device)
 
 				resolve(device)
 			}
@@ -69,4 +70,4 @@ class Scanner {
 
 class ScannerError extends BluError {}
 
-module.exports = new Scanner()
+export default new Scanner()

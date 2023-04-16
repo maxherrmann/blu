@@ -1,12 +1,12 @@
-const TerserPlugin = require("terser-webpack-plugin")
+import TerserPlugin from "terser-webpack-plugin"
 
-const buildVersion = require("./src/version.js")
+import { version as buildVersion } from "./src/version.js"
 const buildDate = new Date()
 
-const esmConfig = {
+const esMinConfig = {
 	mode: "production",
 	entry: {
-		dist: { import: "./blu.esm.js", filename: "blu.esm.min.js" }
+		dist: { import: "./index.js", filename: "blu.min.js" }
 	},
 	output: {
 		module: true,
@@ -15,6 +15,9 @@ const esmConfig = {
 		}
 	},
 	devtool: "source-map",
+	experiments: {
+		outputModule: true
+	},
 	optimization: {
 		minimizer: [
 			new TerserPlugin({
@@ -23,28 +26,24 @@ const esmConfig = {
 					module: true,
 					keep_classnames: true,
 					format: {
-						preamble: getPreamble("ESM Minified")
+						preamble: getPreamble("Minified ECMAScript Module")
 					}
 				}
 			})
 		]
-	},
-	experiments: {
-		outputModule: true
 	}
 }
 
-const umdConfig = {
+const cjsMinConfig = {
 	mode: "production",
 	entry: {
-		dist: { import: "./blu.umd.js", filename: "blu.umd.min.js" }
+		dist: { import: "./index.js", filename: "blu.min.cjs" }
 	},
 	output: {
 		library: {
-			name: "blu",
-			type: "umd"
-		},
-		globalObject: "this"
+			type: "commonjs2",
+			export: "default"
+		}
 	},
 	devtool: "source-map",
 	optimization: {
@@ -54,7 +53,7 @@ const umdConfig = {
 				terserOptions: {
 					keep_classnames: true,
 					format: {
-						preamble: getPreamble("UMD Minified")
+						preamble: getPreamble("Minified CommonJS Module")
 					}
 				}
 			})
@@ -70,7 +69,7 @@ function getPreamble(exportType) {
 	` */`
 }
 
-module.exports = [
-	esmConfig,
-	umdConfig
+export default [
+	esMinConfig,
+	cjsMinConfig
 ]

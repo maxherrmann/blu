@@ -1,7 +1,7 @@
-const BluError = require("../utils/bluError.js")
-const isTypedArray = require("../utils/isTypedArray.js")
+import BluError from "../utils/bluError.js"
+import isTypedArray from "../utils/isTypedArray.js"
 
-class Response {
+export default class Response {
 	data
 
 	constructor(data) {
@@ -22,5 +22,3 @@ class Response {
 }
 
 class ResponseConstructionError extends BluError {}
-
-module.exports = Response

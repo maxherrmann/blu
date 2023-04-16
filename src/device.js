@@ -1,21 +1,21 @@
-const logger = require("./logger.js")
-const configuration = require("./configuration.js")
-const bluetooth = require("./bluetooth.js")
+import logger from "./logger.js"
+import configuration from "./configuration.js"
+import bluetooth from "./bluetooth.js"
 
-const Service = require("./service.js")
-const Characteristic = require("./characteristic.js")
-const Descriptor = require("./descriptor.js")
-const GATTOperationQueue = require("./gattOperationQueue.js")
-const {
+import Service from "./service.js"
+import Characteristic from "./characteristic.js"
+import Descriptor from "./descriptor.js"
+import GATTOperationQueue from "./gattOperationQueue.js"
+import {
 	ServiceDescription,
 	CharacteristicDescription,
 	DescriptorDescription
-} = require("./descriptions.js")
+} from "./descriptions.js"
 
-const BluError = require("../utils/bluError.js")
-const EventEmitter = require("../utils/eventEmitter.js")
+import BluError from "../utils/bluError.js"
+import EventEmitter from "../utils/eventEmitter.js"
 
-class Device extends EventEmitter {
+export default class Device extends EventEmitter {
 	id
 	name
 	properties
@@ -345,13 +345,11 @@ class Device extends EventEmitter {
 					}
 				}
 
-				const { autoListenToNotifiableCharacteristics } = require("./configuration.js")
-
 				for (const service of this.services) {
 					for (const characteristic of service.characteristics) {
 						if (
 							characteristic.properties.notify &&
-							autoListenToNotifiableCharacteristics
+							configuration.autoListenToNotifiableCharacteristics
 						) {
 							await characteristic.startListeningForNotifications()
 						}
@@ -397,5 +395,3 @@ class DeviceConnectionError extends BluError {}
 class DeviceBluetoothInterfaceDiscoveryError extends BluError {}
 class DeviceBluetoothInterfaceIncompleteError extends BluError {}
 class DescriptorDiscoveryError extends BluError {}
-
-module.exports = Device

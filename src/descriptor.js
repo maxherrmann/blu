@@ -1,13 +1,13 @@
-const logger = require("./logger.js")
-const bluetooth = require("./bluetooth.js")
+import logger from "./logger.js"
+import bluetooth from "./bluetooth.js"
 
-const Response = require("./response.js")
+import Response from "./response.js"
 
-const BluError = require("../utils/bluError.js")
-const isArray = require("../utils/isArray.js")
-const isTypedArray = require("../utils/isTypedArray.js")
+import BluError from "../utils/bluError.js"
+import isArray from "../utils/isArray.js"
+import isTypedArray from "../utils/isTypedArray.js"
 
-class Descriptor {
+export default class Descriptor {
 	characteristic
 	description
 	responseType = Response
@@ -153,5 +153,3 @@ class DescriptorOperationError extends BluError {
 		this.descriptor = descriptor
 	}
 }
-
-module.exports = Descriptor

@@ -1,4 +1,4 @@
-const EventEmitter = require("../utils/eventEmitter.js")
+import EventEmitter from "../utils/eventEmitter.js"
 
 class Bluetooth extends EventEmitter {
 	#connectedDevices = new Set()
@@ -76,4 +76,4 @@ class Bluetooth extends EventEmitter {
 	}
 }
 
-module.exports = new Bluetooth()
+export default new Bluetooth()

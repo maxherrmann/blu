@@ -1,6 +1,6 @@
-const BluError = require("../utils/bluError.js")
+import BluError from "../utils/bluError.js"
 
-class Logger {
+export default class Logger {
 	includeTimestamps = false
 	includeLevelNames = false
 
@@ -167,5 +167,3 @@ const DateFormatter = new Intl.DateTimeFormat("en-US", {
 })
 
 class LoggerError extends BluError {}
-
-module.exports = Logger

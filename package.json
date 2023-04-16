@@ -10,9 +10,6 @@
 		"Bluetooth Low Energy"
 	],
 	"license": "MIT",
-	"scripts": {
-		"build": "genversion src/version.js -d && npx webpack --config webpack.config.js"
-	},
 	"homepage": "https://blu.js.org/",
 	"bugs": "https://github.com/maxherrmann/blu/issues",
 	"repository": {
@@ -25,7 +22,18 @@
 		"url": "https://max-herrmann.com"
 	},
 	"funding": "https://github.com/sponsors/maxherrmann",
-	"main": "dist/blu.umd.min.js",
+	"type": "module",
+	"main": "dist/blu.min.cjs",
+	"module": "dist/blu.min.js",
+	"exports": {
+		".": {
+			"import": "./dist/blu.min.js",
+			"require": "./dist/blu.min.cjs"
+		}
+	},
+	"scripts": {
+		"build": "genversion src/version.js -d -e && npx webpack --config webpack.config.js"
+	},
 	"devDependencies": {
 		"genversion": "^3.1.1",
 		"webpack": "^5.74.0",

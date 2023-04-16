@@ -1,7 +1,7 @@
-const Device = require("./device.js")
+import Device from "./device.js"
 
-const BluError = require("../utils/bluError.js")
-const isSubclass = require("../utils/isSubclass.js")
+import BluError from "../utils/bluError.js"
+import isSubclass from "../utils/isSubclass.js"
 
 class Configuration {
 	#scannerConfig
@@ -120,4 +120,4 @@ class Configuration {
 
 class BluConfigurationError extends BluError {}
 
-module.exports = new Configuration()
+export default new Configuration()
