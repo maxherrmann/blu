@@ -1,16 +1,16 @@
 {
 	"name": "@blu.js/blu",
-	"version": "1.4.1",
-	"description": "A JavaScript framework for interacting with Bluetooth Low Energy devices from the web.",
+	"version": "2.0.0",
+	"description": "The type-safe framework for interacting with Bluetooth Low Energy devices from the web.",
 	"keywords": [
-		"Framework",
-		"JavaScript",
-		"Bluetooth",
-		"Web Bluetooth",
-		"Bluetooth Low Energy"
+		"blu",
+		"web bluetooth",
+		"bluetooth low energy",
+		"bluetooth",
+		"framework"
 	],
 	"license": "MIT",
-	"homepage": "https://blu.js.org/",
+	"homepage": "https://github.com/maxherrmann/blu#readme",
 	"bugs": "https://github.com/maxherrmann/blu/issues",
 	"repository": {
 		"type": "git",
@@ -18,25 +18,46 @@
 	},
 	"author": {
 		"name": "Max Herrmann",
-		"email": "m@xherrmann.com",
-		"url": "https://max-herrmann.com"
+		"email": "blu@max-herrmann.com",
+		"url": "https://github.com/maxherrmann"
 	},
 	"funding": "https://github.com/sponsors/maxherrmann",
 	"type": "module",
-	"main": "dist/blu.min.cjs",
-	"module": "dist/blu.min.js",
-	"exports": {
-		".": {
-			"import": "./dist/blu.min.js",
-			"require": "./dist/blu.min.cjs"
-		}
-	},
+	"main": "./dist/blu.min.js",
+	"types": "./dist/blu.d.ts",
 	"scripts": {
-		"build": "genversion src/version.js -d -e && npx webpack --config webpack.config.js"
+		"start": "webpack serve --mode production --name playground --progress",
+		"dev": "webpack serve --mode development --name playground --progress",
+		"build": "webpack --mode production --name package --progress && api-extractor run --local && api-documenter markdown -i ./wiki -o ./wiki/api/ && cp .github/wiki/* wiki/",
+		"build:playground": "webpack --mode production --name playground --progress",
+		"format": "prettier --write .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"update": "ncu -i && git add package*.json && git commit -m \"Update dependencies\"",
+		"update:auto": "ncu -u -t semver --dep prod && ncu -u --dep dev && git add package*.json && git commit -m \"Update dependencies\""
 	},
 	"devDependencies": {
-		"genversion": "^3.1.1",
-		"webpack": "^5.79.0",
-		"webpack-cli": "^5.0.1"
+		"@microsoft/api-documenter": "^7.23.9",
+		"@microsoft/api-extractor": "^7.38.0",
+		"@microsoft/tsdoc-config": "^0.16.2",
+		"@types/web-bluetooth": "^0.0.18",
+		"@typescript-eslint/eslint-plugin": "^6.7.4",
+		"@typescript-eslint/parser": "^6.7.4",
+		"css-loader": "^6.8.1",
+		"css-minimizer-webpack-plugin": "^5.0.1",
+		"eslint": "^8.51.0",
+		"eslint-config-prettier": "^9.0.0",
+		"eslint-plugin-tsdoc": "^0.2.17",
+		"html-bundler-webpack-plugin": "^2.14.3",
+		"npm-check-updates": "^16.14.5",
+		"prettier": "^3.0.3",
+		"terser-webpack-plugin": "^5.3.9",
+		"ts-loader": "^9.5.0",
+		"typed-emitter": "^2.1.0",
+		"typescript": "^5.2.2",
+		"webpack": "^5.88.2",
+		"webpack-cli": "^5.1.4",
+		"webpack-dev-server": "^4.15.1",
+		"zod": "^3.22.4"
 	}
 }
