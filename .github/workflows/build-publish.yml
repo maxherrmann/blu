@@ -1,4 +1,4 @@
-name: Build
+name: Build and Publish
 
 on:
     workflow_dispatch:
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
     build:
-        name: Build package and draft release
+        name: Build and Publish
         runs-on: ubuntu-latest
 
         steps:
@@ -66,6 +66,11 @@ jobs:
                       dist/*.d.ts
                   fail_on_unmatched_files: true
 
+            - name: Publish package to NPM
+              run: npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_ACCESS_TOKEN}}
+
             - name: Update documentation
               uses: Andrew-Chen-Wang/github-wiki-action@v4
               with:
@@ -77,3 +82,5 @@ jobs:
                   curl https://purge.jsdelivr.net/gh/maxherrmann/blu
                   curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest
                   curl https://purge.jsdelivr.net/gh/maxherrmann/blu@${{ github.event.inputs.versionTag }}
+                  curl https://purge.jsdelivr.net/npm/@blu.js/blu
+                  curl https://purge.jsdelivr.net/npm/@blu.js/blu@latest
