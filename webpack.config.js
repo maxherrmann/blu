@@ -99,7 +99,7 @@ export default (_env, argv) => {
 			argv.name === "package"
 				? false
 				: new HtmlBundlerPlugin({
-						minify: argv.mode === "production",
+						minify: "auto",
 						entry: "./src/playground/",
 						js: {
 							filename: "assets/js/[name].js",
