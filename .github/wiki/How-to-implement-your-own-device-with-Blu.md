@@ -6,7 +6,7 @@
 
 ### Get familiar with Blu
 
-In order to effectively use Blu with your device, you should first familiarize yourself with the framework. A good starting point is to check out the [playground](https://blu.js.org/), as well as the source code of some of the [examples](https://github.com/maxherrmann/blu-playground/tree/main/src/playground/examples). To get an overview of Blu's API, consult the [API reference](https://github.com/maxherrmann/blu/wiki/api/blu).
+In order to effectively use Blu with your device, you should first familiarize yourself with the framework. A good starting point is to check out the [playground](https://blu.js.org/), as well as the source code of some of the [examples](https://github.com/maxherrmann/blu-playground/tree/main/src/playground/examples). To get an overview of Blu's API, consult the [API reference](https://github.com/maxherrmann/blu/wiki/blu).
 
 ### Get familiar with your device
 
@@ -130,7 +130,7 @@ class MyDevice extends BluDevice {
 
 > Note: We didn't set a custom `type` in our descriptions yet, as we will do this later.
 
-The most important and thus also required part of a protocol description is the UUID. Only when you provide a correct UUID, Blu – or in this case Web Bluetooth – will be able to find your device's services, characteristics and descriptors and ultimately interact with them. You can learn more about the signature of each of the protocol descriptions in the [API reference](https://github.com/maxherrmann/blu/wiki/api/blu).
+The most important and thus also required part of a protocol description is the UUID. Only when you provide a correct UUID, Blu – or in this case Web Bluetooth – will be able to find your device's services, characteristics and descriptors and ultimately interact with them. You can learn more about the signature of each of the protocol descriptions in the [API reference](https://github.com/maxherrmann/blu/wiki/blu).
 
 ### Create the scanner configuration
 
@@ -153,7 +153,7 @@ const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
 // ...
 ```
 
-You can learn more about `scannerConfig` options in the [API reference](https://github.com/maxherrmann/blu/wiki/api/blu.bluconfigurationoptions.scannerconfig).
+You can learn more about `scannerConfig` options in the [API reference](https://github.com/maxherrmann/blu/wiki/blu.bluconfigurationoptions.scannerconfig).
 
 > Note: If you do not include your device's service UUIDs in the `scannerConfig`, they won't be discoverable and thus be inaccessible when connecting your device.
 
@@ -203,11 +203,11 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 }
 ```
 
-Now that we have a property that holds the button's state, we need to update its value based on notifications from the device. For this we need to communicate with the device. This is where [`Request`](https://github.com/maxherrmann/blu/wiki/api/blu.blurequest)s and [`Response`](https://github.com/maxherrmann/blu/wiki/api/blu.bluresponse)s come in to play.
+Now that we have a property that holds the button's state, we need to update its value based on notifications from the device. For this we need to communicate with the device. This is where [`Request`](https://github.com/maxherrmann/blu/wiki/blu.blurequest)s and [`Response`](https://github.com/maxherrmann/blu/wiki/bluresponse)s come in to play.
 
 As we "described" to Blu earlier, the Button State Characteristic has the following properties: Read and Notify (`R--N`). This means that you can read from the characteristic and have it send notifications. In our case, you can read the button's state and get notified when the button's state changes.
 
-As notifications can also be seen as responses from the characteristic, we create a class that extends [`Response`](https://github.com/maxherrmann/blu/wiki/api/blu.bluresponse). The response holds a single `buttonState` getter.
+As notifications can also be seen as responses from the characteristic, we create a class that extends [`Response`](https://github.com/maxherrmann/blu/wiki/blu.bluresponse). The response holds a single `buttonState` getter.
 
 ```ts
 // /src/playground/examples/my-device/button.ts
@@ -246,7 +246,7 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 // ...
 ```
 
-The last thing we need to do to finish our implementation of the Button State Characteristic, is to react to the notifications it sends. For this we can utilize the [`beforeReady` hook](https://github.com/maxherrmann/blu/wiki/api/blu.blucharacteristic.beforeready). `beforeReady` is a virtual function that can be used to executed asynchronous tasks before the characteristic is deemed ready to use.
+The last thing we need to do to finish our implementation of the Button State Characteristic, is to react to the notifications it sends. For this we can utilize the [`beforeReady` hook](https://github.com/maxherrmann/blu/wiki/blu.blucharacteristic.beforeready). `beforeReady` is a virtual function that can be used to executed asynchronous tasks before the characteristic is deemed ready to use.
 
 We first need to read the initial button state from the device to pre-populate the characteristic's `#buttonState` property:
 
@@ -275,7 +275,7 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 
 > Note: The result of `this.read()` resolves to `ButtonStateResponse`, because we instructed the characteristic to treat responses from the characteristic as `ButtonStateResponse` by overriding the `responseType` earlier. `this.read<ButtonStateResponse>()` is the same as `this.read() as ButtonStateResponse`.
 
-Next, we add a listener for our characteristic's [`notification` event](https://github.com/maxherrmann/blu/wiki/api/blu.blucharacteristicevents.notification) that updates our `#buttonState` property whenever the device's button state changes. Optionally, we can also emit a respective event that notifies our API users about button state changes. Here's how our characteristic implementation should look now:
+Next, we add a listener for our characteristic's [`notification` event](https://github.com/maxherrmann/blu/wiki/blu.blucharacteristicevents.notification) that updates our `#buttonState` property whenever the device's button state changes. Optionally, we can also emit a respective event that notifies our API users about button state changes. Here's how our characteristic implementation should look now:
 
 ```ts
 // /src/playground/examples/my-device/button.ts
