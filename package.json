@@ -28,7 +28,7 @@
 	"scripts": {
 		"start": "webpack serve --mode production --name playground --progress",
 		"dev": "webpack serve --mode development --name playground --progress",
-		"build": "webpack --mode production --name package --progress && api-extractor run --local && api-documenter markdown -i ./wiki -o ./wiki/api/ && cp .github/wiki/* wiki/",
+		"build": "sh build.sh",
 		"build:playground": "webpack --mode production --name playground --progress",
 		"format": "prettier --write .",
 		"lint": "eslint .",
