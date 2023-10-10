@@ -48,7 +48,6 @@ export default {
 	bluConfig: bluConfig,
 	onLoad: onLoad,
 } as BluPlaygroundExample
-
 ```
 
 ### Expose your example to the playground
@@ -60,7 +59,7 @@ In order to make your example available in the playground, you have to expose it
 
 import myDevice from "./my-device"
 // ...
-export default [/* ... */, myDevice ] as BluPlaygroundExample[]
+export default [, /* ... */ myDevice] as BluPlaygroundExample[]
 ```
 
 ### Launch the playground
@@ -171,7 +170,7 @@ Let's start with the button service:
 import { BluService } from "@blu.js/blu"
 
 export class ButtonService extends BluService {
-    buttonStateCharacteristic!: ButtonStateCharacteristic
+	buttonStateCharacteristic!: ButtonStateCharacteristic
 }
 ```
 
@@ -218,7 +217,7 @@ import { BluService, BluCharacteristic, BluResponse } from "@blu.js/blu"
 
 class ButtonStateResponse extends BluResponse {
 	get buttonState() {
-        // Read the button state from the response's data buffer
+		// Read the button state from the response's data buffer
 		return this.data?.getUint8(0)
 	}
 }
@@ -234,7 +233,7 @@ Now we instruct our characteristic to treat all incoming responses, i.e. notific
 // ...
 
 export class ButtonStateCharacteristic extends BluCharacteristic {
-    override responseType = ButtonStateResponse
+	override responseType = ButtonStateResponse
 
 	#buttonState?: ButtonStateResponse["buttonState"]
 
@@ -256,11 +255,11 @@ We first need to read the initial button state from the device to pre-populate t
 // ...
 
 export class ButtonStateCharacteristic extends BluCharacteristic {
-    override responseType = ButtonStateResponse
+	override responseType = ButtonStateResponse
 
 	#buttonState?: ButtonStateResponse["buttonState"]
 
-    override async beforeReady() {
+	override async beforeReady() {
 		// Read initial button state.
 		this.#buttonState = (await this.read<ButtonStateResponse>()).buttonState
 	}
@@ -283,15 +282,15 @@ Next, we add a listener for our characteristic's [`notification` event](https://
 // ...
 
 export class ButtonStateCharacteristic extends BluCharacteristic {
-    override responseType = ButtonStateResponse
+	override responseType = ButtonStateResponse
 
 	#buttonState?: ButtonStateResponse["buttonState"]
 
-    override async beforeReady() {
+	override async beforeReady() {
 		// Read initial button state.
 		this.#buttonState = (await this.read<ButtonStateResponse>()).buttonState
 
-        this.on("notification", (response: ButtonStateResponse) => {
+		this.on("notification", (response: ButtonStateResponse) => {
 			// Update button state based on response.
 			this.#buttonState = response.buttonState
 
@@ -313,7 +312,10 @@ One thing you might be wondering about: Why do we emit the `button-state-changed
 Here's what a user registering an event listener for our `button-state-changed` event would look like if we emitted it directly from `this`:
 
 ```ts
-device.buttonService.buttonStateCharacteristic.on("button-state-changed", () => {})
+device.buttonService.buttonStateCharacteristic.on(
+	"button-state-changed",
+	() => {},
+)
 ```
 
 And here's the same thing with us emitting the event from `this.service.device`:
@@ -337,32 +339,32 @@ import { ButtonService, ButtonStateCharacteristic } from "./button"
 
 class MyDevice extends BluDevice {
 	static override protocol: BluServiceDescription[] = [
-        new BluServiceDescription({
-            // Service UUID
-            uuid: "e95d9882-251d-470a-a062-fa1922dfa9a8",
-            // Service identifier
-            identifier: "buttonService",
-            // Service name
-            name: "Button Service",
-            // Service type
-            type: ButtonService,
-            // Characteristic descriptions
-            characteristicDescriptions: [
-                new BluCharacteristicDescription({
-                    // Characteristic UUID
-                    uuid: "e95dda90-251d-470a-a062-fa1922dfa9a8",
-                    // Characteristic identifier
-                    identifier: "buttonStateCharacteristic",
-                    // Characteristic name
-                    name: "Button State Characteristic",
-                    // Characteristic type
-                    type: ButtonStateCharacteristic,
-                    // Expected characteristic properties
-                    expectedProperties: "R--N",
-                }),
-            ],
-	    }),
-    ]
+		new BluServiceDescription({
+			// Service UUID
+			uuid: "e95d9882-251d-470a-a062-fa1922dfa9a8",
+			// Service identifier
+			identifier: "buttonService",
+			// Service name
+			name: "Button Service",
+			// Service type
+			type: ButtonService,
+			// Characteristic descriptions
+			characteristicDescriptions: [
+				new BluCharacteristicDescription({
+					// Characteristic UUID
+					uuid: "e95dda90-251d-470a-a062-fa1922dfa9a8",
+					// Characteristic identifier
+					identifier: "buttonStateCharacteristic",
+					// Characteristic name
+					name: "Button State Characteristic",
+					// Characteristic type
+					type: ButtonStateCharacteristic,
+					// Expected characteristic properties
+					expectedProperties: "R--N",
+				}),
+			],
+		}),
+	]
 }
 
 // ...
@@ -382,9 +384,9 @@ In the same file, alter the `MyDevice` class to provide functionality to our use
 class MyDevice extends BluDevice {
 	// ...
 
-    buttonService!: ButtonService
+	buttonService!: ButtonService
 
-    get buttonState() {
+	get buttonState() {
 		return this.buttonService.buttonStateCharacteristic.buttonState
 	}
 }

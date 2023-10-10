@@ -39,7 +39,11 @@ The Blu framework comes as a minified ECMAScript module with source maps.
 ```ts
 import blu from "@blu.js/blu"
 // or
-import { BluDevice, BluCharacteristic, configuration, /* ... */ } from "@blu.js/blu"
+import {
+	BluDevice,
+	BluCharacteristic,
+	configuration /* ... */,
+} from "@blu.js/blu"
 ```
 
 ## Usage
@@ -107,31 +111,35 @@ The playground features a collection of examples that show how Blu can be used.
 You can select an example in the playground's sidebar.
 
 #### [**🧱 Starter Kit**](https://github.com/maxherrmann/blu/tree/main/src/playground/examples/starter-kit)
-- The perfect starting point for integrating your own Bluetooth device with Blu.
-- Does not implement any functionality.
+
+-   The perfect starting point for integrating your own Bluetooth device with Blu.
+-   Does not implement any functionality.
 
 #### [**🔋 Battery**](https://github.com/maxherrmann/blu/tree/main/src/playground/examples/battery)
-- Implementation example for a generic Bluetooth device that provides a standardized battery service.
-- Read your device's battery level and get notified when it changes.
-- Works great with Keyboards, Mice, Controllers, Headphones, ...
+
+-   Implementation example for a generic Bluetooth device that provides a standardized battery service.
+-   Read your device's battery level and get notified when it changes.
+-   Works great with Keyboards, Mice, Controllers, Headphones, ...
 
 #### [**🤖 BBC micro:bit**](https://github.com/maxherrmann/blu-playground/tree/main/examples/microbit) (Work in progress)
-- Implementation example for a [BBC micro:bit](https://www.microbit.org/) device.
-- Implements the [default Bluetooth profile for the BBC micro:bit](https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html).
-- Implementation status:
-  - [x] Device Information Service
-  - [x] Accelerometer Service
-  - [ ] Magnetometer Service
-  - [x] Button Service
-  - [ ] IO Pin Service
-  - [ ] LED Service
-  - [ ] Event Service
-  - [ ] DFU Control Service
-  - [x] Temperature Service
-  - [ ] UART Service
-- Tested with the BBC micro:bit v2 rev. 21.
+
+-   Implementation example for a [BBC micro:bit](https://www.microbit.org/) device.
+-   Implements the [default Bluetooth profile for the BBC micro:bit](https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html).
+-   Implementation status:
+    -   [x] Device Information Service
+    -   [x] Accelerometer Service
+    -   [ ] Magnetometer Service
+    -   [x] Button Service
+    -   [ ] IO Pin Service
+    -   [ ] LED Service
+    -   [ ] Event Service
+    -   [ ] DFU Control Service
+    -   [x] Temperature Service
+    -   [ ] UART Service
+-   Tested with the BBC micro:bit v2 rev. 21.
 
 #### Want to share your example and make it available on [blu.js.org](https://blu.js.org/)?
+
 Feel free to [contribute](https://github.com/maxherrmann/blu-playground/compare)! ❤️
 
 ## Building
