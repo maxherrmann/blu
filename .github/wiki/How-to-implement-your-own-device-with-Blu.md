@@ -284,18 +284,20 @@ Next, we add a listener for our characteristic's [`notification` event](https://
 export class ButtonStateCharacteristic extends BluCharacteristic {
 	override responseType = ButtonStateResponse
 
-	#buttonState?: ButtonStateResponse["buttonState"]
+	#buttonState: ButtonStateResponse["buttonState"]
 
 	override async beforeReady() {
 		// Read initial button state.
 		this.#buttonState = (await this.read<ButtonStateResponse>()).buttonState
 
-		this.on("notification", (response: ButtonStateResponse) => {
-			// Update button state based on response.
-			this.#buttonState = response.buttonState
+		this.on("notification", response => {
+            if (response instanceof ButtonStateResponse) {
+                // Update button state based on response.
+                this.#buttonState = response.buttonState
 
-			// (Optional) Emit `button-state-changed` event from the device object.
-			this.service.device.emit("button-state-changed", this.buttonState)
+                // (Optional) Emit `button-state-changed` event from the device object.
+                this.service.device.emit("button-state-changed", this.buttonState)
+            }
 		})
 	}
 
