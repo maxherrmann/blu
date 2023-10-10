@@ -1,12 +1,17 @@
-<img src="https://max-herrmann.com/deploy/blu/blu_logo.png?0" height="100" alt="Blu">
-
-**A JavaScript framework for interacting with Bluetooth Low Energy devices from the web.**
+<p align="center">
+    <br>
+    <img src="https://max-herrmann.com/deploy/blu/blu_logo.png?0" height="100" alt="Blu">
+    <br>
+    <i><b>The type-safe framework for interacting with<br>Bluetooth Low Energy devices from the web.</b></i>
+    <br>
+    <br>
+</p>
 
 ## Compatibility
 
-The Blu Framework is built upon the [Web Bluetooth API](https://webbluetoothcg.github.io/web-bluetooth/) and thus requires the browser it runs on to support it. Some specific functionality may only be available in certain browsers.
+The Blu framework is built upon the [Web Bluetooth API](https://webbluetoothcg.github.io/web-bluetooth/) and thus requires the browser it runs on to support it. Some specific functionality may only be available in certain browsers.
 
-[➡️ Can I use Web Bluetooth?](https://caniuse.com/web-bluetooth)
+[➡ **Can I use Web Bluetooth?**](https://caniuse.com/web-bluetooth)
 
 ## Installation
 
@@ -18,8 +23,7 @@ npm install @blu.js/blu --save
 
 ### Download
 
-- [**blu.min.js** (ECMAScript Module)](https://github.com/maxherrmann/blu/releases/latest/download/blu.min.js)
-- [**blu.min.cjs** (CommonJS Module)](https://github.com/maxherrmann/blu/releases/latest/download/blu.min.cjs)
+[**➡ blu.min.js** (Minified ECMAScript Module)](https://github.com/maxherrmann/blu/releases/latest/download/blu.min.js)
 
 ### CDN
 
@@ -27,108 +31,191 @@ You can use CDNs like [jsDelivr](https://www.jsdelivr.com/?docs=gh) or [UNPKG](h
 
 ### Add Blu to your project
 
-#### Web
+The Blu framework comes as a minified ECMAScript module with source maps.
 
-```js
-// my-module.js
+-   The default export's signature is documented [here](https://github.com/maxherrmann/blu/wiki/api/blu._default).
+-   All named exports are documented [here](https://github.com/maxherrmann/blu/wiki/api/blu).
 
+```ts
 import blu from "@blu.js/blu"
 // or
-import { bluetooth, configuration, scanner /* … */ } from "@blu.js/blu"
+import { BluDevice, BluCharacteristic, configuration, /* ... */ } from "@blu.js/blu"
 ```
 
-#### Node.js
-
-```js
-// my-module.cjs
-
-const blu = require("@blu.js/blu")
-// or
-const { bluetooth, configuration, scanner /* … */ } = require("@blu.js/blu")
-```
+## Usage
 
 ### Use the Blu API in your project
 
 #### `async`/`await` syntax
 
-```js
+```ts
 try {
-	let device = await blu.scanner.getDevice()
+	const device = await blu.scanner.getDevice()
 
-	if (device !== null) {
+	if (device) {
 		await device.connect()
 
-		// …
+		// ...
 	}
-}
-catch(error) {
-	// …
+} catch (error) {
+	// ...
 }
 ```
 
 #### `Promise` syntax
 
-```js
-blu.scanner.getDevice()
-.then(device => {
-	if (device !== null) {
-		device.connect()
-		.then(() => {
-			// …
-		})
-	}
-})
-.catch(error => {
-	// …
-})
+```ts
+blu.scanner
+	.getDevice()
+	.then(device => {
+		if (device) {
+			device.connect().then(() => {
+				// ...
+			})
+		}
+	})
+	.catch(error => {
+		// ...
+	})
 ```
-
-## Usage
-
-### Integration
-
-The Blu Framework is a hybrid ECMAScript/CommonJS module that exports the following…
-
-#### Properties
-
-- `bluetooth:` [`Bluetooth`](https://github.com/maxherrmann/blu/wiki/bluetooth)
-- `configuration:` [`Configuration`](https://github.com/maxherrmann/blu/wiki/configuration)
-- `logger:` [`Logger`](https://github.com/maxherrmann/blu/wiki/logger)
-- `scanner:` [`Scanner`](https://github.com/maxherrmann/blu/wiki/scanner)
-- `version:` [`String`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)
-
-#### Classes
-
-- [`ServiceDescription`](https://github.com/maxherrmann/blu/wiki/ServiceDescription)
-- [`CharacteristicDescription`](https://github.com/maxherrmann/blu/wiki/CharacteristicDescription)
-- [`DescriptorDescription`](https://github.com/maxherrmann/blu/wiki/DescriptorDescription)
-- [`Service`](https://github.com/maxherrmann/blu/wiki/Service)
-- [`Characteristic`](https://github.com/maxherrmann/blu/wiki/Characteristic)
-- [`Descriptor`](https://github.com/maxherrmann/blu/wiki/Descriptor)
-- [`Device`](https://github.com/maxherrmann/blu/wiki/Device)
-- [`Request`](https://github.com/maxherrmann/blu/wiki/Request)
-- [`Response`](https://github.com/maxherrmann/blu/wiki/Response)
-- [`BluError`](https://github.com/maxherrmann/blu/wiki/BluError)
 
 ### Usage examples
 
-You can find a collection of examples as part of the Blu Playground at [maxherrmann/blu-playground](https://github.com/maxherrmann/blu-playground).
+You can find a collection of usage examples with different complexity as part of the [Blu Playground](#blu-playground) in the [src/playground/examples](https://github.com/maxherrmann/blu/tree/main/src/playground/examples) directory.
 
-### Configuring Blu for your own device
+## Documentation
 
-You can find a detailed guide on how to configure Blu for your own device in this repo’s wiki.
+### Blu API
 
-[**➡️ Open the Guide**](https://github.com/maxherrmann/blu/wiki/Configuring-Blu-for-your-own-device)
+[**➡ Reference**](https://github.com/maxherrmann/blu/wiki/api/blu)
+
+### Guides
+
+[**➡ How to implement your own device with Blu**](https://github.com/maxherrmann/blu/wiki/How-to-implement-your-own-device-with-Blu)
 
 ## Blu Playground
 
-The playground offers you a way to explore examples and test the [Blu API](#blu-api) through your browser’s console. The playground’s source is hosted at [maxherrmann/blu-playground](https://github.com/maxherrmann/blu-playground).
+The playground offers you a way to explore examples and test Blu within your browser.
 
-[**➡️ Open the Playground**](https://playground.blu.js.org/)
+[**➡ Blu Playground**](https://blu.js.org/)
 
-## Blu API
+The playground exposes [Blu's default export](https://github.com/maxherrmann/blu/wiki/api/blu._default) as a global variable named `blu`, allowing you to access it from the console. Once a device has been connected, it is available as `device`.
 
-### Reference
-The Blu API is documented in this repo’s wiki.
+### Examples
 
-[**➡️ Open the API reference**](https://github.com/maxherrmann/blu/wiki#blu-api-reference)
+The playground features a collection of examples that show how Blu can be used.
+You can select an example in the playground's sidebar.
+
+#### [**🧱 Starter Kit**](https://github.com/maxherrmann/blu/tree/main/src/playground/examples/starter-kit)
+- The perfect starting point for integrating your own Bluetooth device with Blu.
+- Does not implement any functionality.
+
+#### [**🔋 Battery**](https://github.com/maxherrmann/blu/tree/main/src/playground/examples/battery)
+- Implementation example for a generic Bluetooth device that provides a standardized battery service.
+- Read your device's battery level and get notified when it changes.
+- Works great with Keyboards, Mice, Controllers, Headphones, ...
+
+#### [**🤖 BBC micro:bit**](https://github.com/maxherrmann/blu-playground/tree/main/examples/microbit) (Work in progress)
+- Implementation example for a [BBC micro:bit](https://www.microbit.org/) device.
+- Implements the [default Bluetooth profile for the BBC micro:bit](https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html).
+- Implementation status:
+  - [x] Device Information Service
+  - [x] Accelerometer Service
+  - [ ] Magnetometer Service
+  - [x] Button Service
+  - [ ] IO Pin Service
+  - [ ] LED Service
+  - [ ] Event Service
+  - [ ] DFU Control Service
+  - [x] Temperature Service
+  - [ ] UART Service
+- Tested with the BBC micro:bit v2 rev. 21.
+
+#### Want to share your example and make it available on [blu.js.org](https://blu.js.org/)?
+Feel free to [contribute](https://github.com/maxherrmann/blu-playground/compare)! ❤️
+
+## Building
+
+To build Blu locally, first run the following:
+
+```sh
+git clone https://github.com/maxherrmann/blu.git && cd blu && npm i
+```
+
+### Build Scripts
+
+#### Run in production mode
+
+```sh
+npm start
+```
+
+Builds the playground in production mode and launches a local web server that watches for changes.
+
+#### Run in development mode
+
+```sh
+npm run dev
+```
+
+Builds the playground in development mode and launches a local web server that watches for changes.
+
+#### Build package
+
+```sh
+npm run build
+```
+
+Builds the package in production mode.
+
+> Building the package in production mode also invokes [`api-extractor`](https://api-extractor.com) to generate the package's `.d.ts` rollup and API documentation, as well as [`api-documenter`](https://api-extractor.com/pages/setup/generating_docs/) to create the sources for this repo's [GitHub wiki](https://github.com/maxherrmann/blu/wiki).
+
+#### Build playground
+
+```sh
+npm run build:playground
+```
+
+Builds the playground in production mode.
+
+> Only used for building the sources for [blu.js.org](https://blu.js.org/).
+
+#### Format
+
+```sh
+npm run format
+```
+
+Formats the source code with [Prettier](https://prettier.io/).
+
+#### Lint
+
+```sh
+npm run lint
+```
+
+Lints the source code with [ESLint](https://eslint.org/).
+
+#### Lint and fix
+
+```sh
+npm run lint:fix
+```
+
+Lints the source code with [ESLint](https://eslint.org/) and automatically fixes all auto-solvable issues.
+
+#### Update dependencies
+
+```sh
+npm run update
+```
+
+Interactively updates all dependencies with [`ncu`](https://github.com/raineorshine/npm-check-updates).
+
+#### Update dependencies
+
+```sh
+npm run update:auto
+```
+
+Automatically updates all dependencies with [`ncu`](https://github.com/raineorshine/npm-check-updates).

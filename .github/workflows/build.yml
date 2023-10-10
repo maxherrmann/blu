@@ -1,68 +1,82 @@
 name: Build
 
 on:
-  workflow_dispatch:
-    inputs:
-      versionTag:
-        description: Version
-        required: true
-        type: string
+    workflow_dispatch:
+        inputs:
+            versionTag:
+                description: Version
+                required: true
+                type: string
+
+permissions:
+    contents: write
 
 jobs:
-  build:
-    name: Build package and draft release
-    runs-on: ubuntu-latest
+    build:
+        name: Build package and draft release
+        runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout changes
-      uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.ref }}
+        steps:
+            - name: Checkout changes
+              uses: actions/checkout@v3
+              with:
+                  ref: ${{ github.event.ref }}
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 'lts/*'
-        registry-url: https://registry.npmjs.org/
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "lts/*"
+                  registry-url: https://registry.npmjs.org/
 
-    - name: Bump version to ${{ github.event.inputs.versionTag }}
-      run: |
-        npm version ${{ github.event.inputs.versionTag }} --allow-same-version --no-git-tag-version
+            - name: Bump version to ${{ github.event.inputs.versionTag }}
+              run: |
+                  npm version ${{ github.event.inputs.versionTag }} --allow-same-version --no-git-tag-version
 
-    - name: Build package
-      run: |
-        npm install
-        npm run build
-        git status
+            - name: Install
+              run: npm install
 
-    - name: Commit and push changes
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: 'Build ${{ github.event.inputs.versionTag }}'
-        tagging_message: ${{ github.event.inputs.versionTag }}
-        skip_fetch: true
-        skip_checkout: true
+            - name: Lint and format source code
+              run: |
+                  npm run lint:fix
+                  npm run format
+                  git status
 
-    - name: Create draft release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.event.inputs.versionTag }}
-        draft: true
-        prerelease: ${{ contains(github.event.inputs.versionTag, '-rc.') }}
-        files: dist/*
-        fail_on_unmatched_files: true
+            - name: Build package
+              run: |
+                  npm install
+                  npm run build
 
-    - name: Purge jsDelivr CDN cache
-      run: |
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@${{ github.event.inputs.versionTag }}/dist/blu.min.js
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@${{ github.event.inputs.versionTag }}/dist/blu.min.js.map
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@${{ github.event.inputs.versionTag }}/dist/blu.min.cjs
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@${{ github.event.inputs.versionTag }}/dist/blu.min.cjs.map
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.min.js
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.min.js.map
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.min.cjs
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest/dist/blu.min.cjs.map
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu/dist/blu.min.js
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu/dist/blu.min.js.map
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu/dist/blu.min.cjs
-        curl https://purge.jsdelivr.net/gh/maxherrmann/blu/dist/blu.min.cjs.map
+            - name: Commit and push changes
+              uses: stefanzweifel/git-auto-commit-action@v4
+              with:
+                  commit_message: "Build ${{ github.event.inputs.versionTag }}"
+                  tagging_message: ${{ github.event.inputs.versionTag }}
+                  skip_fetch: true
+                  skip_checkout: true
+
+            - name: Create draft release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ github.event.inputs.versionTag }}
+                  draft: true
+                  prerelease: ${{ contains(github.event.inputs.versionTag, '-rc.') }}
+                  files: |
+                      dist/*.js
+                      dist/*.js.map
+                      dist/*.d.ts
+                  fail_on_unmatched_files: true
+
+            - name: Update documentation
+              uses: Andrew-Chen-Wang/github-wiki-action@v4
+              with:
+                  path: "wiki/"
+                  commit-message: "Update documentation (Blu ${{ github.event.inputs.versionTag }})"
+                  ignore: |
+                      "*.api.json"
+                      "api/index.md"
+
+            - name: Purge jsDelivr CDN cache
+              run: |
+                  curl https://purge.jsdelivr.net/gh/maxherrmann/blu
+                  curl https://purge.jsdelivr.net/gh/maxherrmann/blu@latest
+                  curl https://purge.jsdelivr.net/gh/maxherrmann/blu@${{ github.event.inputs.versionTag }}
