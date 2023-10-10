@@ -33,8 +33,8 @@ You can use CDNs like [jsDelivr](https://www.jsdelivr.com/?docs=gh) or [UNPKG](h
 
 The Blu framework comes as a minified ECMAScript module with source maps.
 
--   The default export's signature is documented [here](https://github.com/maxherrmann/blu/wiki/api/blu._default).
--   All named exports are documented [here](https://github.com/maxherrmann/blu/wiki/api/blu).
+-   The default export's signature is documented [here](https://github.com/maxherrmann/blu/wiki/blu._default).
+-   All named exports are documented [here](https://github.com/maxherrmann/blu/wiki/blu).
 
 ```ts
 import blu from "@blu.js/blu"
@@ -91,7 +91,7 @@ You can find a collection of usage examples with different complexity as part of
 
 ### Blu API
 
-[**➡ Reference**](https://github.com/maxherrmann/blu/wiki/api/blu)
+[**➡ Reference**](https://github.com/maxherrmann/blu/wiki/blu)
 
 ### Guides
 
@@ -103,7 +103,7 @@ The playground offers you a way to explore examples and test Blu within your bro
 
 [**➡ Blu Playground**](https://blu.js.org/)
 
-The playground exposes [Blu's default export](https://github.com/maxherrmann/blu/wiki/api/blu._default) as a global variable named `blu`, allowing you to access it from the console. Once a device has been connected, it is available as `device`.
+The playground exposes [Blu's default export](https://github.com/maxherrmann/blu/wiki/blu._default) as a global variable named `blu`, allowing you to access it from the console. Once a device has been connected, it is available as `device`.
 
 ### Examples
 

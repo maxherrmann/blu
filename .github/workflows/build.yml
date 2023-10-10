@@ -71,9 +71,6 @@ jobs:
               with:
                   path: "wiki/"
                   commit-message: "Update documentation (Blu ${{ github.event.inputs.versionTag }})"
-                  ignore: |
-                      "*.api.json"
-                      "api/index.md"
 
             - name: Purge jsDelivr CDN cache
               run: |
