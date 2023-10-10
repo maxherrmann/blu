@@ -16,3 +16,6 @@ find ./wiki -type f -exec sed -i -e 's/\.md//g' -e 's/\.\/index/\.\/\ /g' {} \;
 
 # Copy default files to wiki directory
 cp -r .github/wiki/* wiki/
+
+# Rename "index.md" for GitHub wiki deployment
+mv wiki/index.md wiki/Home.md
