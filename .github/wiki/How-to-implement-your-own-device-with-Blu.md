@@ -291,13 +291,16 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 		this.#buttonState = (await this.read<ButtonStateResponse>()).buttonState
 
 		this.on("notification", response => {
-            if (response instanceof ButtonStateResponse) {
-                // Update button state based on response.
-                this.#buttonState = response.buttonState
+			if (response instanceof ButtonStateResponse) {
+				// Update button state based on response.
+				this.#buttonState = response.buttonState
 
-                // (Optional) Emit `button-state-changed` event from the device object.
-                this.service.device.emit("button-state-changed", this.buttonState)
-            }
+				// (Optional) Emit `button-state-changed` event from the device object.
+				this.service.device.emit(
+					"button-state-changed",
+					this.buttonState,
+				)
+			}
 		})
 	}
 
