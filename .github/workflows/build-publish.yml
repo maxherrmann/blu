@@ -58,8 +58,9 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: ${{ github.event.inputs.versionTag }}
-                  draft: true
                   prerelease: ${{ contains(github.event.inputs.versionTag, '-rc.') }}
+                  draft: true
+                  body_path: .github/RELEASE_TEMPLATE.md
                   files: |
                       dist/*.js
                       dist/*.js.map
