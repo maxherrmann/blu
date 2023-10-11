@@ -258,6 +258,8 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 	/**
 	 * Send a request to the characteristic.
+	 * @typeParam ResponseType - The type of the expected response. Defaults to
+	 *  {@link BluResponse}.
 	 * @param request - The request.
 	 * @param timeout - The time to wait for an answer
 	 *  (a notification) in milliseconds before the request fails. Defaults to
@@ -271,7 +273,10 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 *  constructed.
 	 * @sealed
 	 */
-	request(request: BluRequest, timeout = 5000) {
+	request<ResponseType extends BluResponse = BluResponse>(
+		request: BluRequest,
+		timeout = 5000,
+	) {
 		if (!(request instanceof BluRequest)) {
 			throw new BluCharacteristicOperationError(
 				this,
@@ -287,12 +292,12 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 			)
 		}
 
-		return new Promise<BluResponse>(resolve => {
+		return new Promise<ResponseType>(resolve => {
 			let timeoutTimer: NodeJS.Timeout
 
 			if (configuration.options.dataTransferLogging) {
 				logger.target.debug(
-					`${this.description.name}: BluRequest:`,
+					`${this.description.name}: Request:`,
 					request,
 				)
 			}
@@ -303,7 +308,9 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 					this.off("notification", onResponse)
 
-					resolve(new request.responseType(response.data))
+					resolve(
+						new request.responseType(response.data) as ResponseType,
+					)
 				}
 			}
 
@@ -336,6 +343,9 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 	/**
 	 * Send multiple requests to the characteristic.
+	 * @typeParam ResponseTypes - The types of the expected responses. Defaults
+	 *  to {@link BluResponse}[]. The order of response types matches the order
+	 *  of requests.
 	 * @param requests - The requests.
 	 * @param timeout - The time to wait for each answer
 	 *  (notification) in milliseconds before the respective request fails.
@@ -351,7 +361,10 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 *  be constructed.
 	 * @sealed
 	 */
-	requestAll(requests: BluRequest[], timeout = 5000) {
+	requestAll<ResponseTypes extends BluResponse[] = BluResponse[]>(
+		requests: BluRequest[],
+		timeout = 5000,
+	) {
 		if (
 			!isArray(requests) ||
 			!requests.every(request => request instanceof BluRequest)
@@ -376,7 +389,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 			responseQueue.push(this.request(request, timeout))
 		}
 
-		return Promise.all(responseQueue)
+		return Promise.all(responseQueue) as Promise<ResponseTypes>
 	}
 
 	/**
