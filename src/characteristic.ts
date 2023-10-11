@@ -151,7 +151,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 *  data. This is meant as a convenience method and can also be done
 	 *  manually.
 	 * @typeParam ResponseType - The type of the expected response. Defaults to
-	 *  {@link BluResponse} itself.
+	 *  {@link BluResponse}.
 	 * @returns A `Promise` that resolves with a {@link BluResponse} of the given
 	 *  `ResponseType`.
 	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.

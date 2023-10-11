@@ -116,7 +116,7 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	 *  {@link BluDescriptor.responseType} with the descriptor's value as data.
 	 *  This is meant as a convenience method and can also be done manually.
 	 * @typeParam ResponseType - The type of the expected response. Defaults to
-	 *  {@link BluResponse} itself.
+	 *  {@link BluResponse}.
 	 * @returns A `Promise` that resolves with a {@link BluResponse} of the given
 	 *  `ResponseType`.
 	 * @throws A {@link BluDescriptorOperationError} when something went wrong.
