@@ -576,13 +576,6 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
  */
 export interface BluDeviceEvents extends BluEvents {
 	/**
-	 * An advertisement has been received for this device.
-	 * @param event - The advertising event, taken from the {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
-	 * @eventProperty
-	 */
-	advertised: (event: BluetoothAdvertisingEvent) => void
-
-	/**
 	 * The device has been connected.
 	 * @eventProperty
 	 */
