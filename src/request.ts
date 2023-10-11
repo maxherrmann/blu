@@ -10,8 +10,8 @@ import isBufferSource from "./utils/isBufferSource"
 export default class BluRequest {
 	/**
 	 * The request's response type.
-	 * @remarks Will be used to construct the response to this request. Meant
-	 *  to be overridden by class extensions.
+	 * @remarks Will be used to construct the response to this request. Meant to
+	 *  be overridden by class extensions.
 	 * @defaultValue {@link BluResponse} itself.
 	 * @readonly
 	 * @virtual

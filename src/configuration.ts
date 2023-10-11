@@ -29,8 +29,8 @@ export class BluConfiguration {
 	/**
 	 * Set specific configuration options.
 	 * @param options - The configuration options.
-	 * @throws A {@link BluConfigurationError} when invalid configuration options
-	 *  were provided.
+	 * @throws A {@link BluConfigurationError} when invalid configuration
+	 *  options were provided.
 	 */
 	set(options: BluConfigurationOptions) {
 		try {
@@ -122,38 +122,41 @@ export interface BluConfigurationOptions {
 	 * A device protocol matching type.
 	 * @remarks Instructs Blu how to handle discrepancies between the expected
 	 *  and actual Bluetooth protocols of devices when trying to connect them.
-	 *  The expected Bluetooth protocol is inferred from the `static protocol`
-	 *  of the {@link BluConfigurationOptions.deviceType} that was configured.
+	 *  The expected Bluetooth protocol is inferred from the
+	 *  {@link BluDevice.protocol} of the
+	 *  {@link BluConfigurationOptions.deviceType} protocol that was configured.
 	 *
 	 *  **Available matching types**
 	 *
-	 *  - `default`: The device's Bluetooth protocol must exactly match all
+	 *  - `"default"`: The device's Bluetooth protocol must exactly match all
 	 *  expectations, but can include additional services, characteristics or
 	 *  descriptors. A connection attempt will fail if any of the device's
 	 *  expected endpoints are missing or if any characteristic has mismatching
 	 *  properties.
 	 *
-	 *  - `minimal`: The device's Bluetooth protocol must include all expected
+	 *  - `"minimal"`: The device's Bluetooth protocol must include all expected
 	 *  services, characteristics or descriptors. A connection attempt will fail
 	 *  if any of the device's expected endpoints are missing, while
 	 *  characteristic property mismatches are ignored.
 	 *
-	 *  - `off`: The device's Bluetooth protocol must not match any
+	 *  - `"off"`: The device's Bluetooth protocol must not match any
 	 *  expectations. Not recommended for production environments.
 	 *
-	 * @example
+	 *  **Example**
+	 *
 	 *  - A Bluetooth device is expected to have a battery service.
 	 *  This service is somehow missing from the device's actual Bluetooth
 	 *  protocol.
 	 *  A connection attempt would fail for the following matching types:
-	 *  `default`, `minimal`.
+	 *  `"default"`, `"minimal"`.
+	 *
 	 *  - A Bluetooth device is expected to have a battery service with a
 	 *  readable and notifiable characteristic.
 	 *  This characteristic is somehow missing its "notifiable" property on the
 	 *  device's actual Bluetooth protocol.
 	 *  A connection attempt would fail for the following matching types:
-	 *  `default`.
-	 * @defaultValue `default`
+	 *  `"default"`.
+	 * @defaultValue `"default"`
 	 */
 	deviceProtocolMatching?: "default" | "minimal" | "off"
 

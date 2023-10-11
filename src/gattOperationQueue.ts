@@ -30,8 +30,8 @@ export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperat
 	 * @returns A `Promise` that resolves with the GATT operation's result.
 	 * @throws A {@link BluGATTOperationQueueError} when invalid arguments were
 	 *  provided.
-	 * @throws A {@link BluGATTOperationError} when something went wrong during a
-	 *  GATT operation.
+	 * @throws A {@link BluGATTOperationError} when something went wrong during
+	 *  a GATT operation.
 	 */
 	async add<ResultType>(callback: () => Promise<ResultType>) {
 		if (typeof callback !== "function") {

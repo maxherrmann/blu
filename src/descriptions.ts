@@ -119,8 +119,9 @@ export class BluServiceDescription extends BluProtocolDescription {
 	 * Construct a description for a Bluetooth service.
 	 * @param uuid - The service's UUID.
 	 * @param identifier - The service's identifier. Used for
-	 *  accessing the described service directly from the {@link BluDevice} object.
-	 *  The service will only be accessible as a generic service when omitted.
+	 *  accessing the described service directly from the {@link BluDevice}
+	 *  object. The service will only be accessible as a generic service when
+	 *  omitted.
 	 * @param name - The service's name. Used for internal
 	 *  reference. Defaults to "Generic Service".
 	 * @param type - The service's type. Defaults to
@@ -204,8 +205,8 @@ export class BluCharacteristicDescription extends BluProtocolDescription {
 	 * @param uuid - The characteristic's UUID.
 	 * @param identifier - The characteristic's identifier. Used
 	 *  for accessing the described characteristic directly from the
-	 *  {@link BluService} object. The characteristic will only be accessible as a
-	 *  generic characteristic when omitted.
+	 *  {@link BluService} object. The characteristic will only be accessible as
+	 *  a generic characteristic when omitted.
 	 * @param name - The characteristic's name. Used for internal
 	 *  reference. Defaults to "Generic Characteristic".
 	 * @param type - The characteristic's type. Defaults to
@@ -213,8 +214,9 @@ export class BluCharacteristicDescription extends BluProtocolDescription {
 	 * @param descriptorDescriptions - The descriptions for the
 	 *  characteristic's descriptors.
 	 * @param expectedProperties - The characteristic's expected
-	 *  properties as an {@link BluCharacteristicProperties.toString | indicator string}.
-	 *  Used for validation.
+	 *  properties as an
+	 *  {@link BluCharacteristicProperties.toString | indicator string}. Used
+	 *  for validation.
 	 * @throws A {@link BluDescriptionConstructionError} when invalid arguments
 	 *  were provided.
 	 */

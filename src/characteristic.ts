@@ -340,14 +340,15 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * @param timeout - The time to wait for each answer
 	 *  (notification) in milliseconds before the respective request fails.
 	 *  Defaults to 5000 ms.
-	 * @returns A `Promise` that resolves with an array of {@link BluResponse}s of
-	 *  their respectively given {@link BluRequest.responseType}s. The order of
-	 *  responses matches the order of requests.
-	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
-	 * @throws A {@link BluCharacteristicNotificationTimeoutError} when a request
-	 *  timed out.
-	 * @throws A {@link BluResponseConstructionError} when a response could not be
-	 *  constructed.
+	 * @returns A `Promise` that resolves with an array of {@link BluResponse}s
+	 *  of their respectively given {@link BluRequest.responseType}s. The order
+	 *  of responses matches the order of requests.
+	 * @throws A {@link BluCharacteristicOperationError} when something went
+	 *  wrong.
+	 * @throws A {@link BluCharacteristicNotificationTimeoutError} when a
+	 *  request timed out.
+	 * @throws A {@link BluResponseConstructionError} when a response could not
+	 *  be constructed.
 	 * @sealed
 	 */
 	requestAll(requests: BluRequest[], timeout = 5000) {
@@ -380,7 +381,8 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 	/**
 	 * Start listening for notifications.
-	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
+	 * @throws A {@link BluCharacteristicOperationError} when something went
+	 *  wrong.
 	 * @sealed
 	 */
 	async startListeningForNotifications() {
@@ -423,7 +425,8 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 	/**
 	 * Stop listening for notifications.
-	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
+	 * @throws A {@link BluCharacteristicOperationError} when something went
+	 *  wrong.
 	 * @sealed
 	 */
 	async stopListeningForNotifications() {
@@ -512,13 +515,15 @@ export class BluCharacteristicProperties {
 
 	/**
 	 * Is the characteristic currently listening to notifications?
-	 * @remarks `undefined` if {@link BluCharacteristicProperties.notify} is `false`.
+	 * @remarks `undefined` if {@link BluCharacteristicProperties.notify} is
+	 *  `false`.
 	 */
 	isListening?: boolean
 
 	/**
 	 * Construct a characteristic property dictionary.
-	 * @param properties - The characteristic's properties, taken from the {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param properties - The characteristic's properties, taken from the
+	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
 	 */
 	constructor(properties: BluetoothRemoteGATTCharacteristic["properties"]) {
 		this.read = properties.read
@@ -534,7 +539,7 @@ export class BluCharacteristicProperties {
 	/**
 	 * Get the characteristic's properties formatted as an indicator string.
 	 * @remarks
-	 *  Indicators:
+	 *  **Indicators**
 	 *
 	 *  1. `R`: Read
 	 *
@@ -546,7 +551,8 @@ export class BluCharacteristicProperties {
 	 *
 	 *  Missing capabilities are represented by `-`.
 	 *
-	 * @example
+	 *  **Examples**
+	 *
 	 *  1. `"RW-N"`: Represents a characteristic that is readable, writable and
 	 *  notifiable.
 	 *

@@ -136,8 +136,9 @@ export class BluLogger {
 			typeof consoleLike.error !== "function"
 		) {
 			throw new BluLoggerError(
-				`Argument "consoleLike" must be an object that implements the ` +
-					`following functions: "log", "debug", "warn" and "error".`,
+				`Argument "consoleLike" must be an object that implements ` +
+					`the following functions: "log", "debug", "warn" and ` +
+					`"error".`,
 			)
 		}
 
