@@ -1,5 +1,4 @@
 import { BluResponseConstructionError } from "./errors"
-import isArrayBufferView from "./utils/isArrayBufferView"
 
 /**
  * Response that may be received from a Bluetooth characteristic or
@@ -37,10 +36,10 @@ export default class BluResponse {
 	 *  provided.
 	 */
 	constructor(data?: DataView) {
-		if (data !== undefined && !isArrayBufferView(data)) {
+		if (data !== undefined && !(data instanceof DataView)) {
 			throw new BluResponseConstructionError(
-				`Argument "data" must be either of type "DataView", ` +
-					`or "undefined".`,
+				`Argument "data" must be either of type "DataView" or ` +
+					`"undefined".`,
 			)
 		}
 

@@ -9,7 +9,7 @@ import logger from "./logger"
 import BluRequest from "./request"
 import BluResponse from "./response"
 import isArray from "./utils/isArray"
-import isArrayBufferView from "./utils/isArrayBufferView"
+import isBufferSource from "./utils/isBufferSource"
 
 import type { BluCharacteristicDescription } from "./descriptions"
 import type BluDescriptor from "./descriptor"
@@ -222,7 +222,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 			)
 		}
 
-		if (!isArrayBufferView(value)) {
+		if (!isBufferSource(value)) {
 			throw new BluCharacteristicOperationError(
 				this,
 				`Argument "value" must be of type "BufferSource".`,

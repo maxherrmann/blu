@@ -1,6 +1,6 @@
 import { BluRequestConstructionError } from "./errors"
 import BluResponse from "./response"
-import isArrayBufferView from "./utils/isArrayBufferView"
+import isBufferSource from "./utils/isBufferSource"
 
 /**
  * Request that may be sent to a Bluetooth characteristic or descriptor.
@@ -23,7 +23,7 @@ export default class BluRequest {
 	 * @readonly
 	 * @sealed
 	 */
-	readonly data: DataView
+	readonly data: BufferSource
 
 	/**
 	 * Construct a request.
@@ -31,10 +31,10 @@ export default class BluRequest {
 	 * @throws A {@link BluRequestConstructionError} when invalid arguments were
 	 *  provided.
 	 */
-	constructor(data: DataView) {
-		if (!isArrayBufferView(data)) {
+	constructor(data: BufferSource) {
+		if (!isBufferSource(data)) {
 			throw new BluRequestConstructionError(
-				`Argument "data" must be of type "DataView".`,
+				`Argument "data" must be a buffer source.`,
 			)
 		}
 

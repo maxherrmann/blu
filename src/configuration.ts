@@ -1,7 +1,7 @@
 import { z } from "zod"
 import BluDevice from "./device"
 import { BluConfigurationError } from "./errors"
-import isArrayBufferView from "./utils/isArrayBufferView"
+import isBufferSource from "./utils/isBufferSource"
 import isSubclassOrSelf from "./utils/isSubclassOrSelf"
 
 import type BluCharacteristic from "./characteristic"
@@ -191,12 +191,12 @@ const configurationOptionsGuard = z
 								z.object({
 									dataPrefix: z
 										.custom<BufferSource>(x =>
-											isArrayBufferView(x),
+											isBufferSource(x),
 										)
 										.optional(),
 									mask: z
 										.custom<BufferSource>(x =>
-											isArrayBufferView(x),
+											isBufferSource(x),
 										)
 										.optional(),
 									companyIdentifier: z.number(),
@@ -208,12 +208,12 @@ const configurationOptionsGuard = z
 								z.object({
 									dataPrefix: z
 										.custom<BufferSource>(x =>
-											isArrayBufferView(x),
+											isBufferSource(x),
 										)
 										.optional(),
 									mask: z
 										.custom<BufferSource>(x =>
-											isArrayBufferView(x),
+											isBufferSource(x),
 										)
 										.optional(),
 									service: z.string().or(z.number()),

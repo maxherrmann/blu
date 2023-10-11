@@ -6,7 +6,7 @@ import {
 import { BluEventEmitter, BluEvents } from "./eventEmitter"
 import logger from "./logger"
 import BluResponse from "./response"
-import isArrayBufferView from "./utils/isArrayBufferView"
+import isBufferSource from "./utils/isBufferSource"
 
 import type BluCharacteristic from "./characteristic"
 import type { BluDescriptorDescription } from "./descriptions"
@@ -165,10 +165,10 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	 * @sealed
 	 */
 	async write(value: BufferSource) {
-		if (!isArrayBufferView(value)) {
+		if (!isBufferSource(value)) {
 			throw new BluDescriptorOperationError(
 				this,
-				`Argument "value" must be of type "BufferSource".`,
+				`Argument "value" must be a buffer source.`,
 			)
 		}
 
