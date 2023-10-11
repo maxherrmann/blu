@@ -259,6 +259,18 @@ const configurationOptionsGuard = z
  * Blu's global configuration.
  * @remarks Handles everything related to the configuration of the Blu
  *  framework.
+ *
+ *  **Default configuration**
+ *
+ *  - `scannerConfig`: `{ acceptAllDevices: true }`
+ *
+ *  - `deviceType`: {@link BluDevice}
+ *
+ *  - `deviceProtocolMatching`: `"default"`
+ *
+ *  - `autoEnableNotifications`: `true`
+ *
+ *  - `dataTransferLogging`: `false`
  * @public
  */
 const configuration = new BluConfiguration()
