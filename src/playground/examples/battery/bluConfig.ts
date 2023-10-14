@@ -9,13 +9,13 @@ import { BatteryLevelCharacteristic, BatteryService } from "./battery"
 export class BatteryDevice extends BluDevice {
 	static override protocol = [
 		new BluServiceDescription({
-			uuid: 0x180f,
+			uuid: "0000180f-0000-1000-8000-00805f9b34fb",
 			identifier: "batteryService",
 			name: "Battery Service",
 			type: BatteryService,
 			characteristicDescriptions: [
 				new BluCharacteristicDescription({
-					uuid: 0x2a19,
+					uuid: "00002a19-0000-1000-8000-00805f9b34fb",
 					identifier: "batteryLevelCharacteristic",
 					name: "Battery Level Characteristic",
 					type: BatteryLevelCharacteristic,
