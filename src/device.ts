@@ -22,6 +22,8 @@ import logger from "./logger"
 import BluService from "./service"
 import isArray from "./utils/isArray"
 
+import type { BluConfigurationOptions } from "./configuration"
+
 /**
  * Bluetooth device.
  * @public
@@ -263,15 +265,17 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  descriptors. Adds properties to {@link BluDevice} for all identifiable
 	 *  services. Adds properties to all {@link BluService}s for all identifiable
 	 *  characteristics. Adds properties to all {@link BluCharacteristic}s for all
-	 *  identifiable descriptors. Depending on the Blu configuration,
-	 *  auto-listens to any notifiable characteristics. Invokes all
+	 *  identifiable descriptors. Depending on the active {@link configuration}
+	 *  (see {@link BluConfigurationOptions.autoEnableNotifications | `autoEnableNotifications` option}),
+	 *  auto-listens to some or all notifiable characteristics. Invokes all
 	 *  `beforeReady` functions across the whole protocol and waits for them
 	 *  to be settled.
 	 * @throws A {@link BluDeviceProtocolDiscoveryError} when discovering the
 	 *  device's Bluetooth protocol is not possible.
 	 * @throws A {@link BluDeviceProtocolMatchingError} when the device's
-	 *  Bluetooth protocol does not match expectations, depending on the device
-	 *  protocol matching type set in the Blu configuration.
+	 *  Bluetooth protocol does not match expectations, depending on the
+	 *  {@link BluConfigurationOptions.deviceProtocolMatching | `deviceProtocolMatching` type}
+	 *  from the active {@link configuration}.
 	 */
 	async #discoverProtocol() {
 		try {

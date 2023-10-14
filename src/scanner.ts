@@ -2,6 +2,7 @@ import bluetooth from "./bluetooth"
 import configuration from "./configuration"
 import { BluError, BluScannerError } from "./errors"
 
+import type { BluConfigurationOptions } from "./configuration"
 import type BluDevice from "./device"
 
 /**
@@ -13,9 +14,13 @@ export class BluScanner {
 	/**
 	 * Get a Bluetooth device.
 	 * @remarks Displays the browser's device chooser to the user, instructing
-	 *  them to pair a device.
-	 * @returns A `Promise` that resolves with the selected {@link BluDevice} of
-	 *  the configured type. `null` if no device was selected or found.
+	 *  them to pair a device. Filters advertising devices according to the
+	 *  {@link BluConfigurationOptions.scannerConfig | `scannerConfig`} from the
+	 *  active {@link configuration}.
+	 * @returns A `Promise` that resolves with the selected
+	 *  {@link BluDevice | device} of
+	 *  the {@link BluConfigurationOptions.deviceType | `deviceType`} from the
+	 *  active {@link configuration}. `null` if no device was selected or found.
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
 	async getDevice() {
