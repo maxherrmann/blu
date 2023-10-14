@@ -308,7 +308,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 					logger.warn(
 						`Could not discover "${serviceDescription.name}" ` +
-							`(${serviceDescription.uuid}).`,
+							`(UUID: ${serviceDescription.uuid}).`,
 						this,
 					)
 				}
@@ -358,9 +358,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 							logger.warn(
 								`Could not discover "${characteristicDescription.name}" ` +
-									`(${characteristicDescription.uuid}) ` +
+									`(UUID: ${characteristicDescription.uuid}) ` +
 									`in "${serviceDescription.name}" ` +
-									`(${serviceDescription.uuid}).`,
+									`(UUID: ${serviceDescription.uuid}).`,
 								this,
 							)
 						}
@@ -400,9 +400,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 									logger.warn(
 										`Could not discover "${descriptorDescription.name}" ` +
-											`(${descriptorDescription.uuid}) ` +
+											`(UUID: ${descriptorDescription.uuid}) ` +
 											`in "${characteristicDescription.name}" ` +
-											`(${characteristicDescription.uuid}).`,
+											`(UUID: ${characteristicDescription.uuid}).`,
 										this,
 									)
 								}

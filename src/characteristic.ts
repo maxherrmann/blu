@@ -402,15 +402,17 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		if (!this.properties.notify) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not start listening to a non-notifying characteristic.",
+				"Could not start listening for notifications on a " +
+					"non-notifying characteristic.",
 			)
 		}
 
 		if (this.properties.isListening) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not start listening to a characteristic that is already " +
-					"listened to.",
+				"Could not start listening for notifications on a " +
+					"characteristic that is already listening for " +
+					"notifications.",
 			)
 		}
 
@@ -430,7 +432,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not start listening to characteristic.",
+				"Could not start listening for notifications.",
 				error,
 			)
 		}
@@ -446,8 +448,9 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		if (!this.properties.isListening) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not stop listening to a characteristic that is not yet " +
-					"listened to.",
+				"Could not stop listening for notifications on a " +
+					"characteristic that is not yet listening for " +
+					"notifications.",
 			)
 		}
 
@@ -467,7 +470,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not stop listening to characteristic.",
+				"Could not stop listening for notifications.",
 				error,
 			)
 		}
@@ -527,7 +530,7 @@ export class BluCharacteristicProperties {
 	readonly notify: boolean
 
 	/**
-	 * Is the characteristic currently listening to notifications?
+	 * Is the characteristic currently listening for notifications?
 	 * @remarks `undefined` if {@link BluCharacteristicProperties.notify} is
 	 *  `false`.
 	 */
