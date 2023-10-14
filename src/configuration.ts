@@ -16,8 +16,7 @@ export class BluConfiguration {
 	/**
 	 * Active configuration options.
 	 */
-	#options: Required<BluConfigurationOptions> =
-		configurationOptionsGuard.parse({})
+	#options = defaultOptions
 
 	/**
 	 * Active configuration options.
@@ -64,7 +63,7 @@ export class BluConfiguration {
 	 * Restore the default configuration.
 	 */
 	restoreDefaults() {
-		this.#options = configurationOptionsGuard.parse({})
+		this.#options = defaultOptions
 	}
 }
 
@@ -194,6 +193,18 @@ export interface BluConfigurationOptions {
 }
 
 /**
+ * Default configuration options for Blu.
+ */
+const defaultOptions: Required<BluConfigurationOptions> = {
+	scannerConfig: { acceptAllDevices: true },
+	deviceType: BluDevice,
+	deviceProtocolMatching: "default",
+	deviceConnectionTimeout: false,
+	autoEnableNotifications: true,
+	dataTransferLogging: false,
+}
+
+/**
  * A zod guard for configuration options.
  */
 const configurationOptionsGuard = z
@@ -253,25 +264,20 @@ const configurationOptionsGuard = z
 					optionalManufacturerData: z.array(z.number()).optional(),
 				}),
 			)
-			.default({ acceptAllDevices: true }),
+			.optional(),
 		deviceType: z
 			.custom<typeof BluDevice>(x => isSubclassOrSelf(x, BluDevice))
-			.default(() => {
-				return BluDevice
-			}),
+			.optional(),
 		deviceProtocolMatching: z
 			.union([
 				z.literal("default"),
 				z.literal("minimal"),
 				z.literal("off"),
 			])
-			.default("default"),
-		deviceConnectionTimeout: z.number().or(z.literal(false)).default(false),
-		autoEnableNotifications: z
-			.boolean()
-			.or(z.array(z.string()))
-			.default(true),
-		dataTransferLogging: z.boolean().default(false),
+			.optional(),
+		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
+		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
+		dataTransferLogging: z.boolean().optional(),
 	})
 	.strict()
 
