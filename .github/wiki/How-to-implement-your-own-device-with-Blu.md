@@ -417,6 +417,7 @@ You can use the playground's extension mechanism to implement custom UI controls
 
 ### Bluetooth specification
 
+-   [Web Bluetooth Registries (Web Bluetooth CG)](https://github.com/WebBluetoothCG/registries)
 -   [List of assigned numbers, e.g. GATT UUIDs (Bluetooth SIG)](https://www.bluetooth.com/specifications/assigned-numbers/)
 -   [List of public Bluetooth specifications (Bluetooth SIG)](https://www.bluetooth.com/specifications/specs/)
 
