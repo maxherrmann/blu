@@ -163,6 +163,16 @@ export interface BluConfigurationOptions {
 	deviceProtocolMatching?: "default" | "minimal" | "off"
 
 	/**
+	 * The time to wait for a device connection to be established in
+	 * milliseconds before a connection attempt with {@link BluDevice.connect}
+	 * fails.
+	 * @remarks Can be `false` (no timeout, i.e. wait indefinitely) or a
+	 *  `number` of milliseconds.
+	 * @defaultValue `false`
+	 */
+	deviceConnectionTimeout?: number | false
+
+	/**
 	 * Automatically listen to notifiable characteristics?
 	 * @remarks Will be evaluated during protocol discovery, when connecting new
 	 *  devices. Can be a `boolean` value or an array of
@@ -256,6 +266,7 @@ const configurationOptionsGuard = z
 				z.literal("off"),
 			])
 			.default("default"),
+		deviceConnectionTimeout: z.number().or(z.literal(false)).default(false),
 		autoEnableNotifications: z
 			.boolean()
 			.or(z.array(z.string()))

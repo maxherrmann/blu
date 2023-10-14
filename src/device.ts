@@ -9,6 +9,7 @@ import {
 import BluDescriptor from "./descriptor"
 import {
 	BluDeviceConnectionError,
+	BluDeviceConnectionTimeoutError,
 	BluDeviceConstructionError,
 	BluDeviceProtocolDiscoveryError,
 	BluDeviceProtocolMatchingError,
@@ -168,7 +169,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * Connect the device.
 	 * @remarks Connection time depends on the protocol size, as well as the
 	 *  time it takes to settle all `beforeReady` tasks across the
-	 *  protocol.
+	 *  protocol. Connection may time out, depending on the active
+	 *  {@link configuration}
+	 *  (see {@link BluConfigurationOptions.deviceConnectionTimeout | `deviceConnectionTimeout` option}).
 	 * @throws A {@link DeviceOperationError} when connecting is not possible.
 	 * @throws A {@link BluDeviceConnectionError} when the connection attempt
 	 *  failed.
@@ -182,33 +185,57 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 			)
 		}
 
-		try {
-			await this._bluetoothDevice.gatt!.connect()
-		} catch (error) {
-			throw new BluDeviceConnectionError(
-				this,
-				"Could not connect the device.",
-				error,
-			)
-		}
+		return new Promise<void>((resolve, reject) => {
+			const timeout = configuration.options.deviceConnectionTimeout
+			let timeoutTimer: NodeJS.Timeout
 
-		try {
-			await this.#discoverProtocol()
+			const rejectWithError = (error: unknown) => {
+				clearTimeout(timeoutTimer)
 
-			this._bluetoothDevice.ongattserverdisconnected = () => {
-				this.#onDisconnected()
+				reject(
+					new BluDeviceConnectionError(
+						this,
+						"Could not connect the device.",
+						error,
+					),
+				)
 			}
 
-			await this.beforeReady()
+			if (timeout) {
+				timeoutTimer = setTimeout(() => {
+					rejectWithError(
+						new BluDeviceConnectionTimeoutError(
+							`Connection attempt timed out after ${timeout} ms.`,
+						),
+					)
+				}, timeout)
+			}
 
-			this.emit("connected")
-		} catch (error) {
-			throw new BluDeviceConnectionError(
-				this,
-				"Could not connect the device.",
-				error,
-			)
-		}
+			this._bluetoothDevice
+				.gatt!.connect()
+				.then(async () => {
+					try {
+						await this.#discoverProtocol()
+
+						this._bluetoothDevice.ongattserverdisconnected = () => {
+							this.#onDisconnected()
+						}
+
+						await this.beforeReady()
+
+						clearTimeout(timeoutTimer)
+
+						this.emit("connected")
+
+						resolve()
+					} catch (error) {
+						rejectWithError(error)
+					}
+				})
+				.catch(error => {
+					rejectWithError(error)
+				})
+		})
 	}
 
 	/**

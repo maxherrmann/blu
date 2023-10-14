@@ -200,6 +200,13 @@ export class BluDeviceConnectionError extends BluError {
 }
 
 /**
+ * Device connection timeout error.
+ * @sealed
+ * @public
+ */
+export class BluDeviceConnectionTimeoutError extends BluError {}
+
+/**
  * Device protocol discovery error.
  * @sealed
  * @public
