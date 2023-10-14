@@ -533,8 +533,16 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 						characteristic.properties.notify &&
 						configuration.options.autoEnableNotifications
 					) {
-						// Automatically listen to notifiable characteristics.
-						await characteristic.startListeningForNotifications()
+						if (
+							typeof configuration.options
+								.autoEnableNotifications === "boolean" ||
+							(characteristic.description.identifier &&
+								configuration.options.autoEnableNotifications.includes(
+									characteristic.description.identifier,
+								))
+						)
+							// Automatically listen to notifiable characteristics.
+							await characteristic.startListeningForNotifications()
 					}
 
 					for (const descriptor of characteristic.descriptors) {
