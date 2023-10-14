@@ -34,40 +34,51 @@ export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperat
 	 *  a GATT operation.
 	 */
 	async add<ResultType>(callback: () => Promise<ResultType>) {
-		if (typeof callback !== "function") {
-			throw new BluGATTOperationQueueError(
-				`Argument "callback" must be of type "function".`,
-			)
-		}
+		return new Promise<ResultType>((resolve, reject) => {
+			if (typeof callback !== "function") {
+				throw new BluGATTOperationQueueError(
+					`Argument "callback" must be of type "function".`,
+				)
+			}
 
-		await this.#onceReadyForGATTOperation()
+			void this.#onceReadyForGATTOperation().then(() => {
+				const timeout = setTimeout(() => {
+					reject(
+						new BluGATTOperationError(
+							`GATT operation timed out after ${
+								this.#operationTimeout
+							} ms.`,
+						),
+					)
+				}, this.#operationTimeout)
 
-		const timeout = setTimeout(() => {
-			throw new BluGATTOperationError(
-				`GATT operation timed out after ${this.#operationTimeout} ms.`,
-			)
-		}, this.#operationTimeout)
+				this.#isBusy = true
+				this.emit("operation-started")
 
-		this.#isBusy = true
-		this.emit("operation-started")
-
-		let result: ResultType
-
-		try {
-			result = await callback()
-		} catch (error) {
-			throw new BluGATTOperationError("GATT operation failed.", error)
-		}
-
-		clearTimeout(timeout)
-		this.#isBusy = false
-		this.emit("operation-finished")
-
-		return result
+				callback()
+					.then(result => {
+						resolve(result)
+					})
+					.catch(error => {
+						reject(
+							new BluGATTOperationError(
+								"GATT operation failed.",
+								error,
+							),
+						)
+					})
+					.finally(() => {
+						clearTimeout(timeout)
+						this.#isBusy = false
+						this.emit("operation-finished")
+					})
+			})
+		})
 	}
 
 	/**
 	 * Wait for the device to be ready for the next GATT operation.
+	 * @returns A `Promise` that resolves once the device is ready.
 	 */
 	async #onceReadyForGATTOperation() {
 		return new Promise<void>(resolve => {

@@ -247,7 +247,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * @remarks Queues the GATT operation and waits for it to resolve.
 	 * @typeParam ResultType - The type of the expected result.
 	 * @param operation - The GATT operation.
-	 * @returns The result of the GATT operation.
+	 * @returns A `Promise` that resolves with the result of the GATT operation.
 	 * @throws A {@link BluGATTOperationQueueError} when invalid arguments were
 	 *  provided.
 	 * @throws A {@link BluGATTOperationError} when the GATT operation fails.
