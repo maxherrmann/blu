@@ -6,6 +6,7 @@
 
 import bluetooth from "./bluetooth"
 import configuration from "./configuration"
+import convert from "./converter"
 import logger from "./logger"
 import scanner from "./scanner"
 import version from "./version"
@@ -16,6 +17,7 @@ export {
 	BluCharacteristicProperties,
 } from "./characteristic"
 export { default as configuration } from "./configuration"
+export { default as convert } from "./converter"
 export * from "./descriptions"
 export { default as BluDescriptor } from "./descriptor"
 export { default as BluDevice } from "./device"
@@ -33,6 +35,7 @@ export { default as version } from "./version"
 export default {
 	bluetooth: bluetooth,
 	configuration: configuration,
+	convert: convert,
 	logger: logger,
 	scanner: scanner,
 	version: version,
@@ -41,6 +44,7 @@ export default {
 export type { BluBluetooth, BluBluetoothEvents } from "./bluetooth"
 export type { BluCharacteristicEvents } from "./characteristic"
 export type { BluConfiguration, BluConfigurationOptions } from "./configuration"
+export type { BluConverter } from "./converter"
 export type { BluDescriptorEvents } from "./descriptor"
 export type { BluDeviceEvents } from "./device"
 export type { BluEventEmitter, eventEmitter } from "./eventEmitter"
