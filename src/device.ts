@@ -212,6 +212,17 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
+					try {
+						this._bluetoothDevice.ongattserverdisconnected =
+							// eslint-disable-next-line @typescript-eslint/no-empty-function
+							() => {}
+
+						this.disconnect()
+					} catch {
+						// Ignore potential errors, as device is in unknown
+						// state and will be discarded anyways.
+					}
+
 					rejectWithError(
 						new BluDeviceConnectionTimeoutError(
 							`Connection attempt timed out after ${timeout} ms.`,
