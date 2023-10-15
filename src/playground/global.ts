@@ -8,7 +8,7 @@ import type { BluConfigurationOptions, BluDevice } from "@blu.js/blu"
 declare global {
 	interface Window {
 		blu: typeof blu
-		device: BluDevice
+		device?: BluDevice
 	}
 
 	/**

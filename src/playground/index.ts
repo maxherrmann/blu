@@ -88,6 +88,8 @@ connectDeviceButton.addEventListener("click", () => {
 				const onDisconnect = () => {
 					setCollectionVisibility("connection", false)
 
+					window.device = undefined
+
 					/**
 					 * Account for browser disconnect delay.
 					 * Could be removed, but reconnecting right away leads to
