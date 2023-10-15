@@ -107,6 +107,8 @@ connectDeviceButton.addEventListener("click", () => {
 					onDisconnect()
 
 					blu.logger.error(error as Error)
+
+					return
 				}
 
 				window.device = device
