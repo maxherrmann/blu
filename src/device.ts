@@ -178,18 +178,27 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * @sealed
 	 */
 	async connect() {
-		if (this.isConnected) {
-			throw new DeviceOperationError(
-				this,
-				"Cannot connect a device that is already connected.",
-			)
-		}
-
 		return new Promise<void>((resolve, reject) => {
+			if (this.isConnected) {
+				reject(
+					new DeviceOperationError(
+						this,
+						"Cannot connect a device that is already connected.",
+					),
+				)
+
+				return
+			}
+
 			const timeout = configuration.options.deviceConnectionTimeout
 			let timeoutTimer: NodeJS.Timeout
+			let isTimeoutReached = false
 
 			const rejectWithError = (error: unknown) => {
+				if (isTimeoutReached) {
+					return
+				}
+
 				clearTimeout(timeoutTimer)
 
 				reject(
@@ -208,29 +217,48 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 							`Connection attempt timed out after ${timeout} ms.`,
 						),
 					)
+
+					isTimeoutReached = true
 				}, timeout)
 			}
 
 			this._bluetoothDevice
 				.gatt!.connect()
-				.then(async () => {
-					try {
-						await this.#discoverProtocol()
-
-						this._bluetoothDevice.ongattserverdisconnected = () => {
-							this.#onDisconnected()
-						}
-
-						await this.beforeReady()
-
-						clearTimeout(timeoutTimer)
-
-						this.emit("connected")
-
-						resolve()
-					} catch (error) {
-						rejectWithError(error)
+				.then(() => {
+					if (isTimeoutReached) {
+						return
 					}
+
+					this.#discoverProtocol()
+						.then(() => {
+							if (isTimeoutReached) {
+								return
+							}
+
+							this._bluetoothDevice.ongattserverdisconnected =
+								() => {
+									this.#onDisconnected()
+								}
+
+							this.beforeReady()
+								?.then(() => {
+									if (isTimeoutReached) {
+										return
+									}
+
+									clearTimeout(timeoutTimer)
+
+									this.emit("connected")
+
+									resolve()
+								})
+								.catch(error => {
+									rejectWithError(error)
+								})
+						})
+						.catch(error => {
+							rejectWithError(error)
+						})
 				})
 				.catch(error => {
 					rejectWithError(error)

@@ -36,13 +36,23 @@ export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperat
 	async add<ResultType>(callback: () => Promise<ResultType>) {
 		return new Promise<ResultType>((resolve, reject) => {
 			if (typeof callback !== "function") {
-				throw new BluGATTOperationQueueError(
-					`Argument "callback" must be of type "function".`,
+				reject(
+					new BluGATTOperationQueueError(
+						`Argument "callback" must be of type "function".`,
+					),
 				)
+
+				return
 			}
+
+			let isTimeoutReached = false
 
 			void this.#onceReadyForGATTOperation().then(() => {
 				const timeout = setTimeout(() => {
+					isTimeoutReached = true
+
+					this.#isBusy = false
+
 					reject(
 						new BluGATTOperationError(
 							`GATT operation timed out after ${
@@ -57,9 +67,17 @@ export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperat
 
 				callback()
 					.then(result => {
+						if (isTimeoutReached) {
+							return
+						}
+
 						resolve(result)
 					})
 					.catch(error => {
+						if (isTimeoutReached) {
+							return
+						}
+
 						reject(
 							new BluGATTOperationError(
 								"GATT operation failed.",
@@ -68,6 +86,10 @@ export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperat
 						)
 					})
 					.finally(() => {
+						if (isTimeoutReached) {
+							return
+						}
+
 						clearTimeout(timeout)
 						this.#isBusy = false
 						this.emit("operation-finished")

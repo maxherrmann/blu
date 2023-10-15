@@ -277,23 +277,32 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		request: BluRequest,
 		timeout = 5000,
 	) {
-		if (!(request instanceof BluRequest)) {
-			throw new BluCharacteristicOperationError(
-				this,
-				`Argument "request" must be a valid instance of "BluRequest".`,
-			)
-		}
+		return new Promise<ResponseType>((resolve, reject) => {
+			if (!(request instanceof BluRequest)) {
+				reject(
+					new BluCharacteristicOperationError(
+						this,
+						`Argument "request" must be a valid instance of "BluRequest".`,
+					),
+				)
 
-		if (timeout !== undefined && typeof timeout !== "number") {
-			throw new BluCharacteristicOperationError(
-				this,
-				`Argument "timeout" must be either "undefined" or of type` +
-					`"number".`,
-			)
-		}
+				return
+			}
 
-		return new Promise<ResponseType>(resolve => {
+			if (timeout !== undefined && typeof timeout !== "number") {
+				reject(
+					new BluCharacteristicOperationError(
+						this,
+						`Argument "timeout" must be either "undefined" or of type` +
+							`"number".`,
+					),
+				)
+
+				return
+			}
+
 			let timeoutTimer: NodeJS.Timeout
+			let isTimeoutReached = false
 
 			if (configuration.options.dataTransferLogging) {
 				logger.target.debug(
@@ -303,7 +312,10 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 			}
 
 			const onResponse = (response: BluResponse) => {
-				if (request.responseType.validatorFunction(response)) {
+				if (
+					!isTimeoutReached &&
+					request.responseType.validatorFunction(response)
+				) {
 					clearTimeout(timeoutTimer)
 
 					this.off("notification", onResponse)
@@ -318,24 +330,34 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
+					isTimeoutReached = true
+
 					this.off("notification", onResponse)
 
-					throw new BluCharacteristicNotificationTimeoutError(
-						`Did not receive an expected notification ` +
-							`from the device within ${timeout} ms.`,
+					reject(
+						new BluCharacteristicNotificationTimeoutError(
+							`Did not receive an expected notification ` +
+								`from the device within ${timeout} ms.`,
+						),
 					)
 				}, timeout)
 			}
 
 			this.write(request.data).catch(error => {
+				if (isTimeoutReached) {
+					return
+				}
+
 				clearTimeout(timeoutTimer)
 
 				this.off("notification", onResponse)
 
-				throw new BluCharacteristicOperationError(
-					this,
-					"Could not request from characteristic.",
-					error,
+				reject(
+					new BluCharacteristicOperationError(
+						this,
+						"Could not request from characteristic.",
+						error,
+					),
 				)
 			})
 		})
