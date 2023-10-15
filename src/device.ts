@@ -230,7 +230,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 					}
 
 					this.#discoverProtocol()
-						.then(() => {
+						.then(async () => {
 							if (isTimeoutReached) {
 								return
 							}
@@ -240,21 +240,22 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 									this.#onDisconnected()
 								}
 
-							this.beforeReady()
-								?.then(() => {
-									if (isTimeoutReached) {
-										return
-									}
+							try {
+								await this.beforeReady()
+							} catch (error) {
+								rejectWithError(error)
+								return
+							}
 
-									clearTimeout(timeoutTimer)
+							if (isTimeoutReached) {
+								return
+							}
 
-									this.emit("connected")
+							clearTimeout(timeoutTimer)
 
-									resolve()
-								})
-								.catch(error => {
-									rejectWithError(error)
-								})
+							this.emit("connected")
+
+							resolve()
 						})
 						.catch(error => {
 							rejectWithError(error)
