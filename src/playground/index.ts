@@ -142,9 +142,9 @@ connectDeviceButton.addEventListener("click", () => {
 				device.once("disconnected", onDisconnect)
 				device.once("connection-lost", onDisconnect)
 
-				disconnectDeviceButton.addEventListener("click", () => {
+				disconnectDeviceButton.onclick = () => {
 					device.disconnect()
-				})
+				}
 
 				setCollectionVisibility("connection", true)
 			} else {
