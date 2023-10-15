@@ -85,9 +85,29 @@ connectDeviceButton.addEventListener("click", () => {
 					"Blu Playground",
 				)
 
+				const onDisconnect = () => {
+					setCollectionVisibility("connection", false)
+
+					/**
+					 * Account for browser disconnect delay.
+					 * Could be removed, but reconnecting right away leads to
+					 * errors.
+					 */
+					setTimeout(() => {
+						connectDeviceButton.disabled = false
+						exampleSelect.disabled = false
+					}, 2500)
+				}
+
 				exampleSelect.disabled = true
 
-				await device.connect()
+				try {
+					await device.connect()
+				} catch (error) {
+					onDisconnect()
+
+					blu.logger.error(error as Error)
+				}
 
 				window.device = device
 
@@ -115,20 +135,6 @@ connectDeviceButton.addEventListener("click", () => {
 								}`,
 						)
 						.join("<br>")
-				}
-
-				function onDisconnect() {
-					setCollectionVisibility("connection", false)
-
-					/**
-					 * Account for browser disconnect delay.
-					 * Could be removed, but reconnecting right away leads to
-					 * errors.
-					 */
-					setTimeout(() => {
-						connectDeviceButton.disabled = false
-						exampleSelect.disabled = false
-					}, 2500)
 				}
 
 				device.once("disconnected", onDisconnect)
