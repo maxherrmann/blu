@@ -4,6 +4,7 @@ import {
 	BluService,
 	BluCharacteristicOperationError,
 	logger,
+	convert,
 } from "@blu.js/blu"
 
 export class AccelerometerService extends BluService {
@@ -142,7 +143,7 @@ export class AccelerometerPeriodCharacteristic extends BluCharacteristic {
 			)
 		}
 
-		await this.write(new Uint16Array([time]))
+		await this.write(convert.toUint16Array(time))
 
 		logger.debug(
 			`Set accelerometer period to ${time} ms.`,

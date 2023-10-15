@@ -34,40 +34,73 @@ export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperat
 	 *  a GATT operation.
 	 */
 	async add<ResultType>(callback: () => Promise<ResultType>) {
-		if (typeof callback !== "function") {
-			throw new BluGATTOperationQueueError(
-				`Argument "callback" must be of type "function".`,
-			)
-		}
+		return new Promise<ResultType>((resolve, reject) => {
+			if (typeof callback !== "function") {
+				reject(
+					new BluGATTOperationQueueError(
+						`Argument "callback" must be of type "function".`,
+					),
+				)
 
-		await this.#onceReadyForGATTOperation()
+				return
+			}
 
-		const timeout = setTimeout(() => {
-			throw new BluGATTOperationError(
-				`GATT operation timed out after ${this.#operationTimeout} ms.`,
-			)
-		}, this.#operationTimeout)
+			let isTimeoutReached = false
 
-		this.#isBusy = true
-		this.emit("operation-started")
+			void this.#onceReadyForGATTOperation().then(() => {
+				const timeout = setTimeout(() => {
+					isTimeoutReached = true
 
-		let result: ResultType
+					this.#isBusy = false
 
-		try {
-			result = await callback()
-		} catch (error) {
-			throw new BluGATTOperationError("GATT operation failed.", error)
-		}
+					reject(
+						new BluGATTOperationError(
+							`GATT operation timed out after ${
+								this.#operationTimeout
+							} ms.`,
+						),
+					)
+				}, this.#operationTimeout)
 
-		clearTimeout(timeout)
-		this.#isBusy = false
-		this.emit("operation-finished")
+				this.#isBusy = true
+				this.emit("operation-started")
 
-		return result
+				callback()
+					.then(result => {
+						if (isTimeoutReached) {
+							return
+						}
+
+						resolve(result)
+					})
+					.catch(error => {
+						if (isTimeoutReached) {
+							return
+						}
+
+						reject(
+							new BluGATTOperationError(
+								"GATT operation failed.",
+								error,
+							),
+						)
+					})
+					.finally(() => {
+						if (isTimeoutReached) {
+							return
+						}
+
+						clearTimeout(timeout)
+						this.#isBusy = false
+						this.emit("operation-finished")
+					})
+			})
+		})
 	}
 
 	/**
 	 * Wait for the device to be ready for the next GATT operation.
+	 * @returns A `Promise` that resolves once the device is ready.
 	 */
 	async #onceReadyForGATTOperation() {
 		return new Promise<void>(resolve => {

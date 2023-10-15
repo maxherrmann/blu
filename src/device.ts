@@ -9,6 +9,7 @@ import {
 import BluDescriptor from "./descriptor"
 import {
 	BluDeviceConnectionError,
+	BluDeviceConnectionTimeoutError,
 	BluDeviceConstructionError,
 	BluDeviceProtocolDiscoveryError,
 	BluDeviceProtocolMatchingError,
@@ -21,6 +22,8 @@ import BluGATTOperationQueue from "./gattOperationQueue"
 import logger from "./logger"
 import BluService from "./service"
 import isArray from "./utils/isArray"
+
+import type { BluConfigurationOptions } from "./configuration"
 
 /**
  * Bluetooth device.
@@ -166,47 +169,113 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * Connect the device.
 	 * @remarks Connection time depends on the protocol size, as well as the
 	 *  time it takes to settle all `beforeReady` tasks across the
-	 *  protocol.
+	 *  protocol. Connection may time out, depending on the active
+	 *  {@link configuration}
+	 *  (see {@link BluConfigurationOptions.deviceConnectionTimeout | `deviceConnectionTimeout` option}).
 	 * @throws A {@link DeviceOperationError} when connecting is not possible.
 	 * @throws A {@link BluDeviceConnectionError} when the connection attempt
 	 *  failed.
 	 * @sealed
 	 */
 	async connect() {
-		if (this.isConnected) {
-			throw new DeviceOperationError(
-				this,
-				"Cannot connect a device that is already connected.",
-			)
-		}
+		return new Promise<void>((resolve, reject) => {
+			if (this.isConnected) {
+				reject(
+					new DeviceOperationError(
+						this,
+						"Cannot connect a device that is already connected.",
+					),
+				)
 
-		try {
-			await this._bluetoothDevice.gatt!.connect()
-		} catch (error) {
-			throw new BluDeviceConnectionError(
-				this,
-				"Could not connect the device.",
-				error,
-			)
-		}
-
-		try {
-			await this.#discoverProtocol()
-
-			this._bluetoothDevice.ongattserverdisconnected = () => {
-				this.#onDisconnected()
+				return
 			}
 
-			await this.beforeReady()
+			const timeout = configuration.options.deviceConnectionTimeout
+			let timeoutTimer: NodeJS.Timeout
+			let isTimeoutReached = false
 
-			this.emit("connected")
-		} catch (error) {
-			throw new BluDeviceConnectionError(
-				this,
-				"Could not connect the device.",
-				error,
-			)
-		}
+			const rejectWithError = (error: unknown) => {
+				if (isTimeoutReached) {
+					return
+				}
+
+				clearTimeout(timeoutTimer)
+
+				reject(
+					new BluDeviceConnectionError(
+						this,
+						"Could not connect the device.",
+						error,
+					),
+				)
+			}
+
+			if (timeout) {
+				timeoutTimer = setTimeout(() => {
+					try {
+						this._bluetoothDevice.ongattserverdisconnected =
+							// eslint-disable-next-line @typescript-eslint/no-empty-function
+							() => {}
+
+						this.disconnect()
+					} catch {
+						// Ignore potential errors, as device is in unknown
+						// state and will be discarded anyways.
+					}
+
+					rejectWithError(
+						new BluDeviceConnectionTimeoutError(
+							`Connection attempt timed out after ${timeout} ms.`,
+						),
+					)
+
+					isTimeoutReached = true
+				}, timeout)
+			}
+
+			this._bluetoothDevice
+				.gatt!.connect()
+				.then(() => {
+					if (isTimeoutReached) {
+						return
+					}
+
+					this.#discoverProtocol()
+						.then(async () => {
+							if (isTimeoutReached) {
+								return
+							}
+
+							this._bluetoothDevice.ongattserverdisconnected =
+								() => {
+									this.#onDisconnected()
+								}
+
+							try {
+								await this.beforeReady()
+							} catch (error) {
+								rejectWithError(error)
+								return
+							}
+
+							if (isTimeoutReached) {
+								return
+							}
+
+							clearTimeout(timeoutTimer)
+
+							this.emit("connected")
+
+							resolve()
+						})
+						.catch(error => {
+							rejectWithError(error)
+						})
+				})
+				.catch(error => {
+					rejectWithError(error)
+				})
+		})
 	}
 
 	/**
@@ -247,7 +316,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * @remarks Queues the GATT operation and waits for it to resolve.
 	 * @typeParam ResultType - The type of the expected result.
 	 * @param operation - The GATT operation.
-	 * @returns The result of the GATT operation.
+	 * @returns A `Promise` that resolves with the result of the GATT operation.
 	 * @throws A {@link BluGATTOperationQueueError} when invalid arguments were
 	 *  provided.
 	 * @throws A {@link BluGATTOperationError} when the GATT operation fails.
@@ -263,15 +332,17 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  descriptors. Adds properties to {@link BluDevice} for all identifiable
 	 *  services. Adds properties to all {@link BluService}s for all identifiable
 	 *  characteristics. Adds properties to all {@link BluCharacteristic}s for all
-	 *  identifiable descriptors. Depending on the Blu configuration,
-	 *  auto-listens to any notifiable characteristics. Invokes all
+	 *  identifiable descriptors. Depending on the active {@link configuration}
+	 *  (see {@link BluConfigurationOptions.autoEnableNotifications | `autoEnableNotifications` option}),
+	 *  auto-listens to some or all notifiable characteristics. Invokes all
 	 *  `beforeReady` functions across the whole protocol and waits for them
 	 *  to be settled.
 	 * @throws A {@link BluDeviceProtocolDiscoveryError} when discovering the
 	 *  device's Bluetooth protocol is not possible.
 	 * @throws A {@link BluDeviceProtocolMatchingError} when the device's
-	 *  Bluetooth protocol does not match expectations, depending on the device
-	 *  protocol matching type set in the Blu configuration.
+	 *  Bluetooth protocol does not match expectations, depending on the
+	 *  {@link BluConfigurationOptions.deviceProtocolMatching | `deviceProtocolMatching` type}
+	 *  from the active {@link configuration}.
 	 */
 	async #discoverProtocol() {
 		try {
@@ -308,7 +379,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 					logger.warn(
 						`Could not discover "${serviceDescription.name}" ` +
-							`(${serviceDescription.uuid}).`,
+							`(UUID: ${serviceDescription.uuid}).`,
 						this,
 					)
 				}
@@ -358,9 +429,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 							logger.warn(
 								`Could not discover "${characteristicDescription.name}" ` +
-									`(${characteristicDescription.uuid}) ` +
+									`(UUID: ${characteristicDescription.uuid}) ` +
 									`in "${serviceDescription.name}" ` +
-									`(${serviceDescription.uuid}).`,
+									`(UUID: ${serviceDescription.uuid}).`,
 								this,
 							)
 						}
@@ -400,9 +471,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 									logger.warn(
 										`Could not discover "${descriptorDescription.name}" ` +
-											`(${descriptorDescription.uuid}) ` +
+											`(UUID: ${descriptorDescription.uuid}) ` +
 											`in "${characteristicDescription.name}" ` +
-											`(${characteristicDescription.uuid}).`,
+											`(UUID: ${characteristicDescription.uuid}).`,
 										this,
 									)
 								}
@@ -533,8 +604,16 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 						characteristic.properties.notify &&
 						configuration.options.autoEnableNotifications
 					) {
-						// Automatically listen to notifiable characteristics.
-						await characteristic.startListeningForNotifications()
+						if (
+							typeof configuration.options
+								.autoEnableNotifications === "boolean" ||
+							(characteristic.description.identifier &&
+								configuration.options.autoEnableNotifications.includes(
+									characteristic.description.identifier,
+								))
+						)
+							// Automatically listen to notifiable characteristics.
+							await characteristic.startListeningForNotifications()
 					}
 
 					for (const descriptor of characteristic.descriptors) {

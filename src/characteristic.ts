@@ -277,23 +277,32 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		request: BluRequest,
 		timeout = 5000,
 	) {
-		if (!(request instanceof BluRequest)) {
-			throw new BluCharacteristicOperationError(
-				this,
-				`Argument "request" must be a valid instance of "BluRequest".`,
-			)
-		}
+		return new Promise<ResponseType>((resolve, reject) => {
+			if (!(request instanceof BluRequest)) {
+				reject(
+					new BluCharacteristicOperationError(
+						this,
+						`Argument "request" must be a valid instance of "BluRequest".`,
+					),
+				)
 
-		if (timeout !== undefined && typeof timeout !== "number") {
-			throw new BluCharacteristicOperationError(
-				this,
-				`Argument "timeout" must be either "undefined" or of type` +
-					`"number".`,
-			)
-		}
+				return
+			}
 
-		return new Promise<ResponseType>(resolve => {
+			if (timeout !== undefined && typeof timeout !== "number") {
+				reject(
+					new BluCharacteristicOperationError(
+						this,
+						`Argument "timeout" must be either "undefined" or of type` +
+							`"number".`,
+					),
+				)
+
+				return
+			}
+
 			let timeoutTimer: NodeJS.Timeout
+			let isTimeoutReached = false
 
 			if (configuration.options.dataTransferLogging) {
 				logger.target.debug(
@@ -303,7 +312,10 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 			}
 
 			const onResponse = (response: BluResponse) => {
-				if (request.responseType.validatorFunction(response)) {
+				if (
+					!isTimeoutReached &&
+					request.responseType.validatorFunction(response)
+				) {
 					clearTimeout(timeoutTimer)
 
 					this.off("notification", onResponse)
@@ -318,24 +330,34 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
+					isTimeoutReached = true
+
 					this.off("notification", onResponse)
 
-					throw new BluCharacteristicNotificationTimeoutError(
-						`Did not receive an expected notification ` +
-							`from the device within ${timeout} ms.`,
+					reject(
+						new BluCharacteristicNotificationTimeoutError(
+							`Did not receive an expected notification ` +
+								`from the device within ${timeout} ms.`,
+						),
 					)
 				}, timeout)
 			}
 
 			this.write(request.data).catch(error => {
+				if (isTimeoutReached) {
+					return
+				}
+
 				clearTimeout(timeoutTimer)
 
 				this.off("notification", onResponse)
 
-				throw new BluCharacteristicOperationError(
-					this,
-					"Could not request from characteristic.",
-					error,
+				reject(
+					new BluCharacteristicOperationError(
+						this,
+						"Could not request from characteristic.",
+						error,
+					),
 				)
 			})
 		})
@@ -402,15 +424,17 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		if (!this.properties.notify) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not start listening to a non-notifying characteristic.",
+				"Could not start listening for notifications on a " +
+					"non-notifying characteristic.",
 			)
 		}
 
 		if (this.properties.isListening) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not start listening to a characteristic that is already " +
-					"listened to.",
+				"Could not start listening for notifications on a " +
+					"characteristic that is already listening for " +
+					"notifications.",
 			)
 		}
 
@@ -430,7 +454,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not start listening to characteristic.",
+				"Could not start listening for notifications.",
 				error,
 			)
 		}
@@ -446,8 +470,9 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		if (!this.properties.isListening) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not stop listening to a characteristic that is not yet " +
-					"listened to.",
+				"Could not stop listening for notifications on a " +
+					"characteristic that is not yet listening for " +
+					"notifications.",
 			)
 		}
 
@@ -467,7 +492,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
-				"Could not stop listening to characteristic.",
+				"Could not stop listening for notifications.",
 				error,
 			)
 		}
@@ -527,7 +552,7 @@ export class BluCharacteristicProperties {
 	readonly notify: boolean
 
 	/**
-	 * Is the characteristic currently listening to notifications?
+	 * Is the characteristic currently listening for notifications?
 	 * @remarks `undefined` if {@link BluCharacteristicProperties.notify} is
 	 *  `false`.
 	 */

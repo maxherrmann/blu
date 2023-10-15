@@ -225,4 +225,5 @@ export default {
 	scannerConfig: scannerConfig,
 	deviceType: Microbit,
 	deviceProtocolMatching: "off",
+	deviceConnectionTimeout: 10000,
 } as BluConfigurationOptions

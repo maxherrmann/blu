@@ -5,6 +5,7 @@ import isBufferSource from "./utils/isBufferSource"
 import isSubclassOrSelf from "./utils/isSubclassOrSelf"
 
 import type BluCharacteristic from "./characteristic"
+import type { BluProtocolDescription } from "./descriptions"
 
 /**
  * Configuration for Blu.
@@ -15,8 +16,7 @@ export class BluConfiguration {
 	/**
 	 * Active configuration options.
 	 */
-	#options: Required<BluConfigurationOptions> =
-		configurationOptionsGuard.parse({})
+	#options = defaultOptions
 
 	/**
 	 * Active configuration options.
@@ -63,7 +63,7 @@ export class BluConfiguration {
 	 * Restore the default configuration.
 	 */
 	restoreDefaults() {
-		this.#options = configurationOptionsGuard.parse({})
+		this.#options = defaultOptions
 	}
 }
 
@@ -120,11 +120,12 @@ export interface BluConfigurationOptions {
 
 	/**
 	 * A device protocol matching type.
-	 * @remarks Instructs Blu how to handle discrepancies between the expected
+	 * @remarks Will be evaluated during protocol discovery, when connecting new
+	 *  devices. Instructs Blu how to handle discrepancies between the expected
 	 *  and actual Bluetooth protocols of devices when trying to connect them.
 	 *  The expected Bluetooth protocol is inferred from the
-	 *  {@link BluDevice.protocol} of the
-	 *  {@link BluConfigurationOptions.deviceType} protocol that was configured.
+	 *  {@link BluDevice.protocol} of the configured
+	 *  {@link BluConfigurationOptions.deviceType}.
 	 *
 	 *  **Available matching types**
 	 *
@@ -161,12 +162,26 @@ export interface BluConfigurationOptions {
 	deviceProtocolMatching?: "default" | "minimal" | "off"
 
 	/**
+	 * The time to wait for a device connection to be established in
+	 * milliseconds before a connection attempt with {@link BluDevice.connect}
+	 * fails.
+	 * @remarks Can be `false` (no timeout, i.e. wait indefinitely) or a
+	 *  `number` of milliseconds.
+	 * @defaultValue `false`
+	 */
+	deviceConnectionTimeout?: number | false
+
+	/**
 	 * Automatically listen to notifiable characteristics?
-	 * @remarks If `false`, notifications have to be manually "enabled" by
-	 *  invoking {@link BluCharacteristic.startListeningForNotifications}.
+	 * @remarks Will be evaluated during protocol discovery, when connecting new
+	 *  devices. Can be a `boolean` value or an array of
+	 *  {@link BluProtocolDescription.identifier | characteristic identifiers}.
+	 *  If `false`, notifications have to be manually "enabled" for each
+	 *  characteristic by invoking
+	 *  {@link BluCharacteristic.startListeningForNotifications}.
 	 * @defaultValue `true`
 	 */
-	autoEnableNotifications?: boolean
+	autoEnableNotifications?: boolean | string[]
 
 	/**
 	 * Enable data transfer logging?
@@ -175,6 +190,18 @@ export interface BluConfigurationOptions {
 	 * @defaultValue `false`
 	 */
 	dataTransferLogging?: boolean
+}
+
+/**
+ * Default configuration options for Blu.
+ */
+const defaultOptions: Required<BluConfigurationOptions> = {
+	scannerConfig: { acceptAllDevices: true },
+	deviceType: BluDevice,
+	deviceProtocolMatching: "default",
+	deviceConnectionTimeout: false,
+	autoEnableNotifications: true,
+	dataTransferLogging: false,
 }
 
 /**
@@ -237,21 +264,20 @@ const configurationOptionsGuard = z
 					optionalManufacturerData: z.array(z.number()).optional(),
 				}),
 			)
-			.default({ acceptAllDevices: true }),
+			.optional(),
 		deviceType: z
 			.custom<typeof BluDevice>(x => isSubclassOrSelf(x, BluDevice))
-			.default(() => {
-				return BluDevice
-			}),
+			.optional(),
 		deviceProtocolMatching: z
 			.union([
 				z.literal("default"),
 				z.literal("minimal"),
 				z.literal("off"),
 			])
-			.default("default"),
-		autoEnableNotifications: z.boolean().default(true),
-		dataTransferLogging: z.boolean().default(false),
+			.optional(),
+		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
+		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
+		dataTransferLogging: z.boolean().optional(),
 	})
 	.strict()
 

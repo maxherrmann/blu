@@ -4,6 +4,7 @@ import {
 	BluService,
 	BluCharacteristicOperationError,
 	logger,
+	convert,
 } from "@blu.js/blu"
 
 export class TemperatureService extends BluService {
@@ -98,7 +99,7 @@ export class TemperaturePeriodCharacteristic extends BluCharacteristic {
 		}
 
 		try {
-			await this.write(new Uint16Array([time]))
+			await this.write(convert.toUint16Array(time))
 
 			logger.debug(
 				`Set temperature period to ${time}ms.`,

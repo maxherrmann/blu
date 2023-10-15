@@ -49,4 +49,5 @@ const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
 export default {
 	scannerConfig: scannerConfig,
 	deviceType: MyDevice,
+	deviceConnectionTimeout: 10000,
 } as BluConfigurationOptions
