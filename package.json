@@ -1,6 +1,6 @@
 {
 	"name": "@blu.js/blu",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"description": "The type-safe framework for interacting with Bluetooth Low Energy devices from the web.",
 	"keywords": [
 		"blu",
