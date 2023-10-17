@@ -26,17 +26,14 @@ export class BluScanner {
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
 	async getDevice<DeviceType extends BluDevice = BluDevice>() {
-		if (!bluetooth.isSupported) {
-			throw new BluScannerError(
-				"Could not get device.",
-				new BluError(
+		try {
+			if (!bluetooth.isSupported) {
+				throw new BluError(
 					"Blu is not compatible with this browser, because it " +
 						"does not support Web Bluetooth.",
-				),
-			)
-		}
+				)
+			}
 
-		try {
 			const webBluetoothDevice =
 				await globalThis.navigator.bluetooth.requestDevice(
 					configuration.options.scannerConfig,
@@ -46,6 +43,11 @@ export class BluScanner {
 				webBluetoothDevice,
 			) as DeviceType
 		} catch (error) {
+			if (error instanceof Error && error.name === "NotFoundError") {
+				// Device chooser has been closed on the client side.
+				return null
+			}
+
 			throw new BluScannerError("Could not get device.", error)
 		}
 	}
