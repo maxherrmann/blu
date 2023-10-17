@@ -9,7 +9,7 @@ if (!blu.bluetooth.isSupported) {
 	domNode("#bluetooth-not-supported-overlay").style.display = "block"
 
 	throw new BluPlaygroundError(
-		"Blu is not compatible with this browser, as it does not support " +
+		"Blu is not compatible with this browser, as it does not support Web " +
 			"Bluetooth.",
 	)
 }
