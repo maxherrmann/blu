@@ -96,8 +96,8 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 		}
 
 		if (
-			!isArray(configuration.options.deviceType.protocol) ||
-			configuration.options.deviceType.protocol.some(
+			!isArray((this.constructor as typeof BluDevice).protocol) ||
+			(this.constructor as typeof BluDevice).protocol.some(
 				element => !(element instanceof BluServiceDescription),
 			)
 		) {
@@ -351,8 +351,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 			// Discover described services.
 
-			for (const serviceDescription of configuration.options.deviceType
-				.protocol) {
+			for (const serviceDescription of (
+				this.constructor as typeof BluDevice
+			).protocol) {
 				let service: BluService | undefined
 
 				try {
