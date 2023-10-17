@@ -17,13 +17,15 @@ export class BluScanner {
 	 *  them to pair a device. Filters advertising devices according to the
 	 *  {@link BluConfigurationOptions.scannerConfig | `scannerConfig`} from the
 	 *  active {@link configuration}.
+	 * @typeParam DeviceType - The type of the returned device. Defaults to
+	 *  {@link BluDevice}.
 	 * @returns A `Promise` that resolves with the selected
-	 *  {@link BluDevice | device} of
-	 *  the {@link BluConfigurationOptions.deviceType | `deviceType`} from the
+	 *  {@link BluDevice | device} of the
+	 *  {@link BluConfigurationOptions.deviceType | `deviceType`} from the
 	 *  active {@link configuration}. `null` if no device was selected or found.
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
-	async getDevice() {
+	async getDevice<DeviceType extends BluDevice = BluDevice>() {
 		if (!bluetooth.isSupported) {
 			throw new BluScannerError(
 				"Could not get device.",
@@ -40,7 +42,9 @@ export class BluScanner {
 					configuration.options.scannerConfig,
 				)
 
-			return new configuration.options.deviceType(webBluetoothDevice)
+			return new configuration.options.deviceType(
+				webBluetoothDevice,
+			) as DeviceType
 		} catch (error) {
 			throw new BluScannerError("Could not get device.", error)
 		}
