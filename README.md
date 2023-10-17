@@ -58,7 +58,7 @@ try {
 
 	await device.connect()
 
-    // ...
+	// ...
 } catch (error) {
 	// ...
 }
@@ -71,12 +71,12 @@ blu.scanner
 	.getDevice()
 	.then(device => {
 		device.connect()
-        .then(() => {
-            // ...
-        })
-        .catch(error => {
-            // ...
-        })
+		.then(() => {
+			// ...
+		})
+		.catch(error => {
+			// ...
+		})
 	})
 	.catch(error => {
 		// ...
