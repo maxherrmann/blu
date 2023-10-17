@@ -56,11 +56,9 @@ import {
 try {
 	const device = await blu.scanner.getDevice()
 
-	if (device) {
-		await device.connect()
+	await device.connect()
 
-		// ...
-	}
+    // ...
 } catch (error) {
 	// ...
 }
@@ -72,11 +70,13 @@ try {
 blu.scanner
 	.getDevice()
 	.then(device => {
-		if (device) {
-			device.connect().then(() => {
-				// ...
-			})
-		}
+		device.connect()
+        .then(() => {
+            // ...
+        })
+        .catch(error => {
+            // ...
+        })
 	})
 	.catch(error => {
 		// ...
