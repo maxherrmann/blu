@@ -22,7 +22,7 @@ export class BluScanner {
 	 * @returns A `Promise` that resolves with the selected
 	 *  {@link BluDevice | device} of the
 	 *  {@link BluConfigurationOptions.deviceType | `deviceType`} from the
-	 *  active {@link configuration}. `null` if no device was selected or found.
+	 *  active {@link configuration}.
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
 	async getDevice<DeviceType extends BluDevice = BluDevice>() {
@@ -43,11 +43,6 @@ export class BluScanner {
 				webBluetoothDevice,
 			) as DeviceType
 		} catch (error) {
-			if (error instanceof Error && error.name === "NotFoundError") {
-				// Device chooser has been closed on the client side.
-				return null
-			}
-
 			throw new BluScannerError("Could not get device.", error)
 		}
 	}
