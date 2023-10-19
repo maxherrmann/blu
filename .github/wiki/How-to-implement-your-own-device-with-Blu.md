@@ -170,7 +170,7 @@ Let's start with the button service:
 import { BluService } from "@blu.js/blu"
 
 export class ButtonService extends BluService {
-	buttonStateCharacteristic!: ButtonStateCharacteristic
+	declare buttonStateCharacteristic: ButtonStateCharacteristic
 }
 ```
 
@@ -389,7 +389,7 @@ In the same file, alter the `MyDevice` class to provide functionality to our use
 class MyDevice extends BluDevice {
 	// ...
 
-	buttonService!: ButtonService
+	declare buttonService: ButtonService
 
 	get buttonState() {
 		return this.buttonService.buttonStateCharacteristic.buttonState
@@ -397,7 +397,7 @@ class MyDevice extends BluDevice {
 }
 ```
 
-> Note: The properties `buttonService` and `buttonStateCharacteristic` are automatically added by Blu when connecting the device. Blu infers the property names from the `identifier` property of their respective protocol descriptions. When using TypeScript, we need to make sure our compiler does not complain about this by adding a non-null assertion to each of these properties.
+> Note: The properties `buttonService` and `buttonStateCharacteristic` are dynamically added by Blu when connecting the device. Blu infers the property names from the `identifier` property of their respective protocol descriptions. When using TypeScript, we need to make sure our compiler does not complain about this, by declaring these properties.
 
 > Note: You can of course choose to not implement a custom device class and only control your device through its services. In this case, you can remove the `deviceType` property from the default export of the file. However, as we discussed earlier, this is not ideal when it comes to API usability.
 
