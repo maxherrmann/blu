@@ -1,40 +1,33 @@
 import { BluGATTOperationError, BluGATTOperationQueueError } from "./errors"
-import { BluEventEmitter, BluEvents } from "./eventEmitter"
 
 /**
  * Queue for GATT operations.
  * @sealed
  */
-export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperationQueueEvents> {
+export default class BluGATTOperationQueue {
 	/**
-	 * The timeout in milliseconds for each GATT operation.
+	 * GATT operation queue.
 	 */
-	#operationTimeout = 5000
+	#queue: (() => Promise<unknown>)[] = []
 
 	/**
-	 * Is the device busy?
+	 * Is the device busy with performing another GATT operation?
 	 */
 	#isBusy = false
 
 	/**
-	 * Is the device busy?
-	 * @readonly
-	 */
-	get isBusy() {
-		return this.#isBusy
-	}
-
-	/**
 	 * Add a GATT operation to the queue and wait for its result.
+	 * @remarks A GATT operation times out when it takes more than 5000
+	 *  milliseconds.
 	 * @param callback - The GATT operation.
 	 * @returns A `Promise` that resolves with the GATT operation's result.
 	 * @throws A {@link BluGATTOperationQueueError} when invalid arguments were
 	 *  provided.
 	 * @throws A {@link BluGATTOperationError} when something went wrong during
-	 *  a GATT operation.
+	 *  the GATT operation or when it timed out.
 	 */
 	async add<ResultType>(callback: () => Promise<ResultType>) {
-		return new Promise<ResultType>((resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			if (typeof callback !== "function") {
 				reject(
 					new BluGATTOperationQueueError(
@@ -45,90 +38,77 @@ export default class BluGATTOperationQueue extends BluEventEmitter<BluGATTOperat
 				return
 			}
 
-			let isTimeoutReached = false
+			this.#queue.push(async () => {
+				let isTimeoutReached = false
 
-			void this.#onceReadyForGATTOperation().then(() => {
 				const timeout = setTimeout(() => {
 					isTimeoutReached = true
 
-					this.#isBusy = false
+					reject(
+						new BluGATTOperationError(
+							`GATT operation timed out after ` +
+								`${GATT_OPERATION_TIMEOUT} ms.`,
+						),
+					)
+				}, GATT_OPERATION_TIMEOUT)
+
+				try {
+					const result = await callback()
+
+					if (isTimeoutReached) {
+						return
+					}
+
+					clearTimeout(timeout)
+
+					resolve(result)
+				} catch (error) {
+					if (isTimeoutReached) {
+						return
+					}
+
+					clearTimeout(timeout)
 
 					reject(
 						new BluGATTOperationError(
-							`GATT operation timed out after ${
-								this.#operationTimeout
-							} ms.`,
+							"GATT operation failed.",
+							error,
 						),
 					)
-				}, this.#operationTimeout)
+				}
+			})
 
-				this.#isBusy = true
-				this.emit("operation-started")
-
-				callback()
-					.then(result => {
-						if (isTimeoutReached) {
-							return
-						}
-
-						resolve(result)
-					})
-					.catch(error => {
-						if (isTimeoutReached) {
-							return
-						}
-
-						reject(
-							new BluGATTOperationError(
-								"GATT operation failed.",
-								error,
-							),
-						)
-					})
-					.finally(() => {
-						if (isTimeoutReached) {
-							return
-						}
-
-						clearTimeout(timeout)
-						this.#isBusy = false
-						this.emit("operation-finished")
-					})
+			this.#processQueue().catch(error => {
+				reject(error)
 			})
 		})
 	}
 
 	/**
-	 * Wait for the device to be ready for the next GATT operation.
-	 * @returns A `Promise` that resolves once the device is ready.
+	 * Process the GATT operation queue.
 	 */
-	async #onceReadyForGATTOperation() {
-		return new Promise<void>(resolve => {
-			if (!this.#isBusy) {
-				resolve()
-			} else {
-				this.once("operation-finished", () => {
-					resolve()
-				})
+	async #processQueue() {
+		if (this.#isBusy) {
+			return
+		}
+
+		this.#isBusy = true
+
+		try {
+			while (this.#queue.length > 0) {
+				const callback = this.#queue.shift()!
+
+				await callback()
 			}
-		})
+		} catch (error) {
+			throw error
+		} finally {
+			this.#isBusy = false
+		}
 	}
 }
 
 /**
- * GATT operation queue events.
- * @sealed
+ * The time in milliseconds after which a GATT operation should time out.
  */
-export interface BluGATTOperationQueueEvents extends BluEvents {
-	/**
-	 * A GATT operation has started.
-	 * @eventProperty
-	 */
-	"operation-started": () => void
-
-	/**
-	 * A GATT operation has finished.
-	 * @eventProperty
-	 */
-	"operation-finished": () => void
-}
+const GATT_OPERATION_TIMEOUT = 5000

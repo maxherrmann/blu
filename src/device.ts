@@ -313,7 +313,8 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 	/**
 	 * Perform a GATT operation on this device.
-	 * @remarks Queues the GATT operation and waits for it to resolve.
+	 * @remarks Queues the GATT operation and waits for it to resolve. A GATT
+	 *  operation times out when it takes more than 5000 milliseconds.
 	 * @typeParam ResultType - The type of the expected result.
 	 * @param operation - The GATT operation.
 	 * @returns A `Promise` that resolves with the result of the GATT operation.
