@@ -263,7 +263,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * @param request - The request.
 	 * @param timeout - The time to wait for an answer
 	 *  (a notification) in milliseconds before the request fails. Defaults to
-	 *  5000 ms.
+	 *  5000 milliseconds.
 	 * @returns A `Promise` that resolves with a {@link BluResponse} of the given
 	 *  {@link BluRequest.responseType}.
 	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
@@ -371,7 +371,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * @param requests - The requests.
 	 * @param timeout - The time to wait for each answer
 	 *  (notification) in milliseconds before the respective request fails.
-	 *  Defaults to 5000 ms.
+	 *  Defaults to 5000 milliseconds.
 	 * @returns A `Promise` that resolves with an array of {@link BluResponse}s
 	 *  of their respectively given {@link BluRequest.responseType}s. The order
 	 *  of responses matches the order of requests.
@@ -383,7 +383,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 *  be constructed.
 	 * @sealed
 	 */
-	requestAll<ResponseTypes extends BluResponse[] = BluResponse[]>(
+	async requestAll<ResponseTypes extends BluResponse[] = BluResponse[]>(
 		requests: BluRequest[],
 		timeout = 5000,
 	) {
@@ -405,13 +405,13 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 			)
 		}
 
-		const responseQueue: Promise<BluResponse>[] = []
+		const responses: BluResponse[] = []
 
 		for (const request of requests) {
-			responseQueue.push(this.request(request, timeout))
+			responses.push(await this.request(request, timeout))
 		}
 
-		return Promise.all(responseQueue) as Promise<ResponseTypes>
+		return responses as ResponseTypes
 	}
 
 	/**
