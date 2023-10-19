@@ -70,13 +70,14 @@ try {
 blu.scanner
 	.getDevice()
 	.then(device => {
-		device.connect()
-		.then(() => {
-			// ...
-		})
-		.catch(error => {
-			// ...
-		})
+		device
+			.connect()
+			.then(() => {
+				// ...
+			})
+			.catch(error => {
+				// ...
+			})
 	})
 	.catch(error => {
 		// ...
