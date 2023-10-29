@@ -1,9 +1,9 @@
 import bluetooth from "./bluetooth"
 import configuration from "./configuration"
+import BluDevice from "./device"
 import { BluEnvironmentError, BluScannerError } from "./errors"
 
 import type { BluConfigurationOptions } from "./configuration"
-import type BluDevice from "./device"
 
 /**
  * Scanner for Bluetooth devices.
@@ -41,6 +41,40 @@ export class BluScanner {
 			) as DeviceType
 		} catch (error) {
 			throw new BluScannerError("Could not get device.", error)
+		}
+	}
+
+	/**
+	 * ⚠️ Get all paired Bluetooth devices.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `getDevices()` for details. Paired devices are devices that the user
+	 *  has granted access to. They include devices that are not available at
+	 *  the moment, due to being out of range or switched off.
+	 * @returns A `Promise` that resolves with the paired
+	 *  {@link BluDevice | devices}.
+	 * @throws A {@link BluScannerError} when something went wrong.
+	 */
+	async getPairedDevices() {
+		try {
+			if (!bluetooth.isSupported) {
+				throw new BluEnvironmentError("Web Bluetooth")
+			}
+
+			if (
+				typeof globalThis.navigator.bluetooth.getDevices !== "function"
+			) {
+				throw new BluEnvironmentError("Paired device retrieval")
+			}
+
+			const devices = await globalThis.navigator.bluetooth.getDevices()
+
+			return devices.map(device => {
+				return new BluDevice(device)
+			})
+		} catch (error) {
+			throw new BluScannerError("Could not get paired devices.", error)
 		}
 	}
 }
