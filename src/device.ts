@@ -158,7 +158,11 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * @sealed
 	 */
 	get isConnected() {
-		return this._bluetoothDevice.gatt!.connected
+		if (this._bluetoothDevice.gatt === undefined) {
+			return false
+		}
+
+		return this._bluetoothDevice.gatt.connected
 	}
 
 	/**
