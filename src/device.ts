@@ -11,11 +11,12 @@ import {
 	BluDeviceConnectionError,
 	BluDeviceConnectionTimeoutError,
 	BluDeviceConstructionError,
+	BluDeviceOperationError,
 	BluDeviceProtocolDiscoveryError,
 	BluDeviceProtocolMatchingError,
+	BluEnvironmentError,
 	BluGATTOperationError,
 	BluGATTOperationQueueError,
-	DeviceOperationError,
 } from "./errors"
 import { BluEventEmitter, BluEvents } from "./eventEmitter"
 import BluGATTOperationQueue from "./gattOperationQueue"
@@ -93,6 +94,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 		if (!bluetoothDevice.gatt) {
 			throw new BluDeviceConstructionError(
+				this,
 				`Argument "bluetoothDevice" must be an instance of ` +
 					`"BluetoothDevice".`,
 				"GATT server not available.",
@@ -230,6 +232,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 					rejectWithError(
 						new BluDeviceConnectionTimeoutError(
+							this,
 							`Connection attempt timed out after ${timeout} ms.`,
 						),
 					)
@@ -285,7 +288,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 	/**
 	 * Disconnect the device.
-	 * @throws A {@link DeviceOperationError} when disconnecting is not
+	 * @throws A {@link BluDeviceOperationError} when disconnecting is not
 	 *  possible.
 	 * @throws A {@link BluDeviceConnectionError} when the disconnection attempt
 	 *  failed.
@@ -293,7 +296,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 */
 	disconnect() {
 		if (!this.isConnected) {
-			throw new DeviceOperationError(
+			throw new BluDeviceOperationError(
 				this,
 				"Cannot disconnect a device that is not connected.",
 			)

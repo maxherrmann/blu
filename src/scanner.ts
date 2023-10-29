@@ -1,6 +1,6 @@
 import bluetooth from "./bluetooth"
 import configuration from "./configuration"
-import { BluError, BluScannerError } from "./errors"
+import { BluEnvironmentError, BluScannerError } from "./errors"
 
 import type { BluConfigurationOptions } from "./configuration"
 import type BluDevice from "./device"
@@ -28,10 +28,7 @@ export class BluScanner {
 	async getDevice<DeviceType extends BluDevice = BluDevice>() {
 		try {
 			if (!bluetooth.isSupported) {
-				throw new BluError(
-					"Blu is not compatible with this browser, because it " +
-						"does not support Web Bluetooth.",
-				)
+				throw new BluEnvironmentError("Web Bluetooth")
 			}
 
 			const webBluetoothDevice =
