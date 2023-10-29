@@ -348,6 +348,12 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 			let protocolIncomplete = false
 			let characteristicPropertyMismatch = false
 
+			if (!this.isConnected) {
+				// Sometimes GATT server is reported as disconnected at this
+				// point. If that is the case, we try to reconnect first.
+				await this._bluetoothDevice.gatt!.connect()
+			}
+
 			// Clear services.
 			this.services.length = 0
 
