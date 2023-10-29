@@ -183,31 +183,28 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  protocol. Connection may time out, depending on the active
 	 *  {@link configuration}
 	 *  (see {@link BluConfigurationOptions.deviceConnectionTimeout | `deviceConnectionTimeout` option}).
-	 * @throws A {@link DeviceOperationError} when connecting is not possible.
 	 * @throws A {@link BluDeviceConnectionError} when the connection attempt
 	 *  failed.
 	 * @sealed
 	 */
 	async connect() {
 		return new Promise<void>((resolve, reject) => {
-			if (this.isConnected) {
-				reject(
-					new DeviceOperationError(
-						this,
-						"Cannot connect a device that is already connected.",
-					),
-				)
-
-				return
-			}
-
 			const timeout = configuration.options.deviceConnectionTimeout
 			let timeoutTimer: NodeJS.Timeout
 			let isTimeoutReached = false
 
 			const rejectWithError = (error: unknown) => {
-				if (isTimeoutReached) {
-					return
+				try {
+					this._bluetoothDevice.ongattserverdisconnected =
+						// eslint-disable-next-line @typescript-eslint/no-empty-function
+						() => {}
+
+					if (this.isConnected) {
+						this.disconnect()
+					}
+				} catch {
+					// Ignore potential errors, as device is in an unknown state
+					// and will be discarded anyways.
 				}
 
 				clearTimeout(timeoutTimer)
@@ -223,17 +220,6 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
-					try {
-						this._bluetoothDevice.ongattserverdisconnected =
-							// eslint-disable-next-line @typescript-eslint/no-empty-function
-							() => {}
-
-						this.disconnect()
-					} catch {
-						// Ignore potential errors, as device is in unknown
-						// state and will be discarded anyways.
-					}
-
 					rejectWithError(
 						new BluDeviceConnectionTimeoutError(
 							this,
@@ -361,6 +347,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 		try {
 			let protocolIncomplete = false
 			let characteristicPropertyMismatch = false
+
+			// Clear services.
+			this.services.length = 0
 
 			// Discover described services.
 
