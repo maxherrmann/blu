@@ -7,7 +7,9 @@ import {
 	BluServiceDescription,
 } from "./descriptions"
 import BluDescriptor from "./descriptor"
+import BluDeviceAdvertisement from "./deviceAdvertisement"
 import {
+	BluDeviceAdvertisementReportingError,
 	BluDeviceConnectionError,
 	BluDeviceConnectionTimeoutError,
 	BluDeviceConstructionError,
@@ -77,6 +79,11 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * @readonly
 	 */
 	readonly #gattOperationQueue = new BluGATTOperationQueue()
+
+	/**
+	 * A controller that controls advertisement watching.
+	 */
+	#watchAdvertisementsController = new AbortController()
 
 	/**
 	 * Will the device disconnect shortly?
@@ -307,6 +314,76 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 		}
 
 		this.#willDisconnect = false
+	}
+
+	/**
+	 * ⚠️ Start reporting advertisements.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `watchAdvertisements()` for details. Makes the device start emitting
+	 *  {@link BluDeviceEvents.advertised | `advertised`} events.
+	 * @throws A {@link BluEnvironmentError} when reporting advertisements is
+	 *  not supported by the current environment.
+	 * @throws A {@link BluDeviceAdvertisementReportingError} when something went wrong.
+	 * @sealed
+	 */
+	async startReportingAdvertisements() {
+		if (typeof this._bluetoothDevice.watchAdvertisements !== "function") {
+			throw new BluEnvironmentError("Advertisement reporting")
+		}
+
+		try {
+			this.#watchAdvertisementsController = new AbortController()
+
+			await this._bluetoothDevice.watchAdvertisements({
+				signal: this.#watchAdvertisementsController.signal,
+			})
+
+			this._bluetoothDevice.onadvertisementreceived = (
+				event: BluetoothAdvertisingEvent,
+			) => {
+				this.emit(
+					"advertised",
+					new BluDeviceAdvertisement(
+						event,
+						this.constructor as typeof BluDevice,
+					),
+				)
+			}
+		} catch (error) {
+			throw new BluDeviceAdvertisementReportingError(
+				this,
+				"Could not start reporting advertisements.",
+				error,
+			)
+		}
+	}
+
+	/**
+	 * ⚠️ Stop reporting advertisements.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `watchAdvertisements()` for details. Makes the device stop emitting
+	 *  {@link BluDeviceEvents.advertised | `advertised`} events.
+	 * @throws A {@link BluDeviceOperationError} when the device is not
+	 *  reporting advertisements.
+	 * @sealed
+	 */
+	stopReportingAdvertisements() {
+		if (
+			!this._bluetoothDevice.watchingAdvertisements ||
+			this.#watchAdvertisementsController.signal.aborted === true
+		) {
+			throw new BluDeviceOperationError(
+				this,
+				"Cannot stop reporting advertisements on a device that is " +
+					"not reporting advertisements.",
+			)
+		}
+
+		this.#watchAdvertisementsController.abort()
 	}
 
 	/**
@@ -663,6 +740,17 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
  * @public
  */
 export interface BluDeviceEvents extends BluEvents {
+	/**
+	 * ⚠️ An advertisement has been received from the device.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `watchAdvertisements()` for details.
+	 * @param advertisement - The advertisement.
+	 * @eventProperty
+	 */
+	advertised: (advertisement: BluDeviceAdvertisement) => void
+
 	/**
 	 * The device has been connected.
 	 * @eventProperty

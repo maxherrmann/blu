@@ -248,6 +248,12 @@ export class BluDeviceProtocolDiscoveryError extends BluDeviceError {}
  */
 export class BluDeviceProtocolMatchingError extends BluDeviceError {}
 
+/**
+ * Device advertisement reporting error.
+ * @sealed
+ * @public
+ */
+export class BluDeviceAdvertisementReportingError extends BluDeviceError {}
 
 // GATTOperationQueue
 
