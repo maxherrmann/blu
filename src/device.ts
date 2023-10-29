@@ -62,7 +62,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	readonly services: BluService[] = []
 
 	/**
-	 * The device's underlying {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API} object.
+	 * The device's underlying
+	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
+	 * object.
 	 * @readonly
 	 * @sealed
 	 */
@@ -71,8 +73,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	/**
 	 * The device's GATT operation queue.
 	 * @remarks Used to prevent simultaneous GATT operations by queueing them.
+	 * @readonly
 	 */
-	#gattOperationQueue = new BluGATTOperationQueue()
+	readonly #gattOperationQueue = new BluGATTOperationQueue()
 
 	/**
 	 * Will the device disconnect shortly?
@@ -82,7 +85,8 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 	/**
 	 * Construct a Bluetooth device.
-	 * @param bluetoothDevice - The device's object from the {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothDevice - The device's object from the
+	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
 	 */
 	constructor(bluetoothDevice: BluetoothDevice) {
 		super()
@@ -102,7 +106,8 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 			)
 		) {
 			throw new BluDeviceConstructionError(
-				`Your configured "Device.protocol" is invalid. ` +
+				this,
+				`The device's protocol description is invalid. ` +
 					`It must be an array of instances of "ServiceDescription".`,
 			)
 		}

@@ -41,7 +41,9 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	readonly responseType = BluResponse
 
 	/**
-	 * The descriptor's underlying {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API} object.
+	 * The descriptor's underlying
+	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
+	 * object.
 	 * @readonly
 	 * @sealed
 	 */
@@ -51,7 +53,8 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	 * Construct a Bluetooth descriptor.
 	 * @param characteristic - The characteristic associated with this
 	 *  descriptor.
-	 * @param bluetoothDescriptor - The descriptor's object from the {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothDescriptor - The descriptor's object from the
+	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
 	 * @param description - The descriptor's description.
 	 */
 	constructor({

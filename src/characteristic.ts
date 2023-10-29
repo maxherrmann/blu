@@ -59,7 +59,9 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	readonly responseType = BluResponse
 
 	/**
-	 * The characteristic's underlying {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API} object.
+	 * The characteristic's underlying
+	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
+	 * object.
 	 * @readonly
 	 * @sealed
 	 */
@@ -68,7 +70,8 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	/**
 	 * Construct a Bluetooth characteristic.
 	 * @param service - The service associated with this characteristic.
-	 * @param bluetoothCharacteristic - The characteristic's object from the {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothCharacteristic - The characteristic's object from the
+	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
 	 * @param description - The characteristic's description.
 	 */
 	constructor({
