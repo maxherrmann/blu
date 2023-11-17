@@ -37,21 +37,21 @@
 		"update:auto": "ncu -u -t semver --dep prod && ncu -u --dep dev && git add package*.json && git commit -m \"Update dependencies\""
 	},
 	"devDependencies": {
-		"@microsoft/api-documenter": "^7.23.9",
-		"@microsoft/api-extractor": "^7.38.0",
+		"@microsoft/api-documenter": "^7.23.12",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@microsoft/tsdoc-config": "^0.16.2",
-		"@typescript-eslint/eslint-plugin": "^6.9.0",
-		"@typescript-eslint/parser": "^6.9.0",
+		"@typescript-eslint/eslint-plugin": "^6.11.0",
+		"@typescript-eslint/parser": "^6.11.0",
 		"css-loader": "^6.8.1",
 		"css-minimizer-webpack-plugin": "^5.0.1",
 		"eslint-config-prettier": "^9.0.0",
 		"eslint-plugin-tsdoc": "^0.2.17",
-		"eslint": "^8.52.0",
-		"html-bundler-webpack-plugin": "^2.15.1",
+		"eslint": "^8.53.0",
+		"html-bundler-webpack-plugin": "^3.0.3",
 		"npm-check-updates": "^16.14.6",
-		"prettier": "^3.0.3",
+		"prettier": "^3.1.0",
 		"terser-webpack-plugin": "^5.3.9",
-		"ts-loader": "^9.5.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "^5.2.2",
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "^4.15.1",
@@ -59,7 +59,7 @@
 		"zod": "^3.22.4"
 	},
 	"dependencies": {
-		"@types/web-bluetooth": "^0.0.19",
+		"@types/web-bluetooth": "^0.0.20",
 		"typed-emitter": "^2.1.0"
 	}
 }
