@@ -80,35 +80,7 @@ export interface BluConfigurationOptions {
 	 * @defaultValue A configuration that instructs the device scanner to scan
 	 *  for all devices.
 	 */
-	scannerConfig?:
-		| {
-				filters: {
-					name?: string | undefined
-					namePrefix?: string | undefined
-					services?: (string | number)[] | undefined
-					manufacturerData?:
-						| {
-								companyIdentifier: number
-								dataPrefix?: BufferSource | undefined
-								mask?: BufferSource | undefined
-						  }[]
-						| undefined
-					serviceData?:
-						| {
-								service: string | number
-								dataPrefix?: BufferSource | undefined
-								mask?: BufferSource | undefined
-						  }[]
-						| undefined
-				}[]
-				optionalServices?: (string | number)[] | undefined
-				optionalManufacturerData?: number[] | undefined
-		  }
-		| {
-				acceptAllDevices: boolean
-				optionalServices?: (string | number)[] | undefined
-				optionalManufacturerData?: number[] | undefined
-		  }
+	scannerConfig?: RequestDeviceOptions
 
 	/**
 	 * A device type.

@@ -37,16 +37,39 @@ export class BluError extends Error {
 // Characteristic
 
 /**
+ * Characteristic error.
+ * @public
+ */
+export class BluCharacteristicError extends BluError {
+	/**
+	 * The characteristic that this error belongs to.
+	 */
+	readonly characteristic: BluCharacteristic
+
+	/**
+	 * Construct a characteristic error.
+	 * @param characteristic - The characteristic that this error belongs to.
+	 * @param message - The error message.
+	 * @param underlyingErrors - A collection of any underlying
+	 *  errors.
+	 */
+	constructor(
+		characteristic: BluCharacteristic,
+		message: string,
+		...underlyingErrors: unknown[]
+	) {
+		super(message, ...underlyingErrors)
+
+		this.characteristic = characteristic
+	}
+}
+
+/**
  * Characteristic operation error.
  * @sealed
  * @public
  */
-export class BluCharacteristicOperationError extends BluError {
-	/**
-	 * The characteristic that threw the error.
-	 */
-	readonly characteristic: BluCharacteristic
-
+export class BluCharacteristicOperationError extends BluCharacteristicError {
 	/**
 	 * Construct a characteristic operation error.
 	 * @param characteristic - The characteristic that throws the error.
@@ -60,13 +83,12 @@ export class BluCharacteristicOperationError extends BluError {
 		...underlyingErrors: unknown[]
 	) {
 		super(
+			characteristic,
 			`${characteristic.service.device.name} \u2192 ` +
 				`${characteristic.service.description.name} \u2192 ` +
 				`${characteristic.description.name}: ${message}`,
 			...underlyingErrors,
 		)
-
-		this.characteristic = characteristic
 	}
 }
 
@@ -98,16 +120,39 @@ export class BluDescriptionConstructionError extends BluError {}
 // Descriptor
 
 /**
- * Description operation error.
+ * Descriptor error.
+ * @public
+ */
+export class BluDescriptorError extends BluError {
+	/**
+	 * The descriptor that this error belongs to.
+	 */
+	readonly descriptor: BluDescriptor
+
+	/**
+	 * Construct a descriptor error.
+	 * @param descriptor - The descriptor that this error belongs to.
+	 * @param message - The error message.
+	 * @param underlyingErrors - A collection of any underlying
+	 *  errors.
+	 */
+	constructor(
+		descriptor: BluDescriptor,
+		message: string,
+		...underlyingErrors: unknown[]
+	) {
+		super(message, ...underlyingErrors)
+
+		this.descriptor = descriptor
+	}
+}
+
+/**
+ * Descriptor operation error.
  * @sealed
  * @public
  */
-export class BluDescriptorOperationError extends BluError {
-	/**
-	 * The descriptor that threw the error.
-	 */
-	descriptor: BluDescriptor
-
+export class BluDescriptorOperationError extends BluDescriptorError {
 	/**
 	 * Construct a descriptor operation error.
 	 * @param descriptor - The descriptor that throws the error.
@@ -121,148 +166,94 @@ export class BluDescriptorOperationError extends BluError {
 		...underlyingErrors: unknown[]
 	) {
 		super(
+			descriptor,
 			`${descriptor.characteristic.service.device.name} \u2192 ` +
 				`${descriptor.characteristic.service.description.name} \u2192 ` +
 				`${descriptor.characteristic.description.name} \u2192 ` +
 				`${descriptor.description.name}: ${message}`,
 			...underlyingErrors,
 		)
-
-		this.descriptor = descriptor
 	}
 }
 
 // Device
 
 /**
+ * Device error.
+ * @public
+ */
+export class BluDeviceError extends BluError {
+	/**
+	 * The device that this error belongs to.
+	 */
+	device: BluDevice
+
+	/**
+	 * Construct a device error.
+	 * @param device - The device that the error belongs to.
+	 * @param message - The error message.
+	 * @param underlyingErrors - A collection of any underlying
+	 *  errors.
+	 */
+	constructor(
+		device: BluDevice,
+		message: string,
+		...underlyingErrors: unknown[]
+	) {
+		super(`${device.name}: ${message}`, ...underlyingErrors)
+
+		this.device = device
+	}
+}
+
+/**
  * Device construction error.
  * @sealed
  * @public
  */
-export class BluDeviceConstructionError extends BluError {}
+export class BluDeviceConstructionError extends BluDeviceError {}
 
 /**
  * Device operation error.
  * @sealed
  * @public
  */
-export class DeviceOperationError extends BluError {
-	/**
-	 * The device that threw the error.
-	 */
-	device: BluDevice
-
-	/**
-	 * Construct a device operation error.
-	 * @param device - The device that throws the error.
-	 * @param message - The error message.
-	 * @param underlyingErrors - A collection of any underlying
-	 *  errors.
-	 */
-	constructor(
-		device: BluDevice,
-		message: string,
-		...underlyingErrors: unknown[]
-	) {
-		super(`${device.name}: ${message}`, ...underlyingErrors)
-
-		this.device = device
-	}
-}
+export class BluDeviceOperationError extends BluDeviceError {}
 
 /**
  * Device connection error.
  * @sealed
  * @public
  */
-export class BluDeviceConnectionError extends BluError {
-	/**
-	 * The device that threw the error.
-	 */
-	device: BluDevice
-
-	/**
-	 * Construct a device connection error.
-	 * @param device - The device that throws the error.
-	 * @param message - The error message.
-	 * @param underlyingErrors - A collection of any underlying
-	 *  errors.
-	 */
-	constructor(
-		device: BluDevice,
-		message: string,
-		...underlyingErrors: unknown[]
-	) {
-		super(`${device.name}: ${message}`, ...underlyingErrors)
-
-		this.device = device
-	}
-}
+export class BluDeviceConnectionError extends BluDeviceError {}
 
 /**
  * Device connection timeout error.
  * @sealed
  * @public
  */
-export class BluDeviceConnectionTimeoutError extends BluError {}
+export class BluDeviceConnectionTimeoutError extends BluDeviceError {}
 
 /**
  * Device protocol discovery error.
  * @sealed
  * @public
  */
-export class BluDeviceProtocolDiscoveryError extends BluError {
-	/**
-	 * The device that threw the error.
-	 */
-	device: BluDevice
-
-	/**
-	 * Construct a device protocol discovery error.
-	 * @param device - The device that throws the error.
-	 * @param message - The error message.
-	 * @param underlyingErrors - A collection of any underlying
-	 *  errors.
-	 */
-	constructor(
-		device: BluDevice,
-		message: string,
-		...underlyingErrors: unknown[]
-	) {
-		super(`${device.name}: ${message}`, ...underlyingErrors)
-
-		this.device = device
-	}
-}
+export class BluDeviceProtocolDiscoveryError extends BluDeviceError {}
 
 /**
  * Device protocol matching error.
  * @sealed
  * @public
  */
-export class BluDeviceProtocolMatchingError extends BluError {
-	/**
-	 * The device that threw the error.
-	 */
-	device: BluDevice
+export class BluDeviceProtocolMatchingError extends BluDeviceError {}
 
-	/**
-	 * Construct a device protocol matching error.
-	 * @param device - The device that throws the error.
-	 * @param message - The error message.
-	 * @param underlyingErrors - A collection of any underlying
-	 *  errors.
-	 */
-	constructor(
-		device: BluDevice,
-		message: string,
-		...underlyingErrors: unknown[]
-	) {
-		super(`${device.name}: ${message}`, ...underlyingErrors)
-
-		this.device = device
-	}
-}
+/**
+ * Device advertisement reporting error.
+ * @sealed
+ * @public
+ */
+export class BluDeviceAdvertisementReportingError extends BluDeviceError {}
 
 // GATTOperationQueue
 
@@ -315,3 +306,16 @@ export class BluResponseConstructionError extends BluError {}
  * @public
  */
 export class BluScannerError extends BluError {}
+
+// Environment
+
+/**
+ * Environment error.
+ * @sealed
+ * @public
+ */
+export class BluEnvironmentError extends BluError {
+	constructor(feature: string) {
+		super(`${feature} is not supported by the current environment.`)
+	}
+}

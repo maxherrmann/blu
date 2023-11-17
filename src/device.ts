@@ -7,15 +7,18 @@ import {
 	BluServiceDescription,
 } from "./descriptions"
 import BluDescriptor from "./descriptor"
+import BluDeviceAdvertisement from "./deviceAdvertisement"
 import {
+	BluDeviceAdvertisementReportingError,
 	BluDeviceConnectionError,
 	BluDeviceConnectionTimeoutError,
 	BluDeviceConstructionError,
+	BluDeviceOperationError,
 	BluDeviceProtocolDiscoveryError,
 	BluDeviceProtocolMatchingError,
+	BluEnvironmentError,
 	BluGATTOperationError,
 	BluGATTOperationQueueError,
-	DeviceOperationError,
 } from "./errors"
 import { BluEventEmitter, BluEvents } from "./eventEmitter"
 import BluGATTOperationQueue from "./gattOperationQueue"
@@ -62,7 +65,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	readonly services: BluService[] = []
 
 	/**
-	 * The device's underlying {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API} object.
+	 * The device's underlying
+	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
+	 * object.
 	 * @readonly
 	 * @sealed
 	 */
@@ -71,8 +76,14 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	/**
 	 * The device's GATT operation queue.
 	 * @remarks Used to prevent simultaneous GATT operations by queueing them.
+	 * @readonly
 	 */
-	#gattOperationQueue = new BluGATTOperationQueue()
+	readonly #gattOperationQueue = new BluGATTOperationQueue()
+
+	/**
+	 * A controller that controls advertisement watching.
+	 */
+	#watchAdvertisementsController = new AbortController()
 
 	/**
 	 * Will the device disconnect shortly?
@@ -82,13 +93,15 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 	/**
 	 * Construct a Bluetooth device.
-	 * @param bluetoothDevice - The device's object from the {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothDevice - The device's object from the
+	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
 	 */
 	constructor(bluetoothDevice: BluetoothDevice) {
 		super()
 
 		if (!bluetoothDevice.gatt) {
 			throw new BluDeviceConstructionError(
+				this,
 				`Argument "bluetoothDevice" must be an instance of ` +
 					`"BluetoothDevice".`,
 				"GATT server not available.",
@@ -102,7 +115,8 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 			)
 		) {
 			throw new BluDeviceConstructionError(
-				`Your configured "Device.protocol" is invalid. ` +
+				this,
+				`The device's protocol description is invalid. ` +
 					`It must be an array of instances of "ServiceDescription".`,
 			)
 		}
@@ -151,7 +165,11 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * @sealed
 	 */
 	get isConnected() {
-		return this._bluetoothDevice.gatt!.connected
+		if (this._bluetoothDevice.gatt === undefined) {
+			return false
+		}
+
+		return this._bluetoothDevice.gatt.connected
 	}
 
 	/**
@@ -172,31 +190,28 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  protocol. Connection may time out, depending on the active
 	 *  {@link configuration}
 	 *  (see {@link BluConfigurationOptions.deviceConnectionTimeout | `deviceConnectionTimeout` option}).
-	 * @throws A {@link DeviceOperationError} when connecting is not possible.
 	 * @throws A {@link BluDeviceConnectionError} when the connection attempt
 	 *  failed.
 	 * @sealed
 	 */
 	async connect() {
 		return new Promise<void>((resolve, reject) => {
-			if (this.isConnected) {
-				reject(
-					new DeviceOperationError(
-						this,
-						"Cannot connect a device that is already connected.",
-					),
-				)
-
-				return
-			}
-
 			const timeout = configuration.options.deviceConnectionTimeout
 			let timeoutTimer: NodeJS.Timeout
 			let isTimeoutReached = false
 
 			const rejectWithError = (error: unknown) => {
-				if (isTimeoutReached) {
-					return
+				try {
+					this._bluetoothDevice.ongattserverdisconnected =
+						// eslint-disable-next-line @typescript-eslint/no-empty-function
+						() => {}
+
+					if (this.isConnected) {
+						this.disconnect()
+					}
+				} catch {
+					// Ignore potential errors, as device is in an unknown state
+					// and will be discarded anyways.
 				}
 
 				clearTimeout(timeoutTimer)
@@ -212,19 +227,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
-					try {
-						this._bluetoothDevice.ongattserverdisconnected =
-							// eslint-disable-next-line @typescript-eslint/no-empty-function
-							() => {}
-
-						this.disconnect()
-					} catch {
-						// Ignore potential errors, as device is in unknown
-						// state and will be discarded anyways.
-					}
-
 					rejectWithError(
 						new BluDeviceConnectionTimeoutError(
+							this,
 							`Connection attempt timed out after ${timeout} ms.`,
 						),
 					)
@@ -280,7 +285,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 	/**
 	 * Disconnect the device.
-	 * @throws A {@link DeviceOperationError} when disconnecting is not
+	 * @throws A {@link BluDeviceOperationError} when disconnecting is not
 	 *  possible.
 	 * @throws A {@link BluDeviceConnectionError} when the disconnection attempt
 	 *  failed.
@@ -288,7 +293,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 */
 	disconnect() {
 		if (!this.isConnected) {
-			throw new DeviceOperationError(
+			throw new BluDeviceOperationError(
 				this,
 				"Cannot disconnect a device that is not connected.",
 			)
@@ -309,6 +314,76 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 		}
 
 		this.#willDisconnect = false
+	}
+
+	/**
+	 * ⚠️ Start reporting advertisements.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `watchAdvertisements()` for details. Makes the device start emitting
+	 *  {@link BluDeviceEvents.advertised | `advertised`} events.
+	 * @throws A {@link BluEnvironmentError} when reporting advertisements is
+	 *  not supported by the current environment.
+	 * @throws A {@link BluDeviceAdvertisementReportingError} when something went wrong.
+	 * @sealed
+	 */
+	async startReportingAdvertisements() {
+		if (typeof this._bluetoothDevice.watchAdvertisements !== "function") {
+			throw new BluEnvironmentError("Advertisement reporting")
+		}
+
+		try {
+			this.#watchAdvertisementsController = new AbortController()
+
+			await this._bluetoothDevice.watchAdvertisements({
+				signal: this.#watchAdvertisementsController.signal,
+			})
+
+			this._bluetoothDevice.onadvertisementreceived = (
+				event: BluetoothAdvertisingEvent,
+			) => {
+				this.emit(
+					"advertised",
+					new BluDeviceAdvertisement(
+						event,
+						this.constructor as typeof BluDevice,
+					),
+				)
+			}
+		} catch (error) {
+			throw new BluDeviceAdvertisementReportingError(
+				this,
+				"Could not start reporting advertisements.",
+				error,
+			)
+		}
+	}
+
+	/**
+	 * ⚠️ Stop reporting advertisements.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `watchAdvertisements()` for details. Makes the device stop emitting
+	 *  {@link BluDeviceEvents.advertised | `advertised`} events.
+	 * @throws A {@link BluDeviceOperationError} when the device is not
+	 *  reporting advertisements.
+	 * @sealed
+	 */
+	stopReportingAdvertisements() {
+		if (
+			!this._bluetoothDevice.watchingAdvertisements ||
+			this.#watchAdvertisementsController.signal.aborted === true
+		) {
+			throw new BluDeviceOperationError(
+				this,
+				"Cannot stop reporting advertisements on a device that is " +
+					"not reporting advertisements.",
+			)
+		}
+
+		this.#watchAdvertisementsController.abort()
 	}
 
 	/**
@@ -349,6 +424,15 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 		try {
 			let protocolIncomplete = false
 			let characteristicPropertyMismatch = false
+
+			if (!this.isConnected) {
+				// Sometimes GATT server is reported as disconnected at this
+				// point. If that is the case, we try to reconnect first.
+				await this._bluetoothDevice.gatt!.connect()
+			}
+
+			// Clear services.
+			this.services.length = 0
 
 			// Discover described services.
 
@@ -656,6 +740,17 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
  * @public
  */
 export interface BluDeviceEvents extends BluEvents {
+	/**
+	 * ⚠️ An advertisement has been received from the device.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `watchAdvertisements()` for details.
+	 * @param advertisement - The advertisement.
+	 * @eventProperty
+	 */
+	advertised: (advertisement: BluDeviceAdvertisement) => void
+
 	/**
 	 * The device has been connected.
 	 * @eventProperty
