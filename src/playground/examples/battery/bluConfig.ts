@@ -33,7 +33,7 @@ export class BatteryDevice extends BluDevice {
 	}
 }
 
-const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
+const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"] = {
 	acceptAllDevices: true,
 	optionalServices: BatteryDevice.protocol.map(
 		serviceDescription => serviceDescription.uuid,
@@ -41,7 +41,7 @@ const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
 }
 
 export default {
-	scannerConfig: scannerConfig,
+	deviceScannerConfig: deviceScannerConfig,
 	deviceType: BatteryDevice,
 	deviceConnectionTimeout: 10000,
 } as BluConfigurationOptions

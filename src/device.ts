@@ -325,7 +325,8 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  {@link BluDeviceEvents.advertised | `advertised`} events.
 	 * @throws A {@link BluEnvironmentError} when reporting advertisements is
 	 *  not supported by the current environment.
-	 * @throws A {@link BluDeviceAdvertisementReportingError} when something went wrong.
+	 * @throws A {@link BluDeviceAdvertisementReportingError} when something
+	 *  went wrong.
 	 * @sealed
 	 */
 	async startReportingAdvertisements() {

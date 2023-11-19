@@ -6,6 +6,7 @@ import isSubclassOrSelf from "./utils/isSubclassOrSelf"
 
 import type BluCharacteristic from "./characteristic"
 import type { BluProtocolDescription } from "./descriptions"
+import type BluScanner from "./scanner"
 
 /**
  * Configuration for Blu.
@@ -35,6 +36,10 @@ export class BluConfiguration {
 	set(options: BluConfigurationOptions) {
 		try {
 			options = configurationOptionsGuard.parse(options)
+
+			if (!options.deviceScannerConfig && options.scannerConfig) {
+				options.deviceScannerConfig = options.scannerConfig
+			}
 		} catch (error) {
 			if (error instanceof Error) {
 				error.name = "BluParseError"
@@ -74,16 +79,27 @@ export class BluConfiguration {
  */
 export interface BluConfigurationOptions {
 	/**
-	 * A device scanner configuration.
-	 * @remarks You can find an explanation for each property in the
-	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#parameters | MDN documentation}.
-	 * @defaultValue A configuration that instructs the device scanner to scan
-	 *  for all devices.
+	 * The advertisement scanner configuration.
+	 * @remarks Only relevant when you intend to use the experimental
+	 *  {@link BluScanner.startScanningForAdvertisements} function.
+	 *  You can find an explanation for each property in the
+	 *  {@link https://webbluetoothcg.github.io/web-bluetooth/scanning.html#scanning | Web Bluetooth Scanning draft}.
+	 * @defaultValue A configuration that instructs the scanner to scan
+	 *  for all advertisements.
 	 */
-	scannerConfig?: RequestDeviceOptions
+	advertisementScannerConfig?: BluetoothLEScanOptions
 
 	/**
-	 * A device type.
+	 * The device scanner configuration.
+	 * @remarks You can find an explanation for each property in the
+	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#parameters | MDN documentation}.
+	 * @defaultValue A configuration that instructs the scanner to scan for all
+	 *  devices.
+	 */
+	deviceScannerConfig?: RequestDeviceOptions
+
+	/**
+	 * The device type.
 	 * @remarks Will be used to construct device objects for newly scanned
 	 *  devices.
 	 * @defaultValue {@link BluDevice} itself.
@@ -91,7 +107,7 @@ export interface BluConfigurationOptions {
 	deviceType?: typeof BluDevice
 
 	/**
-	 * A device protocol matching type.
+	 * The device protocol matching type.
 	 * @remarks Will be evaluated during protocol discovery, when connecting new
 	 *  devices. Instructs Blu how to handle discrepancies between the expected
 	 *  and actual Bluetooth protocols of devices when trying to connect them.
@@ -162,81 +178,110 @@ export interface BluConfigurationOptions {
 	 * @defaultValue `false`
 	 */
 	dataTransferLogging?: boolean
+
+	// Deprecated
+
+	/**
+	 * @deprecated Please use
+	 *  {@link BluConfigurationOptions.deviceScannerConfig} instead.
+	 */
+	scannerConfig?: RequestDeviceOptions
 }
 
 /**
  * Default configuration options for Blu.
  */
 const defaultOptions: Required<BluConfigurationOptions> = {
-	scannerConfig: { acceptAllDevices: true },
+	advertisementScannerConfig: { acceptAllAdvertisements: true },
+	deviceScannerConfig: { acceptAllDevices: true },
 	deviceType: BluDevice,
 	deviceProtocolMatching: "default",
 	deviceConnectionTimeout: false,
 	autoEnableNotifications: true,
 	dataTransferLogging: false,
+
+	// Deprecated
+
+	scannerConfig: { acceptAllDevices: true },
 }
+
+/**
+ * A zod guard for `BluetoothServiceUUID`.
+ */
+const bluetoothServiceUUIDGuard = z.string().or(z.number())
+
+/**
+ * A zod guard for `BluetoothDataFilter`.
+ */
+const bluetoothDataFilterGuard = z.object({
+	dataPrefix: z.custom<BufferSource>(x => isBufferSource(x)).optional(),
+	mask: z.custom<BufferSource>(x => isBufferSource(x)).optional(),
+})
+
+/**
+ * A zod guard for `BluetoothManufacturerDataFilter`.
+ */
+const bluetoothManufacturerDataFilterGuard = bluetoothDataFilterGuard.extend({
+	companyIdentifier: z.number(),
+})
+
+/**
+ * A zod guard for `BluetoothServiceDataFilter`.
+ */
+const bluetoothServiceDataFilterGuard = bluetoothDataFilterGuard.extend({
+	service: bluetoothServiceUUIDGuard,
+})
+
+/**
+ * A zod guard for `BluetoothLEScanFilter`.
+ */
+const bluetoothLEScanFilterGuard = z.object({
+	name: z.string().optional(),
+	namePrefix: z.string().optional(),
+	services: z.array(z.string().or(z.number())).optional(),
+	manufacturerData: z.array(bluetoothManufacturerDataFilterGuard).optional(),
+	serviceData: z.array(bluetoothServiceDataFilterGuard).optional(),
+})
+
+/**
+ * A zod guard for `RequestDeviceOptions`.
+ */
+const requestDeviceOptionsGuard = z
+	.object({
+		filters: z.array(bluetoothLEScanFilterGuard),
+		optionalServices: z.array(bluetoothServiceUUIDGuard).optional(),
+		optionalManufacturerData: z.array(z.number()).optional(),
+	})
+	.or(
+		z.object({
+			acceptAllDevices: z.boolean(),
+			optionalServices: z.array(bluetoothServiceUUIDGuard).optional(),
+			optionalManufacturerData: z.array(z.number()).optional(),
+		}),
+	)
+
+/**
+ * A zod guard for `BluetoothLEScanOptions`.
+ */
+const bluetoothLEScanOptionsGuard = z
+	.object({
+		filters: z.array(bluetoothLEScanFilterGuard),
+		keepRepeatedDevices: z.boolean().optional(),
+	})
+	.or(
+		z.object({
+			acceptAllAdvertisements: z.boolean(),
+			keepRepeatedDevices: z.boolean().optional(),
+		}),
+	)
 
 /**
  * A zod guard for configuration options.
  */
 const configurationOptionsGuard = z
 	.object({
-		scannerConfig: z
-			.object({
-				filters: z.array(
-					z.object({
-						name: z.string().optional(),
-						namePrefix: z.string().optional(),
-						services: z.array(z.string().or(z.number())).optional(),
-						manufacturerData: z
-							.array(
-								z.object({
-									dataPrefix: z
-										.custom<BufferSource>(x =>
-											isBufferSource(x),
-										)
-										.optional(),
-									mask: z
-										.custom<BufferSource>(x =>
-											isBufferSource(x),
-										)
-										.optional(),
-									companyIdentifier: z.number(),
-								}),
-							)
-							.optional(),
-						serviceData: z
-							.array(
-								z.object({
-									dataPrefix: z
-										.custom<BufferSource>(x =>
-											isBufferSource(x),
-										)
-										.optional(),
-									mask: z
-										.custom<BufferSource>(x =>
-											isBufferSource(x),
-										)
-										.optional(),
-									service: z.string().or(z.number()),
-								}),
-							)
-							.optional(),
-					}),
-				),
-				optionalServices: z.array(z.string().or(z.number())).optional(),
-				optionalManufacturerData: z.array(z.number()).optional(),
-			})
-			.or(
-				z.object({
-					acceptAllDevices: z.boolean(),
-					optionalServices: z
-						.array(z.string().or(z.number()))
-						.optional(),
-					optionalManufacturerData: z.array(z.number()).optional(),
-				}),
-			)
-			.optional(),
+		advertisementScannerConfig: bluetoothLEScanOptionsGuard.optional(),
+		deviceScannerConfig: requestDeviceOptionsGuard.optional(),
 		deviceType: z
 			.custom<typeof BluDevice>(x => isSubclassOrSelf(x, BluDevice))
 			.optional(),
@@ -250,6 +295,10 @@ const configurationOptionsGuard = z
 		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
 		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
 		dataTransferLogging: z.boolean().optional(),
+
+		// Depreacted
+
+		scannerConfig: requestDeviceOptionsGuard.optional(),
 	})
 	.strict()
 
@@ -260,7 +309,9 @@ const configurationOptionsGuard = z
  *
  *  **Default configuration**
  *
- *  - `scannerConfig`: `{ acceptAllDevices: true }`
+ *  - `advertisementScannerConfig`: `{ acceptAllAdvertisements: true }`
+ *
+ *  - `deviceScannerConfig`: `{ acceptAllDevices: true }`
  *
  *  - `deviceType`: {@link BluDevice}
  *

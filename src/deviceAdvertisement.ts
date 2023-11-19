@@ -16,19 +16,21 @@ export default class BluDeviceAdvertisement {
 
 	/**
 	 * The type of device this advertisement belongs to.
+	 * @remarks `undefined` when it is a generic device.
 	 * @readonly
 	 */
-	readonly #deviceType: typeof BluDevice
+	readonly #deviceType?: typeof BluDevice
 
 	/**
 	 * Construct a Bluetooth device advertisement.
 	 * @param bluetoothAdvertisement - The advertising event object from the
 	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
 	 * @param deviceType - The type of device this advertisement belongs to.
+	 *  `undefined` when it is a generic device.
 	 */
 	constructor(
 		bluetoothAdvertisement: BluetoothAdvertisingEvent,
-		deviceType: typeof BluDevice,
+		deviceType?: typeof BluDevice,
 	) {
 		this._bluetoothAdvertisement = bluetoothAdvertisement
 		this.#deviceType = deviceType
@@ -56,6 +58,10 @@ export default class BluDeviceAdvertisement {
 	 * The device this advertisement belongs to.
 	 */
 	get device() {
+		if (!this.#deviceType) {
+			return this._bluetoothAdvertisement.device
+		}
+
 		return new this.#deviceType(this._bluetoothAdvertisement.device)
 	}
 

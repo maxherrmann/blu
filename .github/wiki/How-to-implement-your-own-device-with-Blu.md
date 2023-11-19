@@ -133,14 +133,14 @@ The most important and thus also required part of a protocol description is the 
 
 ### Create the scanner configuration
 
-Stay within the `bluConfig.ts` file for now and adjust the exported `scannerConfig`. We need to make sure that your browser is able to discover, i.e. scan, a device of your type, as well as filter all other unrelated devices that may be located in your vicinity. Here's an example on how to do that:
+Stay within the `bluConfig.ts` file for now and adjust the exported `deviceScannerConfig`. We need to make sure that your browser is able to discover, i.e. scan, a device of your type, as well as filter all other unrelated devices that may be located in your vicinity. Here's an example on how to do that:
 
 ```ts
 // /src/playground/examples/my-device/bluConfig.ts
 
 // ...
 
-const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
+const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"] = {
 	filters: [
 		{ name: "My Device" }, // Only scan for devices with the name "My Device"
 	],
@@ -152,9 +152,9 @@ const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
 // ...
 ```
 
-You can learn more about `scannerConfig` options in the [API reference](https://github.com/maxherrmann/blu/wiki/blu.bluconfigurationoptions.scannerconfig).
+You can learn more about `deviceScannerConfig` options in the [API reference](https://github.com/maxherrmann/blu/wiki/blu.bluconfigurationoptions.deviceScannerConfig).
 
-> Note: If you do not include your device's service UUIDs in the `scannerConfig`, they won't be discoverable and thus be inaccessible when connecting your device.
+> Note: If you do not include your device's service UUIDs in the `deviceScannerConfig`, they won't be discoverable and thus be inaccessible when connecting your device.
 
 ### Implement the device's services and characteristics
 

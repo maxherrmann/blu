@@ -1,7 +1,13 @@
 import bluetooth from "./bluetooth"
 import configuration from "./configuration"
 import BluDevice from "./device"
-import { BluEnvironmentError, BluScannerError } from "./errors"
+import BluDeviceAdvertisement from "./deviceAdvertisement"
+import {
+	BluEnvironmentError,
+	BluScannerError,
+	BluScannerOperationError,
+} from "./errors"
+import { BluEventEmitter, BluEvents } from "./eventEmitter"
 
 import type { BluConfigurationOptions } from "./configuration"
 
@@ -10,13 +16,18 @@ import type { BluConfigurationOptions } from "./configuration"
  * @sealed
  * @public
  */
-export class BluScanner {
+export class BluScanner extends BluEventEmitter<BluScannerEvents> {
+	/**
+	 * An ongoing advertisement scan.
+	 */
+	#advertisementScan?: BluetoothLEScan
+
 	/**
 	 * Get a Bluetooth device.
 	 * @remarks Displays the browser's device chooser to the user, instructing
 	 *  them to pair a device. Filters advertising devices according to the
-	 *  {@link BluConfigurationOptions.scannerConfig | `scannerConfig`} from the
-	 *  active {@link configuration}.
+	 *  {@link BluConfigurationOptions.deviceScannerConfig | `deviceScannerConfig`}
+	 *  from the active {@link configuration}.
 	 * @typeParam DeviceType - The type of the returned device. Defaults to
 	 *  {@link BluDevice}.
 	 * @returns A `Promise` that resolves with the selected
@@ -33,7 +44,7 @@ export class BluScanner {
 
 			const webBluetoothDevice =
 				await globalThis.navigator.bluetooth.requestDevice(
-					configuration.options.scannerConfig,
+					configuration.options.deviceScannerConfig,
 				)
 
 			return new configuration.options.deviceType(
@@ -77,6 +88,87 @@ export class BluScanner {
 			throw new BluScannerError("Could not get paired devices.", error)
 		}
 	}
+
+	/**
+	 * ⚠️ Start scanning for advertisements.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `Advertisements Scanning` for details. Opens a prompt that asks the
+	 *  user for permission to scan for devices. Once the permission has been
+	 *  granted, {@link BluScannerEvents.advertisement | `advertisement`}
+	 *  events will be emitted.
+	 * @throws A {@link BluScannerError} when something went wrong.
+	 * @sealed
+	 */
+	async startScanningForAdvertisements() {
+		try {
+			if (!bluetooth.isSupported) {
+				throw new BluEnvironmentError("Web Bluetooth")
+			}
+
+			if (
+				typeof globalThis.navigator.bluetooth.requestLEScan !==
+				"function"
+			) {
+				throw new BluEnvironmentError("Advertisement scanning")
+			}
+
+			navigator.bluetooth.onadvertisementreceived = (
+				event: BluetoothAdvertisingEvent,
+			) => {
+				this.emit("advertisement", new BluDeviceAdvertisement(event))
+			}
+
+			this.#advertisementScan =
+				await globalThis.navigator.bluetooth.requestLEScan(
+					configuration.options.advertisementScannerConfig,
+				)
+		} catch (error) {
+			throw new BluScannerError(
+				"Could not start scanning for advertisements.",
+				error,
+			)
+		}
+	}
+
+	/**
+	 * ⚠️ Stop scanning for advertisements.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `Advertisements Scanning` for details.
+	 * @throws A {@link BluScannerOperationError} when the scanner is not
+	 *  scanning for advertisements.
+	 * @sealed
+	 */
+	stopScanningForAdvertisements() {
+		if (!this.#advertisementScan) {
+			throw new BluScannerOperationError(
+				"Cannot stop scanning for advertisements when not scanning.",
+			)
+		}
+
+		this.#advertisementScan.stop()
+	}
+}
+
+/**
+ * Scanner events.
+ * @sealed
+ * @public
+ */
+export interface BluScannerEvents extends BluEvents {
+	/**
+	 * ⚠️ An advertisement has been received.
+	 * @remarks Experimental feature. Only supported by some environments. See
+	 *  the
+	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
+	 *  of `Advertisements Scanning` for details.
+	 * @param advertisement - The advertisement.
+	 * @eventProperty
+	 */
+	advertisement: (advertisement: BluDeviceAdvertisement) => void
 }
 
 /**

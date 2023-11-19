@@ -23,12 +23,12 @@ class MyDevice extends BluDevice {
 }
 
 /**
- * Your scanner configuration.
+ * Your device scanner configuration.
  *
  * Used by Blu to identify your device during device scans. This configuration
  * should be as tight as possible to prevent other devices from being scanned.
  */
-const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
+const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"] = {
 	/**
 	 * Accept all devices.
 	 * Should only be used for demonstration purposes.
@@ -47,7 +47,7 @@ const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
  * Your Blu configuration.
  */
 export default {
-	scannerConfig: scannerConfig,
+	deviceScannerConfig: deviceScannerConfig,
 	deviceType: MyDevice,
 	deviceConnectionTimeout: 10000,
 } as BluConfigurationOptions
