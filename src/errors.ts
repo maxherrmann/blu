@@ -307,6 +307,13 @@ export class BluResponseConstructionError extends BluError {}
  */
 export class BluScannerError extends BluError {}
 
+/**
+ * Scanner operation error.
+ * @sealed
+ * @public
+ */
+export class BluScannerOperationError extends BluError {}
+
 // Environment
 
 /**

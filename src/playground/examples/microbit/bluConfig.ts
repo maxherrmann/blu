@@ -210,7 +210,7 @@ export class Microbit extends BluDevice {
 	}
 }
 
-const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
+const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"] = {
 	filters: [
 		{
 			namePrefix: "BBC micro:bit",
@@ -222,7 +222,7 @@ const scannerConfig: BluConfigurationOptions["scannerConfig"] = {
 }
 
 export default {
-	scannerConfig: scannerConfig,
+	deviceScannerConfig: deviceScannerConfig,
 	deviceType: Microbit,
 	deviceProtocolMatching: "off",
 	deviceConnectionTimeout: 10000,
