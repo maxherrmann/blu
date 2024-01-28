@@ -54,7 +54,7 @@ export class BluBluetooth extends BluEventEmitter<BluBluetoothEvents> {
 	 * @readonly
 	 */
 	get isSupported() {
-		return !!globalThis.navigator.bluetooth
+		return !!globalThis?.navigator?.bluetooth
 	}
 
 	/**
