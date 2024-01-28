@@ -21,7 +21,7 @@
 		"noUnusedParameters": true,
 		"outDir": "./build",
 		"paths": {
-			"@blu.js/blu": ["./src/index.ts"]
+			"@blu.js/blu": ["./src/index.ts"],
 		},
 		"pretty": true,
 		"resolveJsonModule": true,
@@ -29,7 +29,7 @@
 		"sourceMap": true,
 		"strict": true,
 		"stripInternal": true,
-		"target": "ESNext"
+		"target": "ESNext",
 	},
-	"include": ["src/**/*.ts", "package.json"]
+	"include": ["src/**/*.ts", "package.json"],
 }

@@ -28,7 +28,7 @@ export default (_env, argv) => {
 							import: "./src/index.ts",
 							filename: "blu.min.js",
 						},
-				  }
+					}
 				: undefined,
 		module: {
 			rules: [
@@ -125,7 +125,7 @@ export default (_env, argv) => {
 						watchFiles: {
 							paths: ["./src"],
 						},
-				  }),
+					}),
 		],
 	}
 }
