@@ -226,6 +226,12 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 				)
 			}
 
+			if (this._bluetoothDevice.gatt === undefined) {
+				rejectWithError("GATT server unavailable.")
+
+				return
+			}
+
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
 					rejectWithError(
@@ -239,8 +245,8 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 				}, timeout)
 			}
 
-			this._bluetoothDevice
-				.gatt!.connect()
+			this._bluetoothDevice.gatt
+				.connect()
 				.then(() => {
 					if (isTimeoutReached) {
 						return
