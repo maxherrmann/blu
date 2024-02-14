@@ -18,12 +18,12 @@ jobs:
 
         steps:
             - name: Checkout changes
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   ref: ${{ github.event.ref }}
 
             - name: Setup Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: "lts/*"
                   registry-url: https://registry.npmjs.org/
@@ -47,7 +47,7 @@ jobs:
                   npm run build
 
             - name: Commit and push changes
-              uses: stefanzweifel/git-auto-commit-action@v4
+              uses: stefanzweifel/git-auto-commit-action@v5
               with:
                   commit_message: "Build ${{ github.event.inputs.versionTag }}"
                   tagging_message: ${{ github.event.inputs.versionTag }}
