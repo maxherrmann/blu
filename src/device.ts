@@ -202,9 +202,10 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 			const rejectWithError = (error: unknown) => {
 				try {
-					this._bluetoothDevice.ongattserverdisconnected =
-						// eslint-disable-next-line @typescript-eslint/no-empty-function
-						() => {}
+					this._bluetoothDevice.removeEventListener(
+						"gattserverdisconnected",
+						this.#onDisconnected.bind(this),
+					)
 
 					if (this.isConnected) {
 						this.disconnect()
@@ -251,10 +252,10 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 								return
 							}
 
-							this._bluetoothDevice.ongattserverdisconnected =
-								() => {
-									this.#onDisconnected()
-								}
+							this._bluetoothDevice.addEventListener(
+								"gattserverdisconnected",
+								this.#onDisconnected.bind(this),
+							)
 
 							try {
 								await this.beforeReady()
