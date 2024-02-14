@@ -36,10 +36,6 @@ export class BluConfiguration {
 	set(options: BluConfigurationOptions) {
 		try {
 			options = configurationOptionsGuard.parse(options)
-
-			if (!options.deviceScannerConfig && options.scannerConfig) {
-				options.deviceScannerConfig = options.scannerConfig
-			}
 		} catch (error) {
 			if (error instanceof Error) {
 				error.name = "BluParseError"
@@ -178,14 +174,6 @@ export interface BluConfigurationOptions {
 	 * @defaultValue `false`
 	 */
 	dataTransferLogging?: boolean
-
-	// Deprecated
-
-	/**
-	 * @deprecated Please use
-	 *  {@link BluConfigurationOptions.deviceScannerConfig} instead.
-	 */
-	scannerConfig?: RequestDeviceOptions
 }
 
 /**
@@ -199,10 +187,6 @@ const defaultOptions: Required<BluConfigurationOptions> = {
 	deviceConnectionTimeout: false,
 	autoEnableNotifications: true,
 	dataTransferLogging: false,
-
-	// Deprecated
-
-	scannerConfig: { acceptAllDevices: true },
 }
 
 /**
@@ -295,10 +279,6 @@ const configurationOptionsGuard = z
 		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
 		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
 		dataTransferLogging: z.boolean().optional(),
-
-		// Depreacted
-
-		scannerConfig: requestDeviceOptionsGuard.optional(),
 	})
 	.strict()
 
