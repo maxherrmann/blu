@@ -27,7 +27,7 @@ export default class BluGATTOperationQueue {
 	 *  the GATT operation or when it timed out.
 	 */
 	async add<ResultType>(callback: () => Promise<ResultType>) {
-		return new Promise((resolve, reject) => {
+		return new Promise<ResultType>((resolve, reject) => {
 			if (typeof callback !== "function") {
 				reject(
 					new BluGATTOperationQueueError(

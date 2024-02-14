@@ -4,6 +4,7 @@ import { BluConfigurationError } from "./errors"
 import isBufferSource from "./utils/isBufferSource"
 import isSubclassOrSelf from "./utils/isSubclassOrSelf"
 
+import type { BluBluetooth } from "./bluetoothInterface"
 import type BluCharacteristic from "./characteristic"
 import type { BluProtocolDescription } from "./descriptions"
 import type BluScanner from "./scanner"
@@ -20,11 +21,24 @@ export class BluConfiguration {
 	#options = defaultOptions
 
 	/**
+	 * Active Bluetooth interface.
+	 */
+	#bluetoothInterface: BluBluetooth = globalThis?.navigator?.bluetooth
+
+	/**
 	 * Active configuration options.
 	 * @readonly
 	 */
 	get options() {
 		return this.#options
+	}
+
+	/**
+	 * Active Bluetooth interface.
+	 * @readonly
+	 */
+	get bluetoothInterface() {
+		return this.#bluetoothInterface
 	}
 
 	/**
@@ -36,10 +50,6 @@ export class BluConfiguration {
 	set(options: BluConfigurationOptions) {
 		try {
 			options = configurationOptionsGuard.parse(options)
-
-			if (!options.deviceScannerConfig && options.scannerConfig) {
-				options.deviceScannerConfig = options.scannerConfig
-			}
 		} catch (error) {
 			if (error instanceof Error) {
 				error.name = "BluParseError"
@@ -55,6 +65,17 @@ export class BluConfiguration {
 			...this.#options,
 			...options,
 		}
+	}
+
+	/**
+	 * Use a different Bluetooth interface.
+	 * @remarks The interface provided will be used for all Bluetooth
+	 *  operations. It can be useful to provide a custom interface for utilizing
+	 *  Web Bluetooth polyfills. This can potentially allow you to use Blu in
+	 *  environments in which Web Bluetooth is not supported by default.
+	 */
+	useBluetoothInterface(bluetoothInterface: BluBluetooth) {
+		this.#bluetoothInterface = bluetoothInterface
 	}
 
 	/**
@@ -178,14 +199,6 @@ export interface BluConfigurationOptions {
 	 * @defaultValue `false`
 	 */
 	dataTransferLogging?: boolean
-
-	// Deprecated
-
-	/**
-	 * @deprecated Please use
-	 *  {@link BluConfigurationOptions.deviceScannerConfig} instead.
-	 */
-	scannerConfig?: RequestDeviceOptions
 }
 
 /**
@@ -199,10 +212,6 @@ const defaultOptions: Required<BluConfigurationOptions> = {
 	deviceConnectionTimeout: false,
 	autoEnableNotifications: true,
 	dataTransferLogging: false,
-
-	// Deprecated
-
-	scannerConfig: { acceptAllDevices: true },
 }
 
 /**
@@ -295,10 +304,6 @@ const configurationOptionsGuard = z
 		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
 		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
 		dataTransferLogging: z.boolean().optional(),
-
-		// Depreacted
-
-		scannerConfig: requestDeviceOptionsGuard.optional(),
 	})
 	.strict()
 
@@ -313,7 +318,7 @@ const configurationOptionsGuard = z
  *
  *  - `deviceScannerConfig`: `{ acceptAllDevices: true }`
  *
- *  - `deviceType`: {@link BluDevice}
+ *  - `deviceType`: {@link BluDevice} itself
  *
  *  - `deviceProtocolMatching`: `"default"`
  *

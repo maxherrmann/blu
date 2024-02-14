@@ -8,6 +8,7 @@ import logger from "./logger"
 import BluResponse from "./response"
 import isBufferSource from "./utils/isBufferSource"
 
+import type { BluBluetoothRemoteGATTDescriptor } from "./bluetoothInterface"
 import type BluCharacteristic from "./characteristic"
 import type { BluDescriptorDescription } from "./descriptions"
 
@@ -41,20 +42,18 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	readonly responseType = BluResponse
 
 	/**
-	 * The descriptor's underlying
-	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
-	 * object.
+	 * The descriptor's underlying Bluetooth interface endpoint.
 	 * @readonly
 	 * @sealed
 	 */
-	readonly _bluetoothDescriptor: BluetoothRemoteGATTDescriptor
+	readonly _bluetoothDescriptor: BluBluetoothRemoteGATTDescriptor
 
 	/**
 	 * Construct a Bluetooth descriptor.
 	 * @param characteristic - The characteristic associated with this
 	 *  descriptor.
-	 * @param bluetoothDescriptor - The descriptor's object from the
-	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothDescriptor - The descriptor's underlying Bluetooth
+	 *  interface endpoint.
 	 * @param description - The descriptor's description.
 	 */
 	constructor({
@@ -63,7 +62,7 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 		description,
 	}: {
 		characteristic: BluCharacteristic
-		bluetoothDescriptor: BluetoothRemoteGATTDescriptor
+		bluetoothDescriptor: BluBluetoothRemoteGATTDescriptor
 		description: BluDescriptorDescription
 	}) {
 		super()

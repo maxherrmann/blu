@@ -1,26 +1,27 @@
+import configuration from "./configuration"
 import { BluEventEmitter, BluEvents } from "./eventEmitter"
 
 import type BluDevice from "./device"
 
 /**
- * Bluetooth handler.
+ * Bluetooth state handler.
  * @sealed
  * @public
  */
-export class BluBluetooth extends BluEventEmitter<BluBluetoothEvents> {
+export class BluBluetoothState extends BluEventEmitter<BluBluetoothStateEvents> {
 	/**
 	 * Collection of connected devices.
 	 */
 	readonly #connectedDevices = new Set<BluDevice>()
 
 	/**
-	 * Construct a Bluetooth handler.
+	 * Construct a Bluetooth state handler.
 	 */
 	constructor() {
 		super()
 
-		if (this.isSupported) {
-			globalThis.navigator.bluetooth.addEventListener(
+		if (this.isSupported()) {
+			configuration.bluetoothInterface.addEventListener(
 				"availabilitychanged",
 				event => {
 					if ((event as AvailabilityChangedEvent).value) {
@@ -50,14 +51,6 @@ export class BluBluetooth extends BluEventEmitter<BluBluetoothEvents> {
 	}
 
 	/**
-	 * Is Bluetooth supported?
-	 * @readonly
-	 */
-	get isSupported() {
-		return !!globalThis?.navigator?.bluetooth
-	}
-
-	/**
 	 * All connected devices.
 	 * @readonly
 	 */
@@ -75,12 +68,19 @@ export class BluBluetooth extends BluEventEmitter<BluBluetoothEvents> {
 	}
 
 	/**
+	 * Is Bluetooth supported?
+	 */
+	isSupported() {
+		return !!configuration.bluetoothInterface
+	}
+
+	/**
 	 * Is Bluetooth available?
 	 * @returns A `Promise` that resolves with the availability.
 	 */
 	async isAvailable() {
-		if (this.isSupported) {
-			return await globalThis.navigator.bluetooth.getAvailability()
+		if (this.isSupported()) {
+			return await configuration.bluetoothInterface.getAvailability()
 		} else {
 			return false
 		}
@@ -88,11 +88,11 @@ export class BluBluetooth extends BluEventEmitter<BluBluetoothEvents> {
 }
 
 /**
- * Bluetooth events.
+ * Bluetooth state events.
  * @sealed
  * @public
  */
-export interface BluBluetoothEvents extends BluEvents {
+export interface BluBluetoothStateEvents extends BluEvents {
 	/**
 	 * Bluetooth has been enabled.
 	 * @eventProperty
@@ -134,9 +134,8 @@ interface AvailabilityChangedEvent extends Event {
 }
 
 /**
- * Blu's global Bluetooth handler.
- * @remarks Handles everything related to the state of Bluetooth.
+ * Blu's global Bluetooth state handler.
  * @public
  */
-const bluetooth = new BluBluetooth()
+const bluetooth = new BluBluetoothState()
 export default bluetooth

@@ -1,5 +1,6 @@
 import { BluEventEmitter, BluEvents } from "./eventEmitter"
 
+import type { BluBluetoothRemoteGATTService } from "./bluetoothInterface"
 import type BluCharacteristic from "./characteristic"
 import type { BluServiceDescription } from "./descriptions"
 import type BluDevice from "./device"
@@ -31,19 +32,17 @@ export default class BluService extends BluEventEmitter<BluServiceEvents> {
 	readonly characteristics: BluCharacteristic[] = []
 
 	/**
-	 * The service's underlying
-	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
-	 * object.
+	 * The service's underlying Bluetooth interface endpoint.
 	 * @readonly
 	 * @sealed
 	 */
-	readonly _bluetoothService: BluetoothRemoteGATTService
+	readonly _bluetoothService: BluBluetoothRemoteGATTService
 
 	/**
 	 * Construct a Bluetooth service.
 	 * @param device - The device associated with this service.
-	 * @param bluetoothService - The service's object from the Web Bluetooth
-	 *  API.
+	 * @param bluetoothService - The service's underlying Bluetooth interface
+	 *  endpoint.
 	 * @param description - The service's description.
 	 */
 	constructor({
@@ -52,7 +51,7 @@ export default class BluService extends BluEventEmitter<BluServiceEvents> {
 		description,
 	}: {
 		device: BluDevice
-		bluetoothService: BluetoothRemoteGATTService
+		bluetoothService: BluBluetoothRemoteGATTService
 		description: BluServiceDescription
 	}) {
 		super()

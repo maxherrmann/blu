@@ -4,7 +4,7 @@ import { BluPlaygroundError, domNode, setCollectionVisibility } from "./utils"
 
 window.blu = blu
 
-if (!blu.bluetooth.isSupported) {
+if (!blu.bluetooth.isSupported()) {
 	domNode(".content").style.display = "none"
 	domNode("#bluetooth-not-supported-overlay").style.display = "block"
 

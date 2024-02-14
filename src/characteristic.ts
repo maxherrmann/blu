@@ -11,6 +11,7 @@ import BluResponse from "./response"
 import isArray from "./utils/isArray"
 import isBufferSource from "./utils/isBufferSource"
 
+import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetoothInterface"
 import type { BluCharacteristicDescription } from "./descriptions"
 import type BluDescriptor from "./descriptor"
 import type BluService from "./service"
@@ -59,19 +60,17 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	readonly responseType = BluResponse
 
 	/**
-	 * The characteristic's underlying
-	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
-	 * object.
+	 * The characteristic's underlying Bluetooth interface endpoint.
 	 * @readonly
 	 * @sealed
 	 */
-	readonly _bluetoothCharacteristic: BluetoothRemoteGATTCharacteristic
+	readonly _bluetoothCharacteristic: BluBluetoothRemoteGATTCharacteristic
 
 	/**
 	 * Construct a Bluetooth characteristic.
 	 * @param service - The service associated with this characteristic.
-	 * @param bluetoothCharacteristic - The characteristic's object from the
-	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothCharacteristic - The characteristic's underlying
+	 *  Bluetooth interface endpoint.
 	 * @param description - The characteristic's description.
 	 */
 	constructor({
@@ -80,7 +79,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		description,
 	}: {
 		service: BluService
-		bluetoothCharacteristic: BluetoothRemoteGATTCharacteristic
+		bluetoothCharacteristic: BluBluetoothRemoteGATTCharacteristic
 		description: BluCharacteristicDescription
 	}) {
 		super()
@@ -180,18 +179,19 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		}
 
 		try {
-			await this.service.device.performGATTOperation(() => {
-				return this._bluetoothCharacteristic.readValue()
-			})
+			const value =
+				await this.service.device.performGATTOperation<DataView>(() => {
+					return this._bluetoothCharacteristic.readValue()
+				})
 
 			if (configuration.options.dataTransferLogging) {
 				logger.target.debug(
 					`${this.description.name}: Read value:`,
-					this.value,
+					value,
 				)
 			}
 
-			return this.value
+			return value
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
@@ -529,7 +529,9 @@ export interface BluCharacteristicEvents extends BluEvents {
  * @sealed
  * @public
  */
-export class BluCharacteristicProperties {
+export class BluCharacteristicProperties
+	implements BluetoothCharacteristicProperties
+{
 	/**
 	 * Has the characteristic the "Read" capability?
 	 * @readonly
@@ -555,6 +557,36 @@ export class BluCharacteristicProperties {
 	readonly notify: boolean
 
 	/**
+	 * Has the characteristic the "Broadcast" capability?
+	 * @readonly
+	 */
+	readonly broadcast: boolean
+
+	/**
+	 * Has the characteristic the "Indicate" capability?
+	 * @readonly
+	 */
+	readonly indicate: boolean
+
+	/**
+	 * Has the characteristic the "Authenticated Signed Writes" capability?
+	 * @readonly
+	 */
+	readonly authenticatedSignedWrites: boolean
+
+	/**
+	 * Has the characteristic the "Reliable Write" capability?
+	 * @readonly
+	 */
+	readonly reliableWrite: boolean
+
+	/**
+	 * Has the characteristic the "Writable Auxiliaries" capability?
+	 * @readonly
+	 */
+	readonly writableAuxiliaries: boolean
+
+	/**
 	 * Is the characteristic currently listening for notifications?
 	 * @remarks `undefined` if {@link BluCharacteristicProperties.notify} is
 	 *  `false`.
@@ -571,6 +603,11 @@ export class BluCharacteristicProperties {
 		this.write = properties.write
 		this.writeWithoutResponse = properties.writeWithoutResponse
 		this.notify = properties.notify
+		this.broadcast = properties.broadcast
+		this.indicate = properties.indicate
+		this.authenticatedSignedWrites = properties.authenticatedSignedWrites
+		this.reliableWrite = properties.reliableWrite
+		this.writableAuxiliaries = properties.writableAuxiliaries
 
 		if (this.notify) {
 			this.isListening = false
