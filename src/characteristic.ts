@@ -11,6 +11,7 @@ import BluResponse from "./response"
 import isArray from "./utils/isArray"
 import isBufferSource from "./utils/isBufferSource"
 
+import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetoothInterface"
 import type { BluCharacteristicDescription } from "./descriptions"
 import type BluDescriptor from "./descriptor"
 import type BluService from "./service"
@@ -59,19 +60,17 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	readonly responseType = BluResponse
 
 	/**
-	 * The characteristic's underlying
-	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
-	 * object.
+	 * The characteristic's underlying Bluetooth interface endpoint.
 	 * @readonly
 	 * @sealed
 	 */
-	readonly _bluetoothCharacteristic: BluetoothRemoteGATTCharacteristic
+	readonly _bluetoothCharacteristic: BluBluetoothRemoteGATTCharacteristic
 
 	/**
 	 * Construct a Bluetooth characteristic.
 	 * @param service - The service associated with this characteristic.
-	 * @param bluetoothCharacteristic - The characteristic's object from the
-	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothCharacteristic - The characteristic's underlying
+	 *  Bluetooth interface endpoint.
 	 * @param description - The characteristic's description.
 	 */
 	constructor({
@@ -80,7 +79,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		description,
 	}: {
 		service: BluService
-		bluetoothCharacteristic: BluetoothRemoteGATTCharacteristic
+		bluetoothCharacteristic: BluBluetoothRemoteGATTCharacteristic
 		description: BluCharacteristicDescription
 	}) {
 		super()

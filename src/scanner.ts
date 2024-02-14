@@ -1,4 +1,4 @@
-import bluetooth from "./bluetooth"
+import bluetooth from "./bluetoothState"
 import configuration from "./configuration"
 import BluDevice from "./device"
 import BluDeviceAdvertisement from "./deviceAdvertisement"
@@ -9,6 +9,7 @@ import {
 } from "./errors"
 import { BluEventEmitter, BluEvents } from "./eventEmitter"
 
+import type { BluBluetoothLEScan } from "./bluetoothInterface"
 import type { BluConfigurationOptions } from "./configuration"
 
 /**
@@ -20,7 +21,7 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 	/**
 	 * An ongoing advertisement scan.
 	 */
-	#advertisementScan?: BluetoothLEScan
+	#advertisementScan?: BluBluetoothLEScan
 
 	/**
 	 * Get a Bluetooth device.
@@ -38,12 +39,12 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 	 */
 	async getDevice<DeviceType extends BluDevice = BluDevice>() {
 		try {
-			if (!bluetooth.isSupported) {
+			if (!bluetooth.isSupported()) {
 				throw new BluEnvironmentError("Web Bluetooth")
 			}
 
 			const webBluetoothDevice =
-				await globalThis.navigator.bluetooth.requestDevice(
+				await configuration.bluetoothInterface.requestDevice(
 					configuration.options.deviceScannerConfig,
 				)
 
@@ -69,17 +70,18 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 	 */
 	async getPairedDevices() {
 		try {
-			if (!bluetooth.isSupported) {
+			if (!bluetooth.isSupported()) {
 				throw new BluEnvironmentError("Web Bluetooth")
 			}
 
 			if (
-				typeof globalThis.navigator.bluetooth.getDevices !== "function"
+				typeof configuration.bluetoothInterface.getDevices !==
+				"function"
 			) {
 				throw new BluEnvironmentError("Paired device retrieval")
 			}
 
-			const devices = await globalThis.navigator.bluetooth.getDevices()
+			const devices = await configuration.bluetoothInterface.getDevices()
 
 			return devices.map(device => {
 				return new BluDevice(device)
@@ -103,12 +105,12 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 	 */
 	async startScanningForAdvertisements() {
 		try {
-			if (!bluetooth.isSupported) {
+			if (!bluetooth.isSupported()) {
 				throw new BluEnvironmentError("Web Bluetooth")
 			}
 
 			if (
-				typeof globalThis.navigator.bluetooth.requestLEScan !==
+				typeof configuration.bluetoothInterface.requestLEScan !==
 				"function"
 			) {
 				throw new BluEnvironmentError("Advertisement scanning")
@@ -121,7 +123,7 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 			}
 
 			this.#advertisementScan =
-				await globalThis.navigator.bluetooth.requestLEScan(
+				await configuration.bluetoothInterface.requestLEScan(
 					configuration.options.advertisementScannerConfig,
 				)
 		} catch (error) {

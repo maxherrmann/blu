@@ -4,6 +4,7 @@ import { BluConfigurationError } from "./errors"
 import isBufferSource from "./utils/isBufferSource"
 import isSubclassOrSelf from "./utils/isSubclassOrSelf"
 
+import type { BluBluetooth } from "./bluetoothInterface"
 import type BluCharacteristic from "./characteristic"
 import type { BluProtocolDescription } from "./descriptions"
 import type BluScanner from "./scanner"
@@ -20,11 +21,24 @@ export class BluConfiguration {
 	#options = defaultOptions
 
 	/**
+	 * Active Bluetooth interface.
+	 */
+	#bluetoothInterface: BluBluetooth = globalThis?.navigator?.bluetooth
+
+	/**
 	 * Active configuration options.
 	 * @readonly
 	 */
 	get options() {
 		return this.#options
+	}
+
+	/**
+	 * Active Bluetooth interface.
+	 * @readonly
+	 */
+	get bluetoothInterface() {
+		return this.#bluetoothInterface
 	}
 
 	/**
@@ -51,6 +65,17 @@ export class BluConfiguration {
 			...this.#options,
 			...options,
 		}
+	}
+
+	/**
+	 * Use a different Bluetooth interface.
+	 * @remarks The interface provided will be used for all Bluetooth
+	 *  operations. It can be useful to provide a custom interface for utilizing
+	 *  Web Bluetooth polyfills. This can potentially allow you to use Blu in
+	 *  environments in which Web Bluetooth is not supported by default.
+	 */
+	useBluetoothInterface(bluetoothInterface: BluBluetooth) {
+		this.#bluetoothInterface = bluetoothInterface
 	}
 
 	/**
@@ -293,7 +318,7 @@ const configurationOptionsGuard = z
  *
  *  - `deviceScannerConfig`: `{ acceptAllDevices: true }`
  *
- *  - `deviceType`: {@link BluDevice}
+ *  - `deviceType`: {@link BluDevice} itself
  *
  *  - `deviceProtocolMatching`: `"default"`
  *

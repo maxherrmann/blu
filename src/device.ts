@@ -1,4 +1,4 @@
-import bluetooth from "./bluetooth"
+import bluetooth from "./bluetoothState"
 import BluCharacteristic from "./characteristic"
 import configuration from "./configuration"
 import {
@@ -26,6 +26,10 @@ import logger from "./logger"
 import BluService from "./service"
 import isArray from "./utils/isArray"
 
+import type {
+	BluBluetoothDevice,
+	BluBluetoothRemoteGATTDescriptor,
+} from "./bluetoothInterface"
 import type { BluConfigurationOptions } from "./configuration"
 
 /**
@@ -65,13 +69,11 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	readonly services: BluService[] = []
 
 	/**
-	 * The device's underlying
-	 * {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
-	 * object.
+	 * The device's underlying Bluetooth interface endpoint.
 	 * @readonly
 	 * @sealed
 	 */
-	readonly _bluetoothDevice: BluetoothDevice
+	readonly _bluetoothDevice: BluBluetoothDevice
 
 	/**
 	 * The device's GATT operation queue.
@@ -93,18 +95,16 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 	/**
 	 * Construct a Bluetooth device.
-	 * @param bluetoothDevice - The device's object from the
-	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
+	 * @param bluetoothDevice - The device's underlying Bluetooth interface
+	 *  endpoint.
 	 */
-	constructor(bluetoothDevice: BluetoothDevice) {
+	constructor(bluetoothDevice: BluBluetoothDevice) {
 		super()
 
 		if (!bluetoothDevice.gatt) {
 			throw new BluDeviceConstructionError(
 				this,
-				`Argument "bluetoothDevice" must be an instance of ` +
-					`"BluetoothDevice".`,
-				"GATT server not available.",
+				"GATT server unavailable.",
 			)
 		}
 
@@ -646,7 +646,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 					// Discover additional descriptors.
 
-					let _descriptors: BluetoothRemoteGATTDescriptor[]
+					let _descriptors: BluBluetoothRemoteGATTDescriptor[]
 
 					try {
 						_descriptors =

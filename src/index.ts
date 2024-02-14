@@ -4,14 +4,14 @@
  * @packageDocumentation
  */
 
-import bluetooth from "./bluetooth"
+import bluetooth from "./bluetoothState"
 import configuration from "./configuration"
 import convert from "./converter"
 import logger from "./logger"
 import scanner from "./scanner"
 import version from "./version"
 
-export { default as bluetooth } from "./bluetooth"
+export { default as bluetooth } from "./bluetoothState"
 export {
 	default as BluCharacteristic,
 	BluCharacteristicProperties,
@@ -42,7 +42,11 @@ export default {
 	version: version,
 }
 
-export type { BluBluetooth, BluBluetoothEvents } from "./bluetooth"
+export type * from "./bluetoothInterface"
+export type {
+	BluBluetoothState,
+	BluBluetoothStateEvents,
+} from "./bluetoothState"
 export type { BluCharacteristicEvents } from "./characteristic"
 export type { BluConfiguration, BluConfigurationOptions } from "./configuration"
 export type { BluConverter } from "./converter"
