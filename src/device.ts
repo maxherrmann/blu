@@ -341,17 +341,10 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 				signal: this.#watchAdvertisementsController.signal,
 			})
 
-			this._bluetoothDevice.onadvertisementreceived = (
-				event: BluetoothAdvertisingEvent,
-			) => {
-				this.emit(
-					"advertised",
-					new BluDeviceAdvertisement(
-						event,
-						this.constructor as typeof BluDevice,
-					),
-				)
-			}
+			this._bluetoothDevice.addEventListener(
+				"advertisementreceived",
+				this.#onAdvertisementReceived.bind(this),
+			)
 		} catch (error) {
 			throw new BluDeviceAdvertisementReportingError(
 				this,
@@ -385,6 +378,11 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 		}
 
 		this.#watchAdvertisementsController.abort()
+
+		this._bluetoothDevice.removeEventListener(
+			"advertisementreceived",
+			this.#onAdvertisementReceived.bind(this),
+		)
 	}
 
 	/**
@@ -719,6 +717,20 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 				error,
 			)
 		}
+	}
+
+	/**
+	 *  Event handler that is invoked whenever an advertisement has been
+	 *  received from the device.
+	 */
+	#onAdvertisementReceived(event: BluetoothAdvertisingEvent | Event) {
+		this.emit(
+			"advertised",
+			new BluDeviceAdvertisement(
+				event as BluetoothAdvertisingEvent,
+				this.constructor as typeof BluDevice,
+			),
+		)
 	}
 
 	/**
