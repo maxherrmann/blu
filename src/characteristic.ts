@@ -179,18 +179,19 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 		}
 
 		try {
-			await this.service.device.performGATTOperation(() => {
-				return this._bluetoothCharacteristic.readValue()
-			})
+			const value =
+				await this.service.device.performGATTOperation<DataView>(() => {
+					return this._bluetoothCharacteristic.readValue()
+				})
 
 			if (configuration.options.dataTransferLogging) {
 				logger.target.debug(
 					`${this.description.name}: Read value:`,
-					this.value,
+					value,
 				)
 			}
 
-			return this.value
+			return value
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
