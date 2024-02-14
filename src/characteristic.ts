@@ -529,7 +529,9 @@ export interface BluCharacteristicEvents extends BluEvents {
  * @sealed
  * @public
  */
-export class BluCharacteristicProperties {
+export class BluCharacteristicProperties
+	implements BluetoothCharacteristicProperties
+{
 	/**
 	 * Has the characteristic the "Read" capability?
 	 * @readonly
@@ -555,6 +557,36 @@ export class BluCharacteristicProperties {
 	readonly notify: boolean
 
 	/**
+	 * Has the characteristic the "Broadcast" capability?
+	 * @readonly
+	 */
+	readonly broadcast: boolean
+
+	/**
+	 * Has the characteristic the "Indicate" capability?
+	 * @readonly
+	 */
+	readonly indicate: boolean
+
+	/**
+	 * Has the characteristic the "Authenticated Signed Writes" capability?
+	 * @readonly
+	 */
+	readonly authenticatedSignedWrites: boolean
+
+	/**
+	 * Has the characteristic the "Reliable Write" capability?
+	 * @readonly
+	 */
+	readonly reliableWrite: boolean
+
+	/**
+	 * Has the characteristic the "Writable Auxiliaries" capability?
+	 * @readonly
+	 */
+	readonly writableAuxiliaries: boolean
+
+	/**
 	 * Is the characteristic currently listening for notifications?
 	 * @remarks `undefined` if {@link BluCharacteristicProperties.notify} is
 	 *  `false`.
@@ -571,6 +603,11 @@ export class BluCharacteristicProperties {
 		this.write = properties.write
 		this.writeWithoutResponse = properties.writeWithoutResponse
 		this.notify = properties.notify
+		this.broadcast = properties.broadcast
+		this.indicate = properties.indicate
+		this.authenticatedSignedWrites = properties.authenticatedSignedWrites
+		this.reliableWrite = properties.reliableWrite
+		this.writableAuxiliaries = properties.writableAuxiliaries
 
 		if (this.notify) {
 			this.isListening = false
