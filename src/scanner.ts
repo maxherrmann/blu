@@ -1,4 +1,6 @@
+import type { BluBluetoothLEScan } from "./bluetoothInterface"
 import bluetooth from "./bluetoothState"
+import type { BluConfigurationOptions } from "./configuration"
 import configuration from "./configuration"
 import BluDevice from "./device"
 import BluDeviceAdvertisement from "./deviceAdvertisement"
@@ -7,17 +9,12 @@ import {
 	BluScannerError,
 	BluScannerOperationError,
 } from "./errors"
-import { BluEventEmitter, BluEvents } from "./eventEmitter"
-
-import type { BluBluetoothLEScan } from "./bluetoothInterface"
-import type { BluConfigurationOptions } from "./configuration"
+import type { BluEventTarget } from "./eventTarget"
 
 /**
  * Scanner for Bluetooth devices.
- * @sealed
- * @public
  */
-export class BluScanner extends BluEventEmitter<BluScannerEvents> {
+export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 	/**
 	 * An ongoing advertisement scan.
 	 */
@@ -43,9 +40,18 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 				throw new BluEnvironmentError("Web Bluetooth")
 			}
 
+			const scannerConfig = configuration.options.deviceScannerConfig
+
+			scannerConfig.optionalServices =
+				configuration.options.deviceType.interface
+					.filter(
+						serviceDescription => !serviceDescription.advertised,
+					)
+					.map(serviceDescription => serviceDescription.uuid)
+
 			const webBluetoothDevice =
 				await configuration.bluetoothInterface.requestDevice(
-					configuration.options.deviceScannerConfig,
+					scannerConfig,
 				)
 
 			return new configuration.options.deviceType(
@@ -101,7 +107,6 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 	 *  granted, {@link BluScannerEvents.advertisement | `advertisement`}
 	 *  events will be emitted.
 	 * @throws A {@link BluScannerError} when something went wrong.
-	 * @sealed
 	 */
 	async startScanningForAdvertisements() {
 		try {
@@ -119,7 +124,11 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 			navigator.bluetooth.onadvertisementreceived = (
 				event: BluetoothAdvertisingEvent,
 			) => {
-				this.emit("advertisement", new BluDeviceAdvertisement(event))
+				this.dispatchEvent(
+					new BluScannerAdvertisementEvent(
+						new BluDeviceAdvertisement(event),
+					),
+				)
 			}
 
 			this.#advertisementScan =
@@ -142,7 +151,6 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 	 *  of `Advertisements Scanning` for details.
 	 * @throws A {@link BluScannerOperationError} when the scanner is not
 	 *  scanning for advertisements.
-	 * @sealed
 	 */
 	stopScanningForAdvertisements() {
 		if (!this.#advertisementScan) {
@@ -156,27 +164,42 @@ export class BluScanner extends BluEventEmitter<BluScannerEvents> {
 }
 
 /**
- * Scanner events.
- * @sealed
- * @public
+ * Scanner advertisement event.
  */
-export interface BluScannerEvents extends BluEvents {
+export class BluScannerAdvertisementEvent extends Event {
+	/**
+	 * The advertisement.
+	 */
+	readonly advertisement: BluDeviceAdvertisement
+
+	/**
+	 * Construct a device advertised event.
+	 * @param advertisement - The advertisement.
+	 */
+	constructor(advertisement: BluDeviceAdvertisement) {
+		super("advertisement")
+
+		this.advertisement = advertisement
+	}
+}
+
+/**
+ * Scanner event target.
+ */
+type BluScannerEventTarget = BluEventTarget<{
 	/**
 	 * ⚠️ An advertisement has been received.
 	 * @remarks Experimental feature. Only supported by some environments. See
 	 *  the
 	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
 	 *  of `Advertisements Scanning` for details.
-	 * @param advertisement - The advertisement.
-	 * @eventProperty
 	 */
-	advertisement: (advertisement: BluDeviceAdvertisement) => void
-}
+	advertisement: BluScannerAdvertisementEvent
+}>
 
 /**
  * Blu's global Bluetooth device scanner.
  * @remarks Handles everything related to Bluetooth device scanning.
- * @public
  */
 const scanner = new BluScanner()
 export default scanner

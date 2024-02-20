@@ -2,8 +2,6 @@ import type BluDevice from "./device"
 
 /**
  * Bluetooth device advertisement.
- * @public
- * @sealed
  */
 export default class BluDeviceAdvertisement {
 	/**

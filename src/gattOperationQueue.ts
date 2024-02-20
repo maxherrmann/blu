@@ -2,7 +2,6 @@ import { BluGATTOperationError, BluGATTOperationQueueError } from "./errors"
 
 /**
  * Queue for GATT operations.
- * @sealed
  */
 export default class BluGATTOperationQueue {
 	/**

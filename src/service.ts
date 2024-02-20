@@ -1,40 +1,34 @@
-import { BluEventEmitter, BluEvents } from "./eventEmitter"
-
 import type { BluBluetoothRemoteGATTService } from "./bluetoothInterface"
 import type BluCharacteristic from "./characteristic"
 import type { BluServiceDescription } from "./descriptions"
 import type BluDevice from "./device"
+import type { BluEventTarget } from "./eventTarget"
 
 /**
  * Bluetooth service.
- * @public
  */
-export default class BluService extends BluEventEmitter<BluServiceEvents> {
+export default class BluService extends (EventTarget as BluServiceEventTarget) {
 	/**
 	 * The device associated with this service.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly device: BluDevice
 
 	/**
 	 * The service's description.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly description: BluServiceDescription
 
 	/**
 	 * The service's discovered characteristics.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly characteristics: BluCharacteristic[] = []
 
 	/**
 	 * The service's underlying Bluetooth interface endpoint.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly _bluetoothService: BluBluetoothRemoteGATTService
 
@@ -65,7 +59,6 @@ export default class BluService extends BluEventEmitter<BluServiceEvents> {
 	/**
 	 * The service's UUID.
 	 * @readonly
-	 * @sealed
 	 */
 	get uuid() {
 		return this._bluetoothService.uuid
@@ -85,8 +78,6 @@ export default class BluService extends BluEventEmitter<BluServiceEvents> {
 }
 
 /**
- * Service events.
- * @sealed
- * @public
+ * Service event target.
  */
-export interface BluServiceEvents extends BluEvents {}
+type BluServiceEventTarget = BluEventTarget<Record<string, Event | CustomEvent>>

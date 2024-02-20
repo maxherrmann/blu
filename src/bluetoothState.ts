@@ -1,14 +1,12 @@
 import configuration from "./configuration"
-import { BluEventEmitter, BluEvents } from "./eventEmitter"
-
 import type BluDevice from "./device"
+import { BluDeviceConnectionEvent } from "./device"
+import type { BluEventTarget } from "./eventTarget"
 
 /**
  * Bluetooth state handler.
- * @sealed
- * @public
  */
-export class BluBluetoothState extends BluEventEmitter<BluBluetoothStateEvents> {
+export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTarget) {
 	/**
 	 * Collection of connected devices.
 	 */
@@ -25,27 +23,35 @@ export class BluBluetoothState extends BluEventEmitter<BluBluetoothStateEvents> 
 				"availabilitychanged",
 				event => {
 					if ((event as AvailabilityChangedEvent).value) {
-						this.emit("bluetooth-enabled")
+						this.dispatchEvent(
+							new BluBluetoothStateChangeEvent(
+								"bluetooth-enabled",
+							),
+						)
 					} else {
-						this.emit("bluetooth-disabled")
+						this.dispatchEvent(
+							new BluBluetoothStateChangeEvent(
+								"bluetooth-disabled",
+							),
+						)
 					}
 				},
 			)
 
-			this.on("bluetooth-disabled", () => {
+			this.addEventListener("bluetooth-disabled", () => {
 				this.#connectedDevices.clear()
 			})
 
-			this.on("device-connected", device => {
-				this.#connectedDevices.add(device)
+			this.addEventListener("device-connected", event => {
+				this.#connectedDevices.add(event.device)
 			})
 
-			this.on("device-disconnected", device => {
-				this.#connectedDevices.delete(device)
+			this.addEventListener("device-disconnected", event => {
+				this.#connectedDevices.delete(event.device)
 			})
 
-			this.on("device-connection-lost", device => {
-				this.#connectedDevices.delete(device)
+			this.addEventListener("device-connection-lost", event => {
+				this.#connectedDevices.delete(event.device)
 			})
 		}
 	}
@@ -88,46 +94,49 @@ export class BluBluetoothState extends BluEventEmitter<BluBluetoothStateEvents> 
 }
 
 /**
- * Bluetooth state events.
- * @sealed
- * @public
+ * Bluetooth state change event.
  */
-export interface BluBluetoothStateEvents extends BluEvents {
+export class BluBluetoothStateChangeEvent extends Event {
+	/**
+	 * Construct a Bluetooth state change event.
+	 * @param type - The event type.
+	 */
+	constructor(type: "bluetooth-enabled" | "bluetooth-disabled") {
+		super(type)
+	}
+}
+
+/**
+ * Bluetooth state event target.
+ */
+type BluBluetoothStateEventTarget = BluEventTarget<{
 	/**
 	 * Bluetooth has been enabled.
-	 * @eventProperty
 	 */
-	"bluetooth-enabled": () => void
+	"bluetooth-enabled": BluBluetoothStateChangeEvent
 
 	/**
 	 * Bluetooth has been disabled.
-	 * @eventProperty
 	 */
-	"bluetooth-disabled": () => void
+	"bluetooth-disabled": BluBluetoothStateChangeEvent
 
 	/**
 	 * A Bluetooth device has been connected.
-	 * @param device - The device.
-	 * @eventProperty
 	 */
-	"device-connected": (device: BluDevice) => void
+	"device-connected": BluDeviceConnectionEvent
 
 	/**
 	 * A Bluetooth device has been disconnected.
 	 * @remarks You must reconnect the device if you want to use it again.
-	 * @param device - The device.
-	 * @eventProperty
 	 */
-	"device-disconnected": (device: BluDevice) => void
+	"device-disconnected": BluDeviceConnectionEvent
 
 	/**
 	 * The connection to a Bluetooth device has been lost.
 	 * @remarks You must reconnect the device if you want to use it again.
-	 * @param device - The device.
-	 * @eventProperty
 	 */
-	"device-connection-lost": (device: BluDevice) => void
-}
+	"device-connection-lost": BluDeviceConnectionEvent
+}>
 
 interface AvailabilityChangedEvent extends Event {
 	readonly value: boolean
@@ -135,7 +144,6 @@ interface AvailabilityChangedEvent extends Event {
 
 /**
  * Blu's global Bluetooth state handler.
- * @public
  */
-const bluetooth = new BluBluetoothState()
-export default bluetooth
+const bluetoothState = new BluBluetoothState()
+export default bluetoothState

@@ -4,7 +4,6 @@ import type BluDevice from "./device"
 
 /**
  * Generic Blu error.
- * @public
  */
 export class BluError extends Error {
 	/**
@@ -26,10 +25,6 @@ export class BluError extends Error {
 			} else if (typeof underlyingError === "string") {
 				this.message += `\n\u0020 \u2937 ${underlyingError}`
 			}
-
-			if (!this.cause) {
-				this.cause = underlyingError
-			}
 		}
 	}
 }
@@ -38,7 +33,6 @@ export class BluError extends Error {
 
 /**
  * Characteristic error.
- * @public
  */
 export class BluCharacteristicError extends BluError {
 	/**
@@ -66,8 +60,6 @@ export class BluCharacteristicError extends BluError {
 
 /**
  * Characteristic operation error.
- * @sealed
- * @public
  */
 export class BluCharacteristicOperationError extends BluCharacteristicError {
 	/**
@@ -94,8 +86,6 @@ export class BluCharacteristicOperationError extends BluCharacteristicError {
 
 /**
  * Characteristic notification timeout error.
- * @sealed
- * @public
  */
 export class BluCharacteristicNotificationTimeoutError extends BluError {}
 
@@ -103,25 +93,20 @@ export class BluCharacteristicNotificationTimeoutError extends BluError {}
 
 /**
  * Configuration error.
- * @sealed
- * @public
  */
 export class BluConfigurationError extends BluError {}
 
-// Description
+// Interface description
 
 /**
- * Description construction error.
- * @sealed
- * @public
+ * Interface description construction error.
  */
-export class BluDescriptionConstructionError extends BluError {}
+export class BluInterfaceDescriptionConstructionError extends BluError {}
 
 // Descriptor
 
 /**
  * Descriptor error.
- * @public
  */
 export class BluDescriptorError extends BluError {
 	/**
@@ -149,8 +134,6 @@ export class BluDescriptorError extends BluError {
 
 /**
  * Descriptor operation error.
- * @sealed
- * @public
  */
 export class BluDescriptorOperationError extends BluDescriptorError {
 	/**
@@ -180,7 +163,6 @@ export class BluDescriptorOperationError extends BluDescriptorError {
 
 /**
  * Device error.
- * @public
  */
 export class BluDeviceError extends BluError {
 	/**
@@ -208,50 +190,36 @@ export class BluDeviceError extends BluError {
 
 /**
  * Device construction error.
- * @sealed
- * @public
  */
 export class BluDeviceConstructionError extends BluDeviceError {}
 
 /**
  * Device operation error.
- * @sealed
- * @public
  */
 export class BluDeviceOperationError extends BluDeviceError {}
 
 /**
  * Device connection error.
- * @sealed
- * @public
  */
 export class BluDeviceConnectionError extends BluDeviceError {}
 
 /**
  * Device connection timeout error.
- * @sealed
- * @public
  */
 export class BluDeviceConnectionTimeoutError extends BluDeviceError {}
 
 /**
- * Device protocol discovery error.
- * @sealed
- * @public
+ * Device interface discovery error.
  */
-export class BluDeviceProtocolDiscoveryError extends BluDeviceError {}
+export class BluDeviceInterfaceDiscoveryError extends BluDeviceError {}
 
 /**
- * Device protocol matching error.
- * @sealed
- * @public
+ * Device interface matching error.
  */
-export class BluDeviceProtocolMatchingError extends BluDeviceError {}
+export class BluDeviceInterfaceMatchingError extends BluDeviceError {}
 
 /**
  * Device advertisement reporting error.
- * @sealed
- * @public
  */
 export class BluDeviceAdvertisementReportingError extends BluDeviceError {}
 
@@ -259,33 +227,18 @@ export class BluDeviceAdvertisementReportingError extends BluDeviceError {}
 
 /**
  * GATT operation queue error.
- * @sealed
- * @public
  */
 export class BluGATTOperationQueueError extends BluError {}
 
 /**
  * GATT operation error.
- * @sealed
- * @public
  */
 export class BluGATTOperationError extends BluError {}
-
-// Logger
-
-/**
- * Logger error.
- * @sealed
- * @public
- */
-export class BluLoggerError extends BluError {}
 
 // Request
 
 /**
  * Request construction error.
- * @sealed
- * @public
  */
 export class BluRequestConstructionError extends BluError {}
 
@@ -293,8 +246,6 @@ export class BluRequestConstructionError extends BluError {}
 
 /**
  * Response construction error.
- * @sealed
- * @public
  */
 export class BluResponseConstructionError extends BluError {}
 
@@ -302,15 +253,11 @@ export class BluResponseConstructionError extends BluError {}
 
 /**
  * Scanner error.
- * @sealed
- * @public
  */
 export class BluScannerError extends BluError {}
 
 /**
  * Scanner operation error.
- * @sealed
- * @public
  */
 export class BluScannerOperationError extends BluError {}
 
@@ -318,8 +265,6 @@ export class BluScannerOperationError extends BluError {}
 
 /**
  * Environment error.
- * @sealed
- * @public
  */
 export class BluEnvironmentError extends BluError {
 	constructor(feature: string) {

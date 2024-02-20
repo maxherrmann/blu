@@ -3,7 +3,6 @@ import { BluResponseConstructionError } from "./errors"
 /**
  * Response that may be received from a Bluetooth characteristic or descriptor.
  * @remarks Meant to be extended to implement custom properties.
- * @public
  */
 export default class BluResponse {
 	/**
@@ -24,7 +23,6 @@ export default class BluResponse {
 
 	/**
 	 * The response's raw data. `undefined` when there is no data.
-	 * @sealed
 	 */
 	readonly data?: DataView
 

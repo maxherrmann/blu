@@ -1,8 +1,6 @@
-import packageJson from "../package.json"
+import { version } from "../package.json"
 
 /**
  * Blu's version.
- * @public
  */
-const version = packageJson.version
 export default version

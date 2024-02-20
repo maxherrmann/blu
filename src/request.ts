@@ -5,7 +5,6 @@ import isBufferSource from "./utils/isBufferSource"
 /**
  * Request that may be sent to a Bluetooth characteristic or descriptor.
  * @remarks Meant to be extended to implement custom properties.
- * @public
  */
 export default class BluRequest {
 	/**
@@ -21,7 +20,6 @@ export default class BluRequest {
 	/**
 	 * The request's raw data.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly data: BufferSource
 

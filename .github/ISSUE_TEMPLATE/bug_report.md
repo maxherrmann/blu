@@ -31,12 +31,9 @@ fix a bug. Please create a minimal verifiable setup that reproduces the bug.
 
 #### Blu Version
 
-<!--
-Add the Blu version you are using. You can find the version number in
-`package.json` or in the playground's sidebar.
--->
+<!-- Add the Blu version you are using. -->
 
-2.0.0
+3.0.0
 
 #### Environment
 

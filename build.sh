@@ -1,21 +1,14 @@
 #!/bin/bash
 
+# Clean
+rm -rf ./build
+rm -rf ./dist
+
 # Build
-webpack --mode production --name package --progress
-
-# Generate .d.ts rollup
-api-extractor run --local
-
-# Generate API reference
-api-documenter markdown -i ./wiki -o ./wiki
-
-# Fix links for GitHub wiki deployment
-# Remove ".md" from all wiki files
-# Replace "./index" with "./" in all wiki files
-find ./wiki -type f -exec sed -i -e 's/\.md//g' -e 's/\.\/index/\.\/\ /g' {} \;
-
-# Copy default files to wiki directory
-cp -r .github/wiki/* wiki/
-
-# Rename "index.md" for GitHub wiki deployment
-mv wiki/index.md wiki/Home.md
+npx tsc
+node ./build.js
+dts-bundle-generator \
+    -o ./dist/index.d.ts \
+    --external-inlines "@types/web-bluetooth" \
+    --sort --no-banner \
+    -- ./build/src/index.d.ts
