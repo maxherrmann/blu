@@ -2,172 +2,202 @@
     <br>
     <img src="https://max-herrmann.com/deploy/blu/blu_logo.png?0" height="100" alt="Blu">
     <br>
-    <i><b>The type-safe framework for interacting with<br>Bluetooth Low Energy devices from the web.</b></i>
+    <i><b>Web Bluetooth — streamlined.</b></i>
+    <br>
+    <br>
+    <a href="https://www.npmjs.org/package/@blu.js/blu">
+        <img src="https://img.shields.io/npm/v/@blu.js/blu.svg" alt="npm">
+    </a>
+    &nbsp;
+    <img src="https://img.shields.io/bundlejs/size/@blu.js/blu" alt="minified size (gzip)">
+    &nbsp;
+    <img src="https://img.shields.io/npm/dt/@blu.js/blu" alt="downloads">
     <br>
     <br>
 </p>
 
-## Compatibility
+Blu is a framework that streamlines the integration of Web Bluetooth into your projects. Designed with ease of use in mind, Blu offers a robust and intuitive interface for interacting with Bluetooth Low Energy devices from the web, as well as native platforms that don't support Web Bluetooth (yet).
 
-The Blu framework is built upon the [Web Bluetooth API](https://webbluetoothcg.github.io/web-bluetooth/) and thus requires the browser it runs on to support it. Some specific functionality may only be available in certain browsers.
+## Table of contents
 
-[➡ **Can I use Web Bluetooth?**](https://caniuse.com/web-bluetooth)
+-   [**Installation**](#installation)
+-   [**Key advantages**](#key-advantages)
+    -   [Intuitive interface](#intuitive-interface)
+    -   [Intuitive communication model](#intuitive-communication-model)
+    -   [Global operation queueing](#global-operation-queueing)
+    -   [Support for Web Bluetooth polyfills](#support-for-web-bluetooth-polyfills)
+    -   [Type-safety](#type-safety)
+-   [**Usage**](#usage)
+    -   [Import Blu](#import-blu)
+    -   [Use Blu in your project](#use-blu-in-your-project)
+-   [**Building**](#building)
 
 ## Installation
 
-### NPM
-
 ```sh
-npm install @blu.js/blu --save
+npm install @blu.js/blu
 ```
 
-### Download
+## Key advantages
 
-[**➡ blu.min.js** (Minified ECMAScript Module)](https://github.com/maxherrmann/blu/releases/latest/download/blu.min.js)
+### Intuitive interface
 
-### CDN
+Blu takes the complexity out of working with Web Bluetooth by providing extendable base classes for each component of the Bluetooth protocol with intuitive interfaces, streamlining the development process.
 
-You can use CDNs like [jsDelivr](https://www.jsdelivr.com/?docs=gh) or [UNPKG](https://unpkg.com/) to access Blu directly from the web.
+**😕 Web Bluetooth API**
 
-### Add Blu to your project
+```js
+await device.gatt.connect()
 
-The Blu framework comes as a minified ECMAScript module with source maps.
+const service = await device.gatt.getPrimaryService("0x180F")
+const characteristic = await service.getCharacteristic("0x2A19")
+const value = await characteristic.readValue()
 
--   The default export's signature is documented [here](https://github.com/maxherrmann/blu/wiki/blu._default).
--   All named exports are documented [here](https://github.com/maxherrmann/blu/wiki/blu).
-
-```ts
-import blu from "@blu.js/blu"
-// or
-import {
-	BluDevice,
-	BluCharacteristic,
-	configuration /* ... */,
-} from "@blu.js/blu"
+return value
 ```
+
+**✨ Blu**
+
+```js
+await device.connect()
+
+const value = await device.service.characteristic.readValue()
+
+return value
+```
+
+### Intuitive communication model
+
+Blu streamlines interactions with Bluetooth characteristics by implementing an intuitive communication model based on requests and responses. Fetching data from a Bluetooth device is made simple: Just `request` it and `await` a response. No need for dealing with adding and removing listeners, parsing data and – if you're using TypeScript – casting values for type safety.
+
+**😕 Web Bluetooth API**
+
+```js
+return new Promise(resolve => {
+    const onCharacteristicValueChanged = () => {
+		/**
+		 * Ensure that the characteristic's value actually contains the data
+		 * I wanted to get and is not the data for a `writeValueWithResponse`
+		 * call that was triggered elsewhere in my application.
+		 *
+		 * ¯\_(ツ)_/¯
+		 */
+
+		/**
+		 * Parse the data so that my application can actually use it.
+		 *
+		 * ¯\_(ツ)_/¯
+		 */
+
+        characteristic.removeEventListener(
+            "characteristicvaluechanged",
+            onCharacteristicValueChanged
+        )
+
+		resolve(myData)
+	}
+
+	characteristic.addEventListener(
+        "characteristicvaluechanged",
+        onCharacteristicValueChanged
+    )
+
+	// Let the characteristic know what data I want to query.
+	const GET_MY_DATA_COMMAND = 1
+    const PAYLOAD = [0, 1]
+
+	/**
+	 * Ensure that the device is actually ready to receive and send the data,
+	 * so that it does not throw errors – telling me that it is busy.
+	 *
+	 * ¯\_(ツ)_/¯
+	 */
+
+	await characteristic.writeValueWithResponse(
+		new Uint8Array([MY_DATA_OPCODE, ...PAYLOAD]),
+	)
+})
+```
+
+**✨ Blu**
+
+```js
+class MyDataResponse extends BluResponse {
+	static validatorFunction(response) {
+		return response.data?.getUint8(0) === Command.GET_MY_DATA
+	}
+
+	get myData() {
+		return this.data?.getUint8(1)
+	}
+}
+
+class MyDataRequest extends BluRequest {
+	responseType = MyDataResponse
+
+	constructor(...payload) {
+		super(convert.toUint8Array([Command.GET_MY_DATA, ...payload]))
+	}
+}
+
+const response = await characteristic.request(new MyDataRequest(0, 1))
+
+return response.myData
+```
+
+### Global operation queueing
+
+Blu automatically queues all GATT (Generic Attribute Profile) operations your application triggers. This prevents "device busy" errors and potential data loss and enables you to have truly asynchronous communication with a connected device, globally – across your whole application.
+
+### Support for Web Bluetooth polyfills
+
+Blu can also be used in environments where Web Bluetooth is not natively available, i.e. where `globalThis.navigator.bluetooth` is missing, by allowing you to register a custom polyfill. You could, for example take the [bluetooth-le](https://github.com/capacitor-community/bluetooth-le) plugin for [Capacitor.js](https://capacitorjs.com/) and to run your Blu-based application on iOS devices, where Web Bluetooth support is still lacking due to WebKit.
+
+### Type-safety
+
+Blu is built with TypeScript, offering you a strongly typed and safely extendable interface.
 
 ## Usage
 
-### Use the Blu API in your project
+### Import Blu
 
-#### `async`/`await` syntax
+The Blu framework is packaged as a minified ECMAScript module with source maps.
 
-```ts
-try {
-	const device = await blu.scanner.getDevice()
+```js
+import blu from "@blu.js/blu"
 
-	await device.connect()
-
-	// ...
-} catch (error) {
-	// ...
-}
+// blu.bluetooth
+// blu.configuration
+// blu.convert
+// blu.scanner
+// blu.version
 ```
 
-#### `Promise` syntax
-
-```ts
-blu.scanner
-	.getDevice()
-	.then(device => {
-		device
-			.connect()
-			.then(() => {
-				// ...
-			})
-			.catch(error => {
-				// ...
-			})
-	})
-	.catch(error => {
-		// ...
-	})
+```js
+import {
+	BluDevice,
+	BluCharacteristic,
+	bluetooth,
+	configuration,
+	// ...
+} from "@blu.js/blu"
 ```
 
-### Usage examples
+### Use Blu in your project
 
-You can find a collection of usage examples with different complexity as part of the [Blu Playground](#blu-playground) in the [src/playground/examples](https://github.com/maxherrmann/blu/tree/main/src/playground/examples) directory.
+You can find a detailed guide on how to use Blu in this repo's wiki.
 
-## Documentation
-
-### Blu API
-
-[**➡ Reference**](https://github.com/maxherrmann/blu/wiki/blu)
-
-### Guides
-
-[**➡ How to implement your own device with Blu**](https://github.com/maxherrmann/blu/wiki/How-to-implement-your-own-device-with-Blu)
-
-## Blu Playground
-
-The playground offers you a way to explore examples and test Blu within your browser.
-
-[**➡ Blu Playground**](https://blu.js.org/)
-
-The playground exposes [Blu's default export](https://github.com/maxherrmann/blu/wiki/blu._default) as a global variable named `blu`, allowing you to access it from the console. Once a device has been connected, it is available as `device`.
-
-### Examples
-
-The playground features a collection of examples that show how Blu can be used.
-You can select an example in the playground's sidebar.
-
-#### [**🧱 Starter Kit**](https://github.com/maxherrmann/blu/tree/main/src/playground/examples/starter-kit)
-
--   The perfect starting point for integrating your own Bluetooth device with Blu.
--   Does not implement any functionality.
-
-#### [**🔋 Battery**](https://github.com/maxherrmann/blu/tree/main/src/playground/examples/battery)
-
--   Implementation example for a generic Bluetooth device that provides a standardized battery service.
--   Read your device's battery level and get notified when it changes.
--   Works great with Keyboards, Mice, Controllers, Headphones, ...
-
-#### [**🤖 BBC micro:bit**](https://github.com/maxherrmann/blu-playground/tree/main/examples/microbit) (Work in progress)
-
--   Implementation example for a [BBC micro:bit](https://www.microbit.org/) device.
--   Implements the [default Bluetooth profile for the BBC micro:bit](https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html).
--   Implementation status:
-    -   [x] Device Information Service
-    -   [x] Accelerometer Service
-    -   [ ] Magnetometer Service
-    -   [x] Button Service
-    -   [ ] IO Pin Service
-    -   [ ] LED Service
-    -   [ ] Event Service
-    -   [ ] DFU Control Service
-    -   [x] Temperature Service
-    -   [ ] UART Service
--   Tested with the BBC micro:bit v2 rev. 21.
-
-#### Want to share your example and make it available on [blu.js.org](https://blu.js.org/)?
-
-Feel free to [contribute](https://github.com/maxherrmann/blu-playground/compare)! ❤️
+[➡ **How to implement your own device with Blu**](https://github.com/maxherrmann/blu/wiki/How-to-implement-your-own-device-with-Blu)
 
 ## Building
 
-To build Blu locally, first run the following:
+To start building Blu locally, run the following:
 
 ```sh
 git clone https://github.com/maxherrmann/blu.git && cd blu && npm i
 ```
 
-### Build Scripts
-
-#### Run in production mode
-
-```sh
-npm start
-```
-
-Builds the playground in production mode and launches a local web server that watches for changes.
-
-#### Run in development mode
-
-```sh
-npm run dev
-```
-
-Builds the playground in development mode and launches a local web server that watches for changes.
+### Build scripts
 
 #### Build package
 
@@ -175,21 +205,9 @@ Builds the playground in development mode and launches a local web server that w
 npm run build
 ```
 
-Builds the package in production mode.
+Builds the package with [esbuild](https://esbuild.github.io/) and [DTS Bundle Generator](https://github.com/timocov/dts-bundle-generator).
 
-> Building the package in production mode also invokes [`api-extractor`](https://api-extractor.com) to generate the package's `.d.ts` rollup and API documentation, as well as [`api-documenter`](https://api-extractor.com/pages/setup/generating_docs/) to create the sources for this repo's [GitHub wiki](https://github.com/maxherrmann/blu/wiki).
-
-#### Build playground
-
-```sh
-npm run build:playground
-```
-
-Builds the playground in production mode.
-
-> Only used for building the sources for [blu.js.org](https://blu.js.org/).
-
-#### Format
+#### Format code
 
 ```sh
 npm run format
@@ -197,7 +215,7 @@ npm run format
 
 Formats the source code with [Prettier](https://prettier.io/).
 
-#### Lint
+#### Lint code
 
 ```sh
 npm run lint
@@ -205,13 +223,13 @@ npm run lint
 
 Lints the source code with [ESLint](https://eslint.org/).
 
-#### Lint and fix
+#### Lint and fix code
 
 ```sh
 npm run lint:fix
 ```
 
-Lints the source code with [ESLint](https://eslint.org/) and automatically fixes all auto-solvable issues.
+Lints the source code with [ESLint](https://eslint.org/) and fixes all auto-solvable issues.
 
 #### Update dependencies
 

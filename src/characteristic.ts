@@ -1,51 +1,44 @@
+import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetoothInterface"
 import configuration from "./configuration"
+import type { BluCharacteristicDescription } from "./descriptions"
+import type BluDescriptor from "./descriptor"
 import {
 	BluCharacteristicNotificationTimeoutError,
 	BluCharacteristicOperationError,
 	BluResponseConstructionError,
 } from "./errors"
-import { BluEventEmitter, BluEvents } from "./eventEmitter"
-import logger from "./logger"
+import type { BluEventTarget } from "./eventTarget"
 import BluRequest from "./request"
 import BluResponse from "./response"
+import type BluService from "./service"
 import isArray from "./utils/isArray"
 import isBufferSource from "./utils/isBufferSource"
 
-import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetoothInterface"
-import type { BluCharacteristicDescription } from "./descriptions"
-import type BluDescriptor from "./descriptor"
-import type BluService from "./service"
-
 /**
  * Bluetooth characteristic.
- * @public
  */
-export default class BluCharacteristic extends BluEventEmitter<BluCharacteristicEvents> {
+export default class BluCharacteristic extends (EventTarget as BluCharacteristicEventTarget) {
 	/**
 	 * The service associated with this characteristic.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly service: BluService
 
 	/**
 	 * The characteristic's description.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly description: BluCharacteristicDescription
 
 	/**
 	 * The characteristic's properties.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly properties: BluCharacteristicProperties
 
 	/**
 	 * The characteristic's discovered descriptors.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly descriptors: BluDescriptor[] = []
 
@@ -62,7 +55,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	/**
 	 * The characteristic's underlying Bluetooth interface endpoint.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly _bluetoothCharacteristic: BluBluetoothRemoteGATTCharacteristic
 
@@ -92,11 +84,16 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 		this._bluetoothCharacteristic = bluetoothCharacteristic
 
-		this.on("notification", response => {
-			if (configuration.options.dataTransferLogging) {
-				logger.target.debug(
-					`${this.description.name}: Notification received:`,
-					response,
+		this.addEventListener("notification", event => {
+			if (
+				configuration.options.logging &&
+				configuration.options.dataTransferLogging
+			) {
+				console.debug(
+					`${this.service.device.name} ` +
+						`(${this.service.device.constructor.name}): ` +
+						`${this.description.name}: Notification:`,
+					event.response.data,
 				)
 			}
 		})
@@ -105,7 +102,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	/**
 	 * The characteristic's UUID.
 	 * @readonly
-	 * @sealed
 	 */
 	get uuid() {
 		return this._bluetoothCharacteristic.uuid
@@ -116,7 +112,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * @remarks Updated whenever {@link BluCharacteristic.read} is invoked.
 	 * @returns The value or `undefined` if the value has never been read.
 	 * @readonly
-	 * @sealed
 	 */
 	get value() {
 		return this._bluetoothCharacteristic.value
@@ -124,13 +119,45 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 	/**
 	 * Has the characteristic all expected properties?
-	 * @sealed
 	 * @readonly
 	 */
 	get hasExpectedProperties() {
+		if (this.description.expectedProperties === undefined) {
+			return true
+		}
+
 		return (
-			this.description.expectedProperties === null ||
-			this.properties.toString() === this.description.expectedProperties
+			(this.description.expectedProperties.authenticatedSignedWrites ===
+				undefined ||
+				this.description.expectedProperties
+					.authenticatedSignedWrites ===
+					this.properties.authenticatedSignedWrites) &&
+			(this.description.expectedProperties.broadcast === undefined ||
+				this.description.expectedProperties.broadcast ===
+					this.properties.broadcast) &&
+			(this.description.expectedProperties.indicate === undefined ||
+				this.description.expectedProperties.indicate ===
+					this.properties.indicate) &&
+			(this.description.expectedProperties.read === undefined ||
+				this.description.expectedProperties.read ===
+					this.properties.read) &&
+			(this.description.expectedProperties.reliableWrite === undefined ||
+				this.description.expectedProperties.reliableWrite ===
+					this.properties.reliableWrite) &&
+			(this.description.expectedProperties.write === undefined ||
+				this.description.expectedProperties.write ===
+					this.properties.write) &&
+			(this.description.expectedProperties.writeWithoutResponse ===
+				undefined ||
+				this.description.expectedProperties.writeWithoutResponse ===
+					this.properties.writeWithoutResponse) &&
+			(this.description.expectedProperties.notify === undefined ||
+				this.description.expectedProperties.notify ===
+					this.properties.notify) &&
+			(this.description.expectedProperties.writableAuxiliaries ===
+				undefined ||
+				this.description.expectedProperties.writableAuxiliaries ===
+					this.properties.writableAuxiliaries)
 		)
 	}
 
@@ -159,7 +186,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
 	 * @throws A {@link BluResponseConstructionError} when the response could not
 	 *  be constructed.
-	 * @sealed
 	 */
 	async read<ResponseType extends BluResponse = BluResponse>() {
 		return new this.responseType(await this.readValue()) as ResponseType
@@ -168,7 +194,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	/**
 	 * Read the characteristic's value.
 	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
-	 * @sealed
 	 */
 	async readValue() {
 		if (!this.properties.read) {
@@ -184,9 +209,14 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 					return this._bluetoothCharacteristic.readValue()
 				})
 
-			if (configuration.options.dataTransferLogging) {
-				logger.target.debug(
-					`${this.description.name}: Read value:`,
+			if (
+				configuration.options.logging &&
+				configuration.options.dataTransferLogging
+			) {
+				console.debug(
+					`${this.service.device.name} ` +
+						`(${this.service.device.constructor.name}): ` +
+						`${this.description.name}: Read:`,
 					value,
 				)
 			}
@@ -207,7 +237,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * @param withoutResponse - Write without waiting for a
 	 *  response?
 	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
-	 * @sealed
 	 */
 	async write(value: BufferSource, withoutResponse = false) {
 		if (withoutResponse && !this.properties.writeWithoutResponse) {
@@ -232,8 +261,16 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 			)
 		}
 
-		if (configuration.options.dataTransferLogging) {
-			logger.target.debug(`${this.description.name}: Write:`, value)
+		if (
+			configuration.options.logging &&
+			configuration.options.dataTransferLogging
+		) {
+			console.debug(
+				`${this.service.device.name} ` +
+					`(${this.service.device.constructor.name}): ` +
+					`${this.description.name}: Write:`,
+				value,
+			)
 		}
 
 		try {
@@ -274,7 +311,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 *  timed out.
 	 * @throws A {@link BluResponseConstructionError} when a response could not be
 	 *  constructed.
-	 * @sealed
 	 */
 	request<ResponseType extends BluResponse = BluResponse>(
 		request: BluRequest,
@@ -304,38 +340,57 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 				return
 			}
 
-			let timeoutTimer: NodeJS.Timeout
+			let timeoutTimer: ReturnType<typeof setTimeout>
 			let isTimeoutReached = false
 
-			if (configuration.options.dataTransferLogging) {
-				logger.target.debug(
-					`${this.description.name}: Request:`,
+			if (
+				configuration.options.logging &&
+				configuration.options.dataTransferLogging
+			) {
+				console.debug(
+					`${this.service.device.name} ` +
+						`(${this.service.device.constructor.name}): ` +
+						`${this.description.name}: Request:`,
 					request,
 				)
 			}
 
-			const onResponse = (response: BluResponse) => {
+			const onResponse = (event: BluCharacteristicNotificationEvent) => {
 				if (
 					!isTimeoutReached &&
-					request.responseType.validatorFunction(response)
+					request.responseType.validatorFunction(event.response)
 				) {
 					clearTimeout(timeoutTimer)
 
-					this.off("notification", onResponse)
+					this.removeEventListener("notification", onResponse)
 
-					resolve(
-						new request.responseType(response.data) as ResponseType,
-					)
+					const response = new request.responseType(
+						event.response.data,
+					) as ResponseType
+
+					if (
+						configuration.options.logging &&
+						configuration.options.dataTransferLogging
+					) {
+						console.debug(
+							`${this.service.device.name} ` +
+								`(${this.service.device.constructor.name}): ` +
+								`${this.description.name}: Response:`,
+							response,
+						)
+					}
+
+					resolve(response)
 				}
 			}
 
-			this.on("notification", onResponse)
+			this.addEventListener("notification", onResponse)
 
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
 					isTimeoutReached = true
 
-					this.off("notification", onResponse)
+					this.removeEventListener("notification", onResponse)
 
 					reject(
 						new BluCharacteristicNotificationTimeoutError(
@@ -353,7 +408,7 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 				clearTimeout(timeoutTimer)
 
-				this.off("notification", onResponse)
+				this.removeEventListener("notification", onResponse)
 
 				reject(
 					new BluCharacteristicOperationError(
@@ -384,7 +439,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 *  request timed out.
 	 * @throws A {@link BluResponseConstructionError} when a response could not
 	 *  be constructed.
-	 * @sealed
 	 */
 	async requestAll<ResponseTypes extends BluResponse[] = BluResponse[]>(
 		requests: BluRequest[],
@@ -421,7 +475,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * Start listening for notifications.
 	 * @throws A {@link BluCharacteristicOperationError} when something went
 	 *  wrong.
-	 * @sealed
 	 */
 	async startListeningForNotifications() {
 		if (!this.properties.notify) {
@@ -453,7 +506,14 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 			this.properties.isListening = true
 
-			logger.debug("Started listening for notifications.", this)
+			if (configuration.options.logging) {
+				console.debug(
+					`${this.service.device.name} ` +
+						`(${this.service.device.constructor.name}): ` +
+						`${this.description.name}: Started listening for ` +
+						`notifications.`,
+				)
+			}
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
@@ -467,7 +527,6 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * Stop listening for notifications.
 	 * @throws A {@link BluCharacteristicOperationError} when something went
 	 *  wrong.
-	 * @sealed
 	 */
 	async stopListeningForNotifications() {
 		if (!this.properties.isListening) {
@@ -491,7 +550,14 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 
 			this.properties.isListening = false
 
-			logger.debug("Stopped listening for notifications.", this)
+			if (configuration.options.logging) {
+				console.debug(
+					`${this.service.device.name} ` +
+						`(${this.service.device.constructor.name}): ` +
+						`${this.description.name}: Stopped listening for ` +
+						`notifications.`,
+				)
+			}
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
 				this,
@@ -505,83 +571,70 @@ export default class BluCharacteristic extends BluEventEmitter<BluCharacteristic
 	 * Event handler that is invoked whenever a notification is received.
 	 */
 	#onNotification() {
-		this.emit("notification", new this.responseType(this.value))
+		this.dispatchEvent(
+			new BluCharacteristicNotificationEvent(
+				new this.responseType(this.value),
+			),
+		)
 	}
 }
 
 /**
- * Characteristic events.
- * @sealed
- * @public
- */
-export interface BluCharacteristicEvents extends BluEvents {
-	/**
-	 * A notification has been received from the characteristic.
-	 * @param response - The response, constructed from the characteristic's
-	 *  new value.
-	 * @eventProperty
-	 */
-	notification: (response: BluResponse) => void
-}
-
-/**
  * Properties of a characteristic.
- * @sealed
- * @public
  */
 export class BluCharacteristicProperties
 	implements BluetoothCharacteristicProperties
 {
 	/**
-	 * Has the characteristic the "Read" capability?
+	 * Has the characteristic the "read" property?
 	 * @readonly
 	 */
 	readonly read: boolean
 
 	/**
-	 * Has the characteristic the "Write" capability?
+	 * Has the characteristic the "write" property?
 	 * @readonly
 	 */
 	readonly write: boolean
 
 	/**
-	 * Has the characteristic the "Write without response" capability?
+	 * Has the characteristic the "write without response" property?
 	 * @readonly
 	 */
 	readonly writeWithoutResponse: boolean
 
 	/**
-	 * Has the characteristic the "Notify" capability?
+	 * Has the characteristic the "notify" property?
 	 * @readonly
 	 */
 	readonly notify: boolean
 
 	/**
-	 * Has the characteristic the "Broadcast" capability?
+	 * Has the characteristic the "broadcast" property?
 	 * @readonly
 	 */
 	readonly broadcast: boolean
 
 	/**
-	 * Has the characteristic the "Indicate" capability?
+	 * Has the characteristic the "indicate" property?
 	 * @readonly
 	 */
 	readonly indicate: boolean
 
 	/**
-	 * Has the characteristic the "Authenticated Signed Writes" capability?
+	 * Has the characteristic the "authenticated signed writes" property?
 	 * @readonly
 	 */
 	readonly authenticatedSignedWrites: boolean
 
 	/**
-	 * Has the characteristic the "Reliable Write" capability?
+	 * Has the characteristic the "reliable write" property?
 	 * @readonly
 	 */
 	readonly reliableWrite: boolean
 
 	/**
-	 * Has the characteristic the "Writable Auxiliaries" capability?
+	 * Has the characteristic the "writable auxiliaries" property?
 	 * @readonly
 	 */
 	readonly writableAuxiliaries: boolean
@@ -613,38 +666,41 @@ export class BluCharacteristicProperties
 			this.isListening = false
 		}
 	}
+}
+
+/**
+ * Characteristic notification event.
+ */
+export class BluCharacteristicNotificationEvent extends Event {
+	/**
+	 * The response, constructed from the characteristic's new value.
+	 * @readonly
+	 */
+	readonly response: BluResponse
 
 	/**
-	 * Get the characteristic's properties formatted as an indicator string.
-	 * @remarks
-	 *  **Indicators**
-	 *
-	 *  1. `R`: Read
-	 *
-	 *  2. `W`: Write
-	 *
-	 *  3. `w`: Write without response
-	 *
-	 *  4. `N`: Notify
-	 *
-	 *  Missing capabilities are represented by `-`.
-	 *
-	 *  **Examples**
-	 *
-	 *  1. `"RW-N"`: Represents a characteristic that is readable, writable and
-	 *  notifiable.
-	 *
-	 *  2. `"--w-"`: Represents a characteristic that is writable without
-	 *  response.
+	 * Construct a characteristic notification event.
+	 * @param response - The response, constructed from the characteristic's new
+	 *  value.
 	 */
-	toString() {
-		const indicators: string[] = [
-			this.read ? "R" : "-",
-			this.write ? "W" : "-",
-			this.writeWithoutResponse ? "w" : "-",
-			this.notify ? "N" : "-",
-		]
+	constructor(response: BluResponse) {
+		super("notification")
 
-		return indicators.join("")
+		this.response = response
 	}
 }
+
+/**
+ * Characteristic event target.
+ */
+type BluCharacteristicEventTarget = BluEventTarget<{
+	/**
+	 * A notification has been received from the characteristic.
+	 */
+	notification: BluCharacteristicNotificationEvent
+
+	/**
+	 * Custom event.
+	 */
+	[key: string]: Event | CustomEvent
+}>

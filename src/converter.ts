@@ -3,8 +3,6 @@ const textEncoder = new TextEncoder()
 
 /**
  * Data converter.
- * @sealed
- * @public
  */
 export class BluConverter {
 	/**
@@ -156,7 +154,6 @@ export class BluConverter {
 /**
  * Blu's global data converter.
  * @remarks Handles everything related to data conversion.
- * @public
  */
 const convert = new BluConverter()
 export default convert

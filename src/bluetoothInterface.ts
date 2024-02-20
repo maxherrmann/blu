@@ -4,7 +4,6 @@
  *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth}.
  *
  *  **Must** dispatch `availabilitychanged` events.
- * @public
  */
 export interface BluBluetooth extends EventTarget {
 	getAvailability: () => Promise<boolean>
@@ -26,7 +25,6 @@ export interface BluBluetooth extends EventTarget {
  *
  *  **Must** dispatch `advertisementreceived` events if you intend to use the
  *  experimental device advertisement scanning.
- * @public
  */
 export interface BluBluetoothDevice extends EventTarget {
 	readonly id: string
@@ -42,7 +40,6 @@ export interface BluBluetoothDevice extends EventTarget {
  * The Web Bluetooth `BluetoothRemoteGATTServer` interface required by Blu.
  * @remarks Based on
  *  {@link https://developer.mozilla.org/en-US/docs/Web/API/BluetoothRemoteGATTServer}.
- * @public
  */
 export interface BluBluetoothRemoteGATTServer {
 	readonly connected: boolean
@@ -60,7 +57,6 @@ export interface BluBluetoothRemoteGATTServer {
  * The Web Bluetooth `BluetoothRemoteGATTService` interface required by Blu.
  * @remarks Based on
  *  {@link https://developer.mozilla.org/en-US/docs/Web/API/BluetoothRemoteGATTService}.
- * @public
  */
 export interface BluBluetoothRemoteGATTService {
 	readonly uuid: string
@@ -78,7 +74,6 @@ export interface BluBluetoothRemoteGATTService {
  *  {@link https://developer.mozilla.org/en-US/docs/Web/API/BluetoothRemoteGATTCharacteristic}.
  *
  *  **Must** dispatch `characteristicvaluechanged` events.
- * @public
  */
 export interface BluBluetoothRemoteGATTCharacteristic extends EventTarget {
 	readonly uuid: string
@@ -101,7 +96,6 @@ export interface BluBluetoothRemoteGATTCharacteristic extends EventTarget {
  * The Web Bluetooth `BluetoothRemoteGATTDescriptor` interface required by Blu.
  * @remarks Based on
  *  {@link https://developer.mozilla.org/en-US/docs/Web/API/BluetoothRemoteGATTDescriptor}.
- * @public
  */
 export interface BluBluetoothRemoteGATTDescriptor {
 	readonly uuid: string
@@ -114,7 +108,6 @@ export interface BluBluetoothRemoteGATTDescriptor {
  * The Web Bluetooth `BluetoothLEScan` interface required by Blu.
  * @remarks Based on
  *  {@link https://webbluetoothcg.github.io/web-bluetooth/scanning.html#bluetoothlescan}.
- * @public
  */
 export interface BluBluetoothLEScan {
 	stop(): void

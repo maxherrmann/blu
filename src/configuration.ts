@@ -1,18 +1,16 @@
 import { z } from "zod"
-import BluDevice from "./device"
-import { BluConfigurationError } from "./errors"
-import isBufferSource from "./utils/isBufferSource"
-import isSubclassOrSelf from "./utils/isSubclassOrSelf"
-
 import type { BluBluetooth } from "./bluetoothInterface"
 import type BluCharacteristic from "./characteristic"
-import type { BluProtocolDescription } from "./descriptions"
+import type { BluInterfaceDescription } from "./descriptions"
+import BluDevice from "./device"
+import { BluConfigurationError } from "./errors"
 import type BluScanner from "./scanner"
+import isBufferSource from "./utils/isBufferSource"
+import isSubclassOrSelf from "./utils/isSubclassOrSelf"
+import type { BluServiceDescription } from "./descriptions"
 
 /**
  * Configuration for Blu.
- * @sealed
- * @public
  */
 export class BluConfiguration {
 	/**
@@ -95,8 +93,6 @@ export class BluConfiguration {
 
 /**
  * Configuration options.
- * @sealed
- * @public
  */
 export interface BluConfigurationOptions {
 	/**
@@ -114,6 +110,11 @@ export interface BluConfigurationOptions {
 	 * The device scanner configuration.
 	 * @remarks You can find an explanation for each property in the
 	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#parameters | MDN documentation}.
+	 *  Setting the `optionalServices` property here has no effect, as it will
+	 *  be automatically populated by Blu with services that are **not** marked
+	 *  as {@link BluServiceDescription.advertised | advertised} in the
+	 *  {@link BluDevice.interface} of the configured
+	 *  {@link BluConfigurationOptions.deviceType}.
 	 * @defaultValue A configuration that instructs the scanner to scan for all
 	 *  devices.
 	 */
@@ -128,47 +129,33 @@ export interface BluConfigurationOptions {
 	deviceType?: typeof BluDevice
 
 	/**
-	 * The device protocol matching type.
-	 * @remarks Will be evaluated during protocol discovery, when connecting new
-	 *  devices. Instructs Blu how to handle discrepancies between the expected
-	 *  and actual Bluetooth protocols of devices when trying to connect them.
-	 *  The expected Bluetooth protocol is inferred from the
-	 *  {@link BluDevice.protocol} of the configured
+	 * The device interface matching type.
+	 * @remarks Will be evaluated during interface discovery, when connecting
+	 *  new devices. Instructs Blu how to handle discrepancies between the
+	 *  expected and actual Bluetooth interfaces of devices when trying to
+	 *  connect them. The expected Bluetooth interface is inferred from the
+	 *  {@link BluDevice.interface} of the configured
 	 *  {@link BluConfigurationOptions.deviceType}.
 	 *
-	 *  **Available matching types**
+	 *  **Available options**
 	 *
-	 *  - `"default"`: The device's Bluetooth protocol must exactly match all
+	 *  - `true`: The device's Bluetooth interface must exactly match all
 	 *  expectations, but can include additional services, characteristics or
 	 *  descriptors. A connection attempt will fail if any of the device's
 	 *  expected endpoints are missing or if any characteristic has mismatching
-	 *  properties.
+	 *  "read", "write", "write witout response" and "notify" properties.
 	 *
-	 *  - `"minimal"`: The device's Bluetooth protocol must include all expected
-	 *  services, characteristics or descriptors. A connection attempt will fail
-	 *  if any of the device's expected endpoints are missing, while
-	 *  characteristic property mismatches are ignored.
-	 *
-	 *  - `"off"`: The device's Bluetooth protocol must not match any
+	 *  - `false`: The device's Bluetooth interface must not match any
 	 *  expectations. Not recommended for production environments.
 	 *
 	 *  **Example**
 	 *
-	 *  - A Bluetooth device is expected to have a battery service.
-	 *  This service is somehow missing from the device's actual Bluetooth
-	 *  protocol.
-	 *  A connection attempt would fail for the following matching types:
-	 *  `"default"`, `"minimal"`.
-	 *
-	 *  - A Bluetooth device is expected to have a battery service with a
-	 *  readable and notifiable characteristic.
-	 *  This characteristic is somehow missing its "notifiable" property on the
-	 *  device's actual Bluetooth protocol.
-	 *  A connection attempt would fail for the following matching types:
-	 *  `"default"`.
-	 * @defaultValue `"default"`
+	 *  - A Bluetooth device is expected to have a battery service. This service
+	 *  is somehow missing from the device's actual Bluetooth interface. A
+	 *  connection attempt would fail when `deviceInterfaceMatching` is `true`.
+	 * @defaultValue `true`
 	 */
-	deviceProtocolMatching?: "default" | "minimal" | "off"
+	deviceInterfaceMatching?: boolean
 
 	/**
 	 * The time to wait for a device connection to be established in
@@ -182,9 +169,9 @@ export interface BluConfigurationOptions {
 
 	/**
 	 * Automatically listen to notifiable characteristics?
-	 * @remarks Will be evaluated during protocol discovery, when connecting new
-	 *  devices. Can be a `boolean` value or an array of
-	 *  {@link BluProtocolDescription.identifier | characteristic identifiers}.
+	 * @remarks Will be evaluated during interface discovery, when connecting
+	 *  new devices. Can be a `boolean` value or an array of
+	 *  {@link BluInterfaceDescription.identifier | characteristic identifiers}.
 	 *  If `false`, notifications have to be manually "enabled" for each
 	 *  characteristic by invoking
 	 *  {@link BluCharacteristic.startListeningForNotifications}.
@@ -193,9 +180,16 @@ export interface BluConfigurationOptions {
 	autoEnableNotifications?: boolean | string[]
 
 	/**
+	 * Enable logging?
+	 * @defaultValue `true`
+	 */
+	logging?: boolean
+
+	/**
 	 * Enable data transfer logging?
 	 * @remarks When data transfer logging is enabled, every data transfer will
-	 *  be logged in detail. Great for debugging.
+	 *  be logged in detail. Great for debugging. Will be ignored if logging is
+	 *  disabled.
 	 * @defaultValue `false`
 	 */
 	dataTransferLogging?: boolean
@@ -208,9 +202,10 @@ const defaultOptions: Required<BluConfigurationOptions> = {
 	advertisementScannerConfig: { acceptAllAdvertisements: true },
 	deviceScannerConfig: { acceptAllDevices: true },
 	deviceType: BluDevice,
-	deviceProtocolMatching: "default",
+	deviceInterfaceMatching: true,
 	deviceConnectionTimeout: false,
 	autoEnableNotifications: true,
+	logging: true,
 	dataTransferLogging: false,
 }
 
@@ -294,15 +289,10 @@ const configurationOptionsGuard = z
 		deviceType: z
 			.custom<typeof BluDevice>(x => isSubclassOrSelf(x, BluDevice))
 			.optional(),
-		deviceProtocolMatching: z
-			.union([
-				z.literal("default"),
-				z.literal("minimal"),
-				z.literal("off"),
-			])
-			.optional(),
+		deviceInterfaceMatching: z.boolean().optional(),
 		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
 		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
+		logging: z.boolean().optional(),
 		dataTransferLogging: z.boolean().optional(),
 	})
 	.strict()
@@ -320,12 +310,13 @@ const configurationOptionsGuard = z
  *
  *  - `deviceType`: {@link BluDevice} itself
  *
- *  - `deviceProtocolMatching`: `"default"`
+ *  - `deviceInterfaceMatching`: `true`
  *
  *  - `autoEnableNotifications`: `true`
  *
+ *  - `logging`: `true`
+ *
  *  - `dataTransferLogging`: `false`
- * @public
  */
 const configuration = new BluConfiguration()
 export default configuration

@@ -1,5 +1,10 @@
-import bluetooth from "./bluetoothState"
+import type {
+	BluBluetoothDevice,
+	BluBluetoothRemoteGATTDescriptor,
+} from "./bluetoothInterface"
+import bluetoothState from "./bluetoothState"
 import BluCharacteristic from "./characteristic"
+import type { BluConfigurationOptions } from "./configuration"
 import configuration from "./configuration"
 import {
 	BluCharacteristicDescription,
@@ -13,43 +18,34 @@ import {
 	BluDeviceConnectionError,
 	BluDeviceConnectionTimeoutError,
 	BluDeviceConstructionError,
+	BluDeviceInterfaceDiscoveryError,
+	BluDeviceInterfaceMatchingError,
 	BluDeviceOperationError,
-	BluDeviceProtocolDiscoveryError,
-	BluDeviceProtocolMatchingError,
 	BluEnvironmentError,
 	BluGATTOperationError,
 	BluGATTOperationQueueError,
 } from "./errors"
-import { BluEventEmitter, BluEvents } from "./eventEmitter"
+import type { BluEventTarget } from "./eventTarget"
 import BluGATTOperationQueue from "./gattOperationQueue"
-import logger from "./logger"
 import BluService from "./service"
 import isArray from "./utils/isArray"
 
-import type {
-	BluBluetoothDevice,
-	BluBluetoothRemoteGATTDescriptor,
-} from "./bluetoothInterface"
-import type { BluConfigurationOptions } from "./configuration"
-
 /**
  * Bluetooth device.
- * @public
  */
-export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
+export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 	/**
-	 * The description of the device's protocol.
+	 * The description of the device's interface.
 	 * @remarks Meant to be overridden by class extensions to define their
-	 *  respective protocol.
+	 *  respective interface.
 	 * @readonly
 	 * @virtual
 	 */
-	static readonly protocol: BluServiceDescription[] = []
+	static readonly interface: BluServiceDescription[] = []
 
 	/**
 	 * The device's UUID.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly id: string
 
@@ -57,21 +53,18 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * The device's name.
 	 * @defaultValue Unnamed Device
 	 * @readonly
-	 * @sealed
 	 */
 	readonly name: string = "Unnamed Device"
 
 	/**
 	 * The device's discovered services.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly services: BluService[] = []
 
 	/**
 	 * The device's underlying Bluetooth interface endpoint.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly _bluetoothDevice: BluBluetoothDevice
 
@@ -109,14 +102,14 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 		}
 
 		if (
-			!isArray((this.constructor as typeof BluDevice).protocol) ||
-			(this.constructor as typeof BluDevice).protocol.some(
+			!isArray((this.constructor as typeof BluDevice).interface) ||
+			(this.constructor as typeof BluDevice).interface.some(
 				element => !(element instanceof BluServiceDescription),
 			)
 		) {
 			throw new BluDeviceConstructionError(
 				this,
-				`The device's protocol description is invalid. ` +
+				`The device's interface description is invalid. ` +
 					`It must be an array of instances of "ServiceDescription".`,
 			)
 		}
@@ -126,26 +119,46 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 		this._bluetoothDevice = bluetoothDevice
 
-		this.on("connected", () => {
-			logger.log("Connected.", this)
-			bluetooth.emit("device-connected", this)
+		this.addEventListener("connected", () => {
+			if (configuration.options.logging) {
+				console.log(
+					`${this.name} (${this.constructor.name}): Connected.`,
+				)
+			}
+
+			bluetoothState.dispatchEvent(
+				new BluDeviceConnectionEvent("connected", this),
+			)
 		})
 
-		this.on("connection-lost", () => {
-			logger.warn("Connection lost.", this)
-			bluetooth.emit("device-connection-lost", this)
+		this.addEventListener("disconnected", () => {
+			if (configuration.options.logging) {
+				console.log(
+					`${this.name} (${this.constructor.name}): Disconnected.`,
+				)
+			}
+
+			bluetoothState.dispatchEvent(
+				new BluDeviceConnectionEvent("disconnected", this),
+			)
 		})
 
-		this.on("disconnected", () => {
-			logger.log("Disconnected.", this)
-			bluetooth.emit("device-disconnected", this)
+		this.addEventListener("connection-lost", () => {
+			if (configuration.options.logging) {
+				console.warn(
+					`${this.name} (${this.constructor.name}): Connection lost.`,
+				)
+			}
+
+			bluetoothState.dispatchEvent(
+				new BluDeviceConnectionEvent("connection-lost", this),
+			)
 		})
 	}
 
 	/**
 	 * The device's discovered characteristics.
 	 * @readonly
-	 * @sealed
 	 */
 	get characteristics() {
 		const characteristics: BluCharacteristic[] = []
@@ -162,7 +175,6 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	/**
 	 * Is the device connected?
 	 * @readonly
-	 * @sealed
 	 */
 	get isConnected() {
 		if (this._bluetoothDevice.gatt === undefined) {
@@ -185,19 +197,18 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 	/**
 	 * Connect the device.
-	 * @remarks Connection time depends on the protocol size, as well as the
-	 *  time it takes to settle all `beforeReady` tasks across the
-	 *  protocol. Connection may time out, depending on the active
+	 * @remarks Connection time depends on the interface size, as well as the
+	 *  time it takes to settle all `beforeReady` tasks across all interface
+	 *  components. Connection may time out, depending on the active
 	 *  {@link configuration}
 	 *  (see {@link BluConfigurationOptions.deviceConnectionTimeout | `deviceConnectionTimeout` option}).
 	 * @throws A {@link BluDeviceConnectionError} when the connection attempt
 	 *  failed.
-	 * @sealed
 	 */
 	async connect() {
 		return new Promise<void>((resolve, reject) => {
 			const timeout = configuration.options.deviceConnectionTimeout
-			let timeoutTimer: NodeJS.Timeout
+			let timeoutTimer: ReturnType<typeof setTimeout>
 			let isTimeoutReached = false
 
 			const rejectWithError = (error: unknown) => {
@@ -245,6 +256,12 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 				}, timeout)
 			}
 
+			if (configuration.options.logging) {
+				console.log(
+					`${this.name} (${this.constructor.name}): Connecting...`,
+				)
+			}
+
 			this._bluetoothDevice.gatt
 				.connect()
 				.then(() => {
@@ -252,7 +269,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 						return
 					}
 
-					this.#discoverProtocol()
+					this.#discoverInterface()
 						.then(async () => {
 							if (isTimeoutReached) {
 								return
@@ -276,7 +293,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 							clearTimeout(timeoutTimer)
 
-							this.emit("connected")
+							this.dispatchEvent(
+								new BluDeviceConnectionEvent("connected", this),
+							)
 
 							resolve()
 						})
@@ -296,7 +315,6 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  possible.
 	 * @throws A {@link BluDeviceConnectionError} when the disconnection attempt
 	 *  failed.
-	 * @sealed
 	 */
 	disconnect() {
 		if (!this.isConnected) {
@@ -334,7 +352,6 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  not supported by the current environment.
 	 * @throws A {@link BluDeviceAdvertisementReportingError} when something
 	 *  went wrong.
-	 * @sealed
 	 */
 	async startReportingAdvertisements() {
 		if (typeof this._bluetoothDevice.watchAdvertisements !== "function") {
@@ -370,7 +387,6 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  {@link BluDeviceEvents.advertised | `advertised`} events.
 	 * @throws A {@link BluDeviceOperationError} when the device is not
 	 *  reporting advertisements.
-	 * @sealed
 	 */
 	stopReportingAdvertisements() {
 		if (
@@ -402,14 +418,13 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 * @throws A {@link BluGATTOperationQueueError} when invalid arguments were
 	 *  provided.
 	 * @throws A {@link BluGATTOperationError} when the GATT operation fails.
-	 * @sealed
 	 */
 	performGATTOperation<ResultType>(operation: () => Promise<ResultType>) {
 		return this.#gattOperationQueue.add<ResultType>(operation)
 	}
 
 	/**
-	 * Discover the device's Bluetooth protocol.
+	 * Discover the device's Bluetooth interface.
 	 * @remarks Discovers and initializes all services, characteristics and
 	 *  descriptors. Adds properties to {@link BluDevice} for all identifiable
 	 *  services. Adds properties to all {@link BluService}s for all identifiable
@@ -417,19 +432,18 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  identifiable descriptors. Depending on the active {@link configuration}
 	 *  (see {@link BluConfigurationOptions.autoEnableNotifications | `autoEnableNotifications` option}),
 	 *  auto-listens to some or all notifiable characteristics. Invokes all
-	 *  `beforeReady` functions across the whole protocol and waits for them
-	 *  to be settled.
-	 * @throws A {@link BluDeviceProtocolDiscoveryError} when discovering the
-	 *  device's Bluetooth protocol is not possible.
-	 * @throws A {@link BluDeviceProtocolMatchingError} when the device's
-	 *  Bluetooth protocol does not match expectations, depending on the
-	 *  {@link BluConfigurationOptions.deviceProtocolMatching | `deviceProtocolMatching` type}
-	 *  from the active {@link configuration}.
+	 *  `beforeReady` functions across all interface components and waits for
+	 *  them to be settled.
+	 * @throws A {@link BluDeviceInterfaceDiscoveryError} when discovering the
+	 *  device's Bluetooth interface is not possible.
+	 * @throws A {@link BluDeviceInterfaceMatchingError} when the device's
+	 *  Bluetooth interface does not match expectations and
+	 *  {@link BluConfigurationOptions.deviceInterfaceMatching} is `true` in the
+	 *  active configuration.
 	 */
-	async #discoverProtocol() {
+	async #discoverInterface() {
 		try {
-			let protocolIncomplete = false
-			let characteristicPropertyMismatch = false
+			let interfaceIncomplete = false
 
 			if (!this.isConnected) {
 				// Sometimes GATT server is reported as disconnected at this
@@ -444,7 +458,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 			for (const serviceDescription of (
 				this.constructor as typeof BluDevice
-			).protocol) {
+			).interface) {
 				let service: BluService | undefined
 
 				try {
@@ -467,13 +481,17 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 					this.services.push(service)
 				} catch (error) {
-					protocolIncomplete = true
+					if (!serviceDescription.optional) {
+						interfaceIncomplete = true
 
-					logger.warn(
-						`Could not discover "${serviceDescription.name}" ` +
-							`(UUID: ${serviceDescription.uuid}).`,
-						this,
-					)
+						if (configuration.options.logging) {
+							console.warn(
+								`${this.name} (${this.constructor.name}): ` +
+									`Could not discover "${serviceDescription.name}" ` +
+									`(UUID: ${serviceDescription.uuid}).`,
+							)
+						}
+					}
 				}
 
 				if (service) {
@@ -495,16 +513,14 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 							)
 
 							if (!characteristic.hasExpectedProperties) {
-								characteristicPropertyMismatch = true
-
-								logger.warn(
-									`"${characteristicDescription.name}" ` +
-										`(${characteristicDescription.uuid}) ` +
-										`has unexpected properties. Expected ` +
-										`"${characteristicDescription.expectedProperties}" ` +
-										`but got "${characteristic.properties.toString()}".`,
-									this,
-								)
+								if (configuration.options.logging) {
+									console.warn(
+										`${this.name} (${this.constructor.name}): ` +
+											`"${characteristicDescription.name}" ` +
+											`(${characteristicDescription.uuid}) ` +
+											`has unexpected properties.`,
+									)
+								}
 							}
 
 							if (characteristic.description.identifier) {
@@ -517,15 +533,20 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 							service.characteristics.push(characteristic)
 						} catch (error) {
-							protocolIncomplete = true
+							if (!characteristicDescription.optional) {
+								interfaceIncomplete = true
 
-							logger.warn(
-								`Could not discover "${characteristicDescription.name}" ` +
-									`(UUID: ${characteristicDescription.uuid}) ` +
-									`in "${serviceDescription.name}" ` +
-									`(UUID: ${serviceDescription.uuid}).`,
-								this,
-							)
+								if (configuration.options.logging) {
+									console.warn(
+										`${this.name} (${this.constructor.name}): ` +
+											`Could not discover ` +
+											`"${characteristicDescription.name}" ` +
+											`(UUID: ${characteristicDescription.uuid}) ` +
+											`in "${serviceDescription.name}" ` +
+											`(UUID: ${serviceDescription.uuid}).`,
+									)
+								}
+							}
 						}
 
 						if (characteristic) {
@@ -559,15 +580,20 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 
 									characteristic.descriptors.push(descriptor)
 								} catch (error) {
-									protocolIncomplete = true
+									if (!descriptorDescription.optional) {
+										interfaceIncomplete = true
 
-									logger.warn(
-										`Could not discover "${descriptorDescription.name}" ` +
-											`(UUID: ${descriptorDescription.uuid}) ` +
-											`in "${characteristicDescription.name}" ` +
-											`(UUID: ${characteristicDescription.uuid}).`,
-										this,
-									)
+										if (configuration.options.logging) {
+											console.warn(
+												`${this.name} (${this.constructor.name}): ` +
+													`Could not discover ` +
+													`"${descriptorDescription.name}" ` +
+													`(UUID: ${descriptorDescription.uuid}) ` +
+													`in "${characteristicDescription.name}" ` +
+													`(UUID: ${characteristicDescription.uuid}).`,
+											)
+										}
+									}
 								}
 							}
 						}
@@ -575,26 +601,16 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 				}
 			}
 
-			// Check for protocol mismatches.
-
-			let protocolMismatch = false
-
-			switch (configuration.options.deviceProtocolMatching) {
-				case "default":
-					protocolMismatch =
-						protocolIncomplete || characteristicPropertyMismatch
-					break
-				case "minimal":
-					protocolMismatch = protocolIncomplete
-			}
-
-			if (protocolMismatch) {
-				throw new BluDeviceProtocolMatchingError(
+			if (
+				configuration.options.deviceInterfaceMatching &&
+				interfaceIncomplete
+			) {
+				throw new BluDeviceInterfaceMatchingError(
 					this,
-					"The device's Bluetooth protocol does not match " +
+					"The device's Bluetooth interface does not match " +
 						"expectations. Make sure that your device's service " +
 						"descriptions are correct or change Blu's device " +
-						"protocol matching type.",
+						"interface matching type.",
 				)
 			}
 
@@ -658,7 +674,7 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 						) {
 							_descriptors = []
 						} else {
-							throw new BluDeviceProtocolDiscoveryError(
+							throw new BluDeviceInterfaceDiscoveryError(
 								this,
 								`Could not discover descriptors of ` +
 									`characteristic with UUID ` +
@@ -718,9 +734,9 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 				await service.beforeReady()
 			}
 		} catch (error) {
-			throw new BluDeviceProtocolDiscoveryError(
+			throw new BluDeviceInterfaceDiscoveryError(
 				this,
-				"Could not discover the device's Bluetooth protocol.",
+				"Could not discover the device's Bluetooth interface.",
 				error,
 			)
 		}
@@ -731,11 +747,12 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	 *  received from the device.
 	 */
 	#onAdvertisementReceived(event: BluetoothAdvertisingEvent | Event) {
-		this.emit(
-			"advertised",
-			new BluDeviceAdvertisement(
-				event as BluetoothAdvertisingEvent,
-				this.constructor as typeof BluDevice,
+		this.dispatchEvent(
+			new BluDeviceAdvertisedEvent(
+				new BluDeviceAdvertisement(
+					event as BluetoothAdvertisingEvent,
+					this.constructor as typeof BluDevice,
+				),
 			),
 		)
 	}
@@ -746,46 +763,90 @@ export default class BluDevice extends BluEventEmitter<BluDeviceEvents> {
 	#onDisconnected() {
 		if (this.#willDisconnect) {
 			// Intentional disconnect.
-			this.emit("disconnected")
+			this.dispatchEvent(
+				new BluDeviceConnectionEvent("disconnected", this),
+			)
 		} else {
 			// Unintentional disconnect.
-			this.emit("connection-lost")
+			this.dispatchEvent(
+				new BluDeviceConnectionEvent("connection-lost", this),
+			)
 		}
 	}
 }
 
 /**
- * Device events.
- * @sealed
- * @public
+ * Device advertised event.
  */
-export interface BluDeviceEvents extends BluEvents {
+export class BluDeviceAdvertisedEvent extends Event {
+	/**
+	 * The advertisement.
+	 */
+	readonly advertisement: BluDeviceAdvertisement
+
+	/**
+	 * Construct a device advertised event.
+	 * @param advertisement - The advertisement.
+	 */
+	constructor(advertisement: BluDeviceAdvertisement) {
+		super("advertised")
+
+		this.advertisement = advertisement
+	}
+}
+
+export class BluDeviceConnectionEvent extends Event {
+	/**
+	 * The device.
+	 * @readonly
+	 */
+	readonly device: BluDevice
+
+	/**
+	 * Construct a device connection event.
+	 * @param type - The event type.
+	 * @param device - The device.
+	 */
+	constructor(
+		type: "connected" | "disconnected" | "connection-lost",
+		device: BluDevice,
+	) {
+		super(type)
+
+		this.device = device
+	}
+}
+
+/**
+ * Device event target.
+ */
+type BluDeviceEventTarget = BluEventTarget<{
 	/**
 	 * ⚠️ An advertisement has been received from the device.
 	 * @remarks Experimental feature. Only supported by some environments. See
 	 *  the
 	 *  {@link https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md | Web Bluetooth CG's implementation status}
 	 *  of `watchAdvertisements()` for details.
-	 * @param advertisement - The advertisement.
-	 * @eventProperty
 	 */
-	advertised: (advertisement: BluDeviceAdvertisement) => void
+	advertised: BluDeviceAdvertisedEvent
 
 	/**
 	 * The device has been connected.
-	 * @eventProperty
 	 */
-	connected: () => void
-
-	/**
-	 * The device's connection has been lost.
-	 * @eventProperty
-	 */
-	"connection-lost": () => void
+	connected: BluDeviceConnectionEvent
 
 	/**
 	 * The device has been disconnected.
-	 * @eventProperty
 	 */
-	disconnected: () => void
-}
+	disconnected: BluDeviceConnectionEvent
+
+	/**
+	 * The device's connection has been lost.
+	 */
+	"connection-lost": BluDeviceConnectionEvent
+
+	/**
+	 * Custom event.
+	 */
+	[key: string]: Event | CustomEvent
+}>

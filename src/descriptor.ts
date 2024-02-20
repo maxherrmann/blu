@@ -1,33 +1,28 @@
+import type { BluBluetoothRemoteGATTDescriptor } from "./bluetoothInterface"
+import type BluCharacteristic from "./characteristic"
 import configuration from "./configuration"
+import type { BluDescriptorDescription } from "./descriptions"
 import {
 	BluDescriptorOperationError,
 	BluResponseConstructionError,
 } from "./errors"
-import { BluEventEmitter, BluEvents } from "./eventEmitter"
-import logger from "./logger"
+import type { BluEventTarget } from "./eventTarget"
 import BluResponse from "./response"
 import isBufferSource from "./utils/isBufferSource"
 
-import type { BluBluetoothRemoteGATTDescriptor } from "./bluetoothInterface"
-import type BluCharacteristic from "./characteristic"
-import type { BluDescriptorDescription } from "./descriptions"
-
 /**
  * Bluetooth descriptor.
- * @public
  */
-export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> {
+export default class BluDescriptor extends (EventTarget as BluDescriptorEventTarget) {
 	/**
 	 * The characteristic associated with this descriptor.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly characteristic: BluCharacteristic
 
 	/**
 	 * The descriptor's description.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly description: BluDescriptorDescription
 
@@ -44,7 +39,6 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	/**
 	 * The descriptor's underlying Bluetooth interface endpoint.
 	 * @readonly
-	 * @sealed
 	 */
 	readonly _bluetoothDescriptor: BluBluetoothRemoteGATTDescriptor
 
@@ -76,7 +70,6 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	/**
 	 * Get the descriptor's UUID.
 	 * @readonly
-	 * @sealed
 	 */
 	get uuid() {
 		return this._bluetoothDescriptor.uuid
@@ -87,7 +80,6 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	 * @remarks Updated whenever {@link BluDescriptor.read} is invoked.
 	 * @returns The value or `undefined` if the value has never been read.
 	 * @readonly
-	 * @sealed
 	 */
 	get value() {
 		return this._bluetoothDescriptor.value
@@ -110,7 +102,6 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	 * @remarks Constructs a dummy, i.e. fake {@link BluResponse} of the
 	 *  descriptor's `responseType` with the descriptor's value as data.
 	 *  This is meant as a convenience method and can also be done manually.
-	 * @sealed
 	 */
 	/**
 	 * Read from the descriptor.
@@ -124,7 +115,6 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	 * @throws A {@link BluDescriptorOperationError} when something went wrong.
 	 * @throws A {@link BluResponseConstructionError} when the response could not
 	 *  be constructed.
-	 * @sealed
 	 */
 	async read<ResponseType extends BluResponse = BluResponse>() {
 		return new this.responseType(await this.readValue()) as ResponseType
@@ -133,7 +123,6 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	/**
 	 * Read the descriptor's value.
 	 * @throws A {@link BluDescriptorOperationError} when something went wrong.
-	 * @sealed
 	 */
 	async readValue() {
 		try {
@@ -143,9 +132,15 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 				},
 			)
 
-			if (configuration.options.dataTransferLogging) {
-				logger.target.debug(
-					`${this.description.name}: Read value:`,
+			if (
+				configuration.options.logging &&
+				configuration.options.dataTransferLogging
+			) {
+				console.debug(
+					`${this.characteristic.service.device.name} ` +
+						`(${this.characteristic.service.device.constructor.name}): ` +
+						`${this.characteristic.description.name}: ` +
+						`${this.description.name}: Read:`,
 					this.value,
 				)
 			}
@@ -164,7 +159,6 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 	 * Write the descriptor's value.
 	 * @param value - The value.
 	 * @throws A {@link BluDescriptorOperationError} when something went wrong.
-	 * @sealed
 	 */
 	async write(value: BufferSource) {
 		if (!isBufferSource(value)) {
@@ -174,8 +168,17 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 			)
 		}
 
-		if (configuration.options.dataTransferLogging) {
-			logger.target.debug(`${this.description.name}: Write:`, value)
+		if (
+			configuration.options.logging &&
+			configuration.options.dataTransferLogging
+		) {
+			console.debug(
+				`${this.characteristic.service.device.name} ` +
+					`(${this.characteristic.service.device.constructor.name}): ` +
+					`${this.characteristic.description.name}: ` +
+					`${this.description.name}: Write:`,
+				value,
+			)
 		}
 
 		try {
@@ -195,8 +198,8 @@ export default class BluDescriptor extends BluEventEmitter<BluDescriptorEvents> 
 }
 
 /**
- * Descriptor events.
- * @sealed
- * @public
+ * Descriptor event target.
  */
-export interface BluDescriptorEvents extends BluEvents {}
+type BluDescriptorEventTarget = BluEventTarget<
+	Record<string, Event | CustomEvent>
+>
