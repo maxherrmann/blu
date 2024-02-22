@@ -2,7 +2,7 @@
 
 ### Get familiar with the concepts of Bluetooth and the Web Bluetooth API
 
-[A Developer's Guide to Bluetooth Technology](https://www.bluetooth.com/blog/a-developers-guide-to-bluetooth/) is a great article from the Bluetooth SIG that should get you started with the basic concepts of Bluetooth. The [Web Bluetooth specification] (https://webbluetoothcg.github.io/web-bluetooth/#introduction) and this [article from web.dev](https://web.dev/bluetooth/) provide you with information about Web Bluetooth and its implementation.
+[A Developer's Guide to Bluetooth Technology](https://www.bluetooth.com/blog/a-developers-guide-to-bluetooth/) is a great article from the Bluetooth SIG that should get you started with the basic concepts of Bluetooth. The [Web Bluetooth specification](https://webbluetoothcg.github.io/web-bluetooth/#introduction) and this [article from web.dev](https://web.dev/bluetooth/) provide you with information about Web Bluetooth and its implementation.
 
 ### Get familiar with your device
 
