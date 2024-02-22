@@ -1,19 +1,15 @@
 <p align="center">
-    <br>
-    <img src="https://max-herrmann.com/deploy/blu/blu_logo.png?0" height="100" alt="Blu">
-    <br>
-    <i><b>Web Bluetooth — streamlined.</b></i>
-    <br>
-    <br>
-    <a href="https://www.npmjs.org/package/@blu.js/blu">
-        <img src="https://img.shields.io/npm/v/@blu.js/blu.svg" alt="npm">
-    </a>
-    &nbsp;
-    <img src="https://img.shields.io/bundlejs/size/@blu.js/blu" alt="minified size (gzip)">
-    &nbsp;
-    <img src="https://img.shields.io/npm/dt/@blu.js/blu" alt="downloads">
-    <br>
-    <br>
+	<br>
+	<img src="https://max-herrmann.com/deploy/blu/blu_logo.png?0" height="100" alt="Blu">
+	<br>
+	<i><b>Web Bluetooth — streamlined.</b></i>
+	<br>
+	<br>
+	<a href="https://www.npmjs.org/package/@blu.js/blu">
+		<img src="https://img.shields.io/npm/v/@blu.js/blu.svg" alt="npm">
+	</a>
+	<br>
+	<br>
 </p>
 
 Blu is a framework that streamlines the integration of Web Bluetooth into your projects. Designed with ease of use in mind, Blu offers a robust and intuitive interface for interacting with Bluetooth Low Energy devices from the web, as well as native platforms that don't support Web Bluetooth (yet).
@@ -74,7 +70,7 @@ Blu streamlines interactions with Bluetooth characteristics by implementing an i
 
 ```js
 return new Promise(resolve => {
-    const onCharacteristicValueChanged = () => {
+	const onCharacteristicValueChanged = () => {
 		/**
 		 * Ensure that the characteristic's value actually contains the data
 		 * I wanted to get and is not the data for a `writeValueWithResponse`
@@ -89,22 +85,22 @@ return new Promise(resolve => {
 		 * ¯\_(ツ)_/¯
 		 */
 
-        characteristic.removeEventListener(
-            "characteristicvaluechanged",
-            onCharacteristicValueChanged
-        )
+		characteristic.removeEventListener(
+			"characteristicvaluechanged",
+			onCharacteristicValueChanged
+		)
 
 		resolve(myData)
 	}
 
 	characteristic.addEventListener(
-        "characteristicvaluechanged",
-        onCharacteristicValueChanged
-    )
+		"characteristicvaluechanged",
+		onCharacteristicValueChanged
+	)
 
 	// Let the characteristic know what data I want to query.
 	const GET_MY_DATA_COMMAND = 1
-    const PAYLOAD = [0, 1]
+	const PAYLOAD = [0, 1]
 
 	/**
 	 * Ensure that the device is actually ready to receive and send the data,
@@ -151,7 +147,7 @@ Blu automatically queues all GATT (Generic Attribute Profile) operations your ap
 
 ### Support for Web Bluetooth polyfills
 
-Blu can also be used in environments where Web Bluetooth is not natively available, i.e. where `globalThis.navigator.bluetooth` is missing, by allowing you to register a custom polyfill. You could, for example take the [bluetooth-le](https://github.com/capacitor-community/bluetooth-le) plugin for [Capacitor.js](https://capacitorjs.com/) and to run your Blu-based application on iOS devices, where Web Bluetooth support is still lacking due to WebKit.
+Blu can also be used in environments where Web Bluetooth is not natively available, i.e. where `globalThis.navigator.bluetooth` is missing, by allowing you to register a custom polyfill. You could, for example take the [bluetooth-le](https://github.com/capacitor-community/bluetooth-le) plugin for [Capacitor](https://capacitorjs.com/) and to run your Blu-based application on iOS devices, where Web Bluetooth support is still lacking due to WebKit.
 
 ### Type-safety
 
