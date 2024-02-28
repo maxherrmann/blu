@@ -118,42 +118,6 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 		if (bluetoothDevice.name) this.name = bluetoothDevice.name
 
 		this._bluetoothDevice = bluetoothDevice
-
-		this.addEventListener("connected", () => {
-			if (configuration.options.logging) {
-				console.log(
-					`${this.name} (${this.constructor.name}): Connected.`,
-				)
-			}
-
-			bluetoothState.dispatchEvent(
-				new BluDeviceConnectionEvent("connected", this),
-			)
-		})
-
-		this.addEventListener("disconnected", () => {
-			if (configuration.options.logging) {
-				console.log(
-					`${this.name} (${this.constructor.name}): Disconnected.`,
-				)
-			}
-
-			bluetoothState.dispatchEvent(
-				new BluDeviceConnectionEvent("disconnected", this),
-			)
-		})
-
-		this.addEventListener("connection-lost", () => {
-			if (configuration.options.logging) {
-				console.warn(
-					`${this.name} (${this.constructor.name}): Connection lost.`,
-				)
-			}
-
-			bluetoothState.dispatchEvent(
-				new BluDeviceConnectionEvent("connection-lost", this),
-			)
-		})
 	}
 
 	/**
@@ -213,10 +177,7 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 
 			const rejectWithError = (error: unknown) => {
 				try {
-					this._bluetoothDevice.removeEventListener(
-						"gattserverdisconnected",
-						this.#onDisconnected.bind(this),
-					)
+					this.#removeDisconnectionEventListeners()
 
 					if (this.isConnected) {
 						this.disconnect()
@@ -277,7 +238,18 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 
 							this._bluetoothDevice.addEventListener(
 								"gattserverdisconnected",
+								this.#onGATTServerDisconnected.bind(this),
+								{ once: true },
+							)
+							this.addEventListener(
+								"disconnected",
 								this.#onDisconnected.bind(this),
+								{ once: true },
+							)
+							this.addEventListener(
+								"connection-lost",
+								this.#onConnectionLost.bind(this),
+								{ once: true },
 							)
 
 							try {
@@ -293,7 +265,17 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 
 							clearTimeout(timeoutTimer)
 
+							if (configuration.options.logging) {
+								console.log(
+									`${this.name} (${this.constructor.name}): Connected.`,
+								)
+							}
+
 							this.dispatchEvent(
+								new BluDeviceConnectionEvent("connected", this),
+							)
+
+							bluetoothState.dispatchEvent(
 								new BluDeviceConnectionEvent("connected", this),
 							)
 
@@ -329,16 +311,14 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 		try {
 			this._bluetoothDevice.gatt!.disconnect()
 		} catch (error) {
-			this.#willDisconnect = false
-
 			throw new BluDeviceConnectionError(
 				this,
 				"Could not disconnect the device.",
 				error,
 			)
+		} finally {
+			this.#willDisconnect = false
 		}
-
-		this.#willDisconnect = false
 	}
 
 	/**
@@ -743,6 +723,24 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 	}
 
 	/**
+	 * Remove all disconnection event listeners.
+	 */
+	#removeDisconnectionEventListeners() {
+		this._bluetoothDevice.removeEventListener(
+			"gattserverdisconnected",
+			this.#onGATTServerDisconnected.bind(this),
+		)
+		this.removeEventListener(
+			"disconnected",
+			this.#onDisconnected.bind(this),
+		)
+		this.removeEventListener(
+			"connection-lost",
+			this.#onConnectionLost.bind(this),
+		)
+	}
+
+	/**
 	 *  Event handler that is invoked whenever an advertisement has been
 	 *  received from the device.
 	 */
@@ -761,6 +759,38 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 	 * Event handler that is invoked whenever the device has been disconnected.
 	 */
 	#onDisconnected() {
+		if (configuration.options.logging) {
+			console.log(
+				`${this.name} (${this.constructor.name}): Disconnected.`,
+			)
+		}
+
+		bluetoothState.dispatchEvent(
+			new BluDeviceConnectionEvent("disconnected", this),
+		)
+	}
+
+	/**
+	 * Event handler that is invoked whenever the device's connection has been
+	 * lost.
+	 */
+	#onConnectionLost() {
+		if (configuration.options.logging) {
+			console.warn(
+				`${this.name} (${this.constructor.name}): Connection lost.`,
+			)
+		}
+
+		bluetoothState.dispatchEvent(
+			new BluDeviceConnectionEvent("connection-lost", this),
+		)
+	}
+
+	/**
+	 * Event handler that is invoked whenever the device's GATT server has been
+	 * disconnected.
+	 */
+	#onGATTServerDisconnected() {
 		if (this.#willDisconnect) {
 			// Intentional disconnect.
 			this.dispatchEvent(
@@ -772,6 +802,8 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 				new BluDeviceConnectionEvent("connection-lost", this),
 			)
 		}
+
+		this.#removeDisconnectionEventListeners()
 	}
 }
 
