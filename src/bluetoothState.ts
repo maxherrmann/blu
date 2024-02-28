@@ -42,15 +42,15 @@ export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTar
 				this.#connectedDevices.clear()
 			})
 
-			this.addEventListener("device-connected", event => {
+			this.addEventListener("connected", event => {
 				this.#connectedDevices.add(event.device)
 			})
 
-			this.addEventListener("device-disconnected", event => {
+			this.addEventListener("disconnected", event => {
 				this.#connectedDevices.delete(event.device)
 			})
 
-			this.addEventListener("device-connection-lost", event => {
+			this.addEventListener("connection-lost", event => {
 				this.#connectedDevices.delete(event.device)
 			})
 		}
@@ -123,19 +123,19 @@ type BluBluetoothStateEventTarget = BluEventTarget<{
 	/**
 	 * A Bluetooth device has been connected.
 	 */
-	"device-connected": BluDeviceConnectionEvent
+	connected: BluDeviceConnectionEvent
 
 	/**
 	 * A Bluetooth device has been disconnected.
 	 * @remarks You must reconnect the device if you want to use it again.
 	 */
-	"device-disconnected": BluDeviceConnectionEvent
+	disconnected: BluDeviceConnectionEvent
 
 	/**
 	 * The connection to a Bluetooth device has been lost.
 	 * @remarks You must reconnect the device if you want to use it again.
 	 */
-	"device-connection-lost": BluDeviceConnectionEvent
+	"connection-lost": BluDeviceConnectionEvent
 }>
 
 interface AvailabilityChangedEvent extends Event {
