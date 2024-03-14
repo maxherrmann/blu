@@ -35,15 +35,15 @@
 	},
 	"devDependencies": {
 		"@types/web-bluetooth": "^0.0.20",
-		"@typescript-eslint/eslint-plugin": "^7.1.0",
-		"@typescript-eslint/parser": "^7.1.0",
+		"@typescript-eslint/eslint-plugin": "^7.2.0",
+		"@typescript-eslint/parser": "^7.2.0",
 		"dts-bundle-generator": "^9.3.1",
 		"esbuild": "^0.20.1",
 		"eslint": "^8.57.0",
 		"eslint-config-prettier": "^9.1.0",
 		"npm-check-updates": "^16.14.15",
 		"prettier": "^3.2.5",
-		"typescript": "^5.3.3"
+		"typescript": "^5.4.2"
 	},
 	"dependencies": {
 		"zod": "^3.22.4"
