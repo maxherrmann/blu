@@ -7,10 +7,10 @@ import type { BluEventTarget } from "./eventTarget"
  * Bluetooth state handler.
  */
 export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTarget) {
-    /**
-     * Is the Bluetooth state handler initialized?
-     */
-    #initialized = false
+	/**
+	 * Is the Bluetooth state handler initialized?
+	 */
+	#initialized = false
 
 	/**
 	 * Collection of connected devices.
@@ -43,51 +43,47 @@ export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTar
 		return this.connectedDevices[this.connectedDevices.length - 1] ?? null
 	}
 
-    /**
-     * Initialize the Bluetooth state handler.
-     */
-    initialize() {
-        if (this.#initialized || !this.isSupported()) {
-            return
-        }
+	/**
+	 * Initialize the Bluetooth state handler.
+	 */
+	initialize() {
+		if (this.#initialized || !this.isSupported()) {
+			return
+		}
 
-        configuration.bluetoothInterface.addEventListener(
-            "availabilitychanged",
-            event => {
-                if ((event as AvailabilityChangedEvent).value) {
-                    this.dispatchEvent(
-                        new BluBluetoothStateChangeEvent(
-                            "bluetooth-enabled",
-                        ),
-                    )
-                } else {
-                    this.dispatchEvent(
-                        new BluBluetoothStateChangeEvent(
-                            "bluetooth-disabled",
-                        ),
-                    )
-                }
-            },
-        )
+		configuration.bluetoothInterface.addEventListener(
+			"availabilitychanged",
+			event => {
+				if ((event as AvailabilityChangedEvent).value) {
+					this.dispatchEvent(
+						new BluBluetoothStateChangeEvent("bluetooth-enabled"),
+					)
+				} else {
+					this.dispatchEvent(
+						new BluBluetoothStateChangeEvent("bluetooth-disabled"),
+					)
+				}
+			},
+		)
 
-        this.addEventListener("bluetooth-disabled", () => {
-            this.#connectedDevices.clear()
-        })
+		this.addEventListener("bluetooth-disabled", () => {
+			this.#connectedDevices.clear()
+		})
 
-        this.addEventListener("connected", event => {
-            this.#connectedDevices.add(event.device)
-        })
+		this.addEventListener("connected", event => {
+			this.#connectedDevices.add(event.device)
+		})
 
-        this.addEventListener("disconnected", event => {
-            this.#connectedDevices.delete(event.device)
-        })
+		this.addEventListener("disconnected", event => {
+			this.#connectedDevices.delete(event.device)
+		})
 
-        this.addEventListener("connection-lost", event => {
-            this.#connectedDevices.delete(event.device)
-        })
+		this.addEventListener("connection-lost", event => {
+			this.#connectedDevices.delete(event.device)
+		})
 
-        this.#initialized = true
-    }
+		this.#initialized = true
+	}
 
 	/**
 	 * Is Bluetooth supported?
