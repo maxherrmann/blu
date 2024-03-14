@@ -1,13 +1,13 @@
 import { z } from "zod"
 import type { BluBluetooth } from "./bluetoothInterface"
+import bluetoothState from "./bluetoothState"
 import type BluCharacteristic from "./characteristic"
-import type { BluInterfaceDescription } from "./descriptions"
+import type { BluInterfaceDescription, BluServiceDescription } from "./descriptions"
 import BluDevice from "./device"
 import { BluConfigurationError } from "./errors"
 import type BluScanner from "./scanner"
 import isBufferSource from "./utils/isBufferSource"
 import isSubclassOrSelf from "./utils/isSubclassOrSelf"
-import type { BluServiceDescription } from "./descriptions"
 
 /**
  * Configuration for Blu.
@@ -74,6 +74,8 @@ export class BluConfiguration {
 	 */
 	useBluetoothInterface(bluetoothInterface: BluBluetooth) {
 		this.#bluetoothInterface = bluetoothInterface
+
+        bluetoothState.initialize()
 	}
 
 	/**
