@@ -744,13 +744,10 @@ export default class BluDevice extends (EventTarget as BluDeviceEventTarget) {
 	 *  Event handler that is invoked whenever an advertisement has been
 	 *  received from the device.
 	 */
-	#onAdvertisementReceived(event: BluetoothAdvertisingEvent | Event) {
+	#onAdvertisementReceived(event: Event) {
 		this.dispatchEvent(
 			new BluDeviceAdvertisedEvent(
-				new BluDeviceAdvertisement(
-					event as BluetoothAdvertisingEvent,
-					this.constructor as typeof BluDevice,
-				),
+				new BluDeviceAdvertisement(event as BluetoothAdvertisingEvent),
 			),
 		)
 	}

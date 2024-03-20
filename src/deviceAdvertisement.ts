@@ -1,37 +1,28 @@
-import type BluDevice from "./device"
+import { BluBluetoothAdvertisingEvent } from "./bluetoothInterface"
 
 /**
  * Bluetooth device advertisement.
  */
 export default class BluDeviceAdvertisement {
 	/**
-	 * The advertisement's underlying
-	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}
-	 *  advertising event object.
+	 * The advertisement's timestamp.
 	 * @readonly
 	 */
-	readonly _bluetoothAdvertisement: BluetoothAdvertisingEvent
+	readonly timestamp = Date.now()
 
 	/**
-	 * The type of device this advertisement belongs to.
-	 * @remarks `undefined` when it is a generic device.
+	 * The advertisement's underlying Bluetooth interface endpoint.
 	 * @readonly
 	 */
-	readonly #deviceType?: typeof BluDevice
+	readonly _bluetoothAdvertisement: BluBluetoothAdvertisingEvent
 
 	/**
 	 * Construct a Bluetooth device advertisement.
-	 * @param bluetoothAdvertisement - The advertising event object from the
-	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API | Web Bluetooth API}.
-	 * @param deviceType - The type of device this advertisement belongs to.
-	 *  `undefined` when it is a generic device.
+	 * @param bluetoothAdvertisement - The advertisement's underlying Bluetooth
+	 *  interface endpoint.
 	 */
-	constructor(
-		bluetoothAdvertisement: BluetoothAdvertisingEvent,
-		deviceType?: typeof BluDevice,
-	) {
+	constructor(bluetoothAdvertisement: BluBluetoothAdvertisingEvent) {
 		this._bluetoothAdvertisement = bluetoothAdvertisement
-		this.#deviceType = deviceType
 	}
 
 	/**
@@ -56,11 +47,7 @@ export default class BluDeviceAdvertisement {
 	 * The device this advertisement belongs to.
 	 */
 	get device() {
-		if (!this.#deviceType) {
-			return this._bluetoothAdvertisement.device
-		}
-
-		return new this.#deviceType(this._bluetoothAdvertisement.device)
+		return this._bluetoothAdvertisement.device
 	}
 
 	/**

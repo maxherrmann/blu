@@ -4,6 +4,9 @@
  *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth}.
  *
  *  **Must** dispatch `availabilitychanged` events.
+ *
+ *  **Must** dispatch `advertisementreceived` events if you intend to use the
+ *  experimental device advertisement scanning feature.
  */
 export interface BluBluetooth extends EventTarget {
 	getAvailability: () => Promise<boolean>
@@ -24,7 +27,7 @@ export interface BluBluetooth extends EventTarget {
  *  **Must** dispatch `gattserverdisconnected` events.
  *
  *  **Must** dispatch `advertisementreceived` events if you intend to use the
- *  experimental device advertisement scanning.
+ *  experimental device advertisement reporting feature.
  */
 export interface BluBluetoothDevice extends EventTarget {
 	readonly id: string
@@ -111,4 +114,19 @@ export interface BluBluetoothRemoteGATTDescriptor {
  */
 export interface BluBluetoothLEScan {
 	stop(): void
+}
+
+/**
+ * The Web Bluetooth `BluetoothAdvertisingEvent` interface required by Blu.
+ * @remarks Based on the standard Bluetooth specification.
+ */
+export interface BluBluetoothAdvertisingEvent extends Event {
+	readonly device: BluBluetoothDevice
+	readonly uuids: BluetoothServiceUUID[]
+	readonly manufacturerData: BluetoothManufacturerData
+	readonly serviceData: BluetoothServiceData
+	readonly name?: string
+	readonly appearance?: number
+	readonly rssi?: number
+	readonly txPower?: number
 }

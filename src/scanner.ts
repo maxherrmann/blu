@@ -1,4 +1,7 @@
-import type { BluBluetoothLEScan } from "./bluetoothInterface"
+import type {
+	BluBluetoothAdvertisingEvent,
+	BluBluetoothLEScan,
+} from "./bluetoothInterface"
 import bluetooth from "./bluetoothState"
 import type { BluConfigurationOptions } from "./configuration"
 import configuration from "./configuration"
@@ -110,6 +113,12 @@ export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 	 */
 	async startScanningForAdvertisements() {
 		try {
+			if (this.#advertisementScan) {
+				throw new BluScannerOperationError(
+					"Already scanning for advertisements.",
+				)
+			}
+
 			if (!bluetooth.isSupported()) {
 				throw new BluEnvironmentError("Web Bluetooth")
 			}
@@ -121,15 +130,18 @@ export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 				throw new BluEnvironmentError("Advertisement scanning")
 			}
 
-			navigator.bluetooth.onadvertisementreceived = (
-				event: BluetoothAdvertisingEvent,
-			) => {
-				this.dispatchEvent(
-					new BluScannerAdvertisementEvent(
-						new BluDeviceAdvertisement(event),
-					),
-				)
-			}
+			configuration.bluetoothInterface.addEventListener(
+				"advertisementreceived",
+				event => {
+					this.dispatchEvent(
+						new BluScannerAdvertisementEvent(
+							new BluDeviceAdvertisement(
+								event as BluBluetoothAdvertisingEvent,
+							),
+						),
+					)
+				},
+			)
 
 			this.#advertisementScan =
 				await configuration.bluetoothInterface.requestLEScan(
@@ -160,6 +172,7 @@ export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 		}
 
 		this.#advertisementScan.stop()
+		this.#advertisementScan = undefined
 	}
 }
 
