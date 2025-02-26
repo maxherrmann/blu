@@ -1,6 +1,6 @@
-import type BluCharacteristic from "./characteristic"
-import type BluDescriptor from "./descriptor"
-import type BluDevice from "./device"
+import type BluCharacteristic from "./characteristic.js"
+import type BluDescriptor from "./descriptor.js"
+import type BluDevice from "./device.js"
 
 /**
  * Generic Blu error.
@@ -248,6 +248,13 @@ export class BluRequestConstructionError extends BluError {}
  * Response construction error.
  */
 export class BluResponseConstructionError extends BluError {}
+
+// Response thread manager
+
+/**
+ * Response thread manager operation error.
+ */
+export class BluResponseThreadManagerOperationError extends BluError {}
 
 // Scanner
 

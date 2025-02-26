@@ -1,51 +1,54 @@
 {
-	"name": "@blu.js/blu",
-	"version": "3.0.3",
-	"description": "Web Bluetooth — streamlined.",
+	"name": "blutooth",
+	"version": "4.0.0",
+	"description": "The type-safe framework for interacting with Bluetooth Low Energy devices from the web.",
 	"keywords": [
 		"blu",
-		"web bluetooth",
-		"bluetooth low energy",
 		"bluetooth",
-		"framework"
+		"bluetooth low energy",
+		"web bluetooth",
+		"typescript"
 	],
 	"license": "MIT",
 	"homepage": "https://github.com/maxherrmann/blu#readme",
 	"bugs": "https://github.com/maxherrmann/blu/issues",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/maxherrmann/blu"
+		"url": "git+https://github.com/maxherrmann/blu.git"
 	},
 	"author": {
 		"name": "Max Herrmann",
-		"email": "blu@max-herrmann.com",
+		"email": "npm@max-herrmann.com",
 		"url": "https://github.com/maxherrmann"
 	},
 	"funding": "https://github.com/sponsors/maxherrmann",
 	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "sh build.sh",
+		"build": "./build.sh",
 		"format": "prettier --write .",
-		"lint": "eslint .",
-		"lint:fix": "eslint . --fix",
-		"update": "ncu -i && git add package*.json && git commit -m \"Update dependencies\"",
-		"update:auto": "ncu -u -t semver --dep prod && ncu -u --dep dev && git add package*.json && git commit -m \"Update dependencies\""
+		"lint": "eslint ."
 	},
 	"devDependencies": {
-		"@types/web-bluetooth": "^0.0.20",
-		"@typescript-eslint/eslint-plugin": "^7.3.1",
-		"@typescript-eslint/parser": "^7.3.1",
-		"dts-bundle-generator": "^9.3.1",
-		"esbuild": "^0.20.2",
-		"eslint": "^8.57.0",
-		"eslint-config-prettier": "^9.1.0",
-		"npm-check-updates": "^16.14.17",
-		"prettier": "^3.2.5",
-		"typescript": "^5.4.2"
+		"@tsconfig/recommended": "^1.0.8",
+		"@types/eslint": "^9.6.1",
+		"@types/eslint-config-prettier": "^6.11.3",
+		"@types/node": "^22.13.9",
+		"@types/web-bluetooth": "^0.0.21",
+		"dts-bundle-generator": "^9.5.1",
+		"esbuild": "^0.25.0",
+		"eslint": "^9.21.0",
+		"eslint-config-prettier": "^10.0.2",
+		"prettier": "^3.5.3",
+		"publint": "^0.3.8",
+		"typescript": "^5.8.2",
+		"typescript-eslint": "^8.26.0"
 	},
 	"dependencies": {
-		"zod": "^3.22.4"
+		"jaset": "^1.1.0",
+		"zod": "^3.24.2"
 	}
 }

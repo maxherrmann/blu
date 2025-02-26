@@ -5,8 +5,8 @@
 	<i><b>Web Bluetooth — streamlined.</b></i>
 	<br>
 	<br>
-	<a href="https://www.npmjs.org/package/@blu.js/blu">
-		<img src="https://img.shields.io/npm/v/@blu.js/blu.svg" alt="npm">
+	<a href="https://www.npmjs.org/package/blutooth">
+		<img src="https://img.shields.io/npm/v/blutooth.svg" alt="npm">
 	</a>
 	<br>
 	<br>
@@ -16,22 +16,21 @@ Blu is a framework that streamlines the integration of Web Bluetooth into your p
 
 ## Table of contents
 
--   [**Installation**](#installation)
--   [**Key advantages**](#key-advantages)
-    -   [Intuitive interface](#intuitive-interface)
-    -   [Intuitive communication model](#intuitive-communication-model)
-    -   [Global operation queueing](#global-operation-queueing)
-    -   [Support for Web Bluetooth polyfills](#support-for-web-bluetooth-polyfills)
-    -   [Type-safety](#type-safety)
--   [**Usage**](#usage)
-    -   [Import Blu](#import-blu)
-    -   [Use Blu in your project](#use-blu-in-your-project)
--   [**Building**](#building)
+- [**Installation**](#installation)
+- [**Key advantages**](#key-advantages)
+    - [Intuitive interface](#intuitive-interface)
+    - [Intuitive communication model](#intuitive-communication-model)
+    - [Global operation queueing](#global-operation-queueing)
+    - [Support for Web Bluetooth polyfills](#support-for-web-bluetooth-polyfills)
+    - [Type-safety](#type-safety)
+- [**Usage**](#usage)
+    - [Import Blu](#import-blu)
+    - [Use Blu in your project](#use-blu-in-your-project)
 
 ## Installation
 
 ```sh
-npm install @blu.js/blu
+npm i blutooth
 ```
 
 ## Key advantages
@@ -119,7 +118,7 @@ return new Promise(resolve => {
 
 ```js
 class MyDataResponse extends BluResponse {
-	static validatorFunction(response) {
+	static validator(response) {
 		return response.data?.getUint8(0) === Command.GET_MY_DATA
 	}
 
@@ -157,88 +156,19 @@ Blu is built with TypeScript, offering you a strongly typed and safely extendabl
 
 ### Import Blu
 
-The Blu framework is packaged as a minified ECMAScript module with source maps.
-
 ```js
-import blu from "@blu.js/blu"
+import blu from "blutooth"
 
 // blu.bluetooth
 // blu.configuration
 // blu.convert
 // blu.scanner
-// blu.version
 ```
 
-```js
-import {
-	BluDevice,
-	BluCharacteristic,
-	bluetooth,
-	configuration,
-	// ...
-} from "@blu.js/blu"
-```
+See [index.ts](https://github.com/maxherrmann/blu/blob/main/src/index.ts) for all exports.
 
 ### Use Blu in your project
 
-You can find a detailed guide on how to use Blu in this repo's wiki.
+You can find a detailed guide on how to use Blu here:
 
 [➡ **How to implement your own device with Blu**](https://github.com/maxherrmann/blu/wiki/How-to-implement-your-own-device-with-Blu)
-
-## Building
-
-To start building Blu locally, run the following:
-
-```sh
-git clone https://github.com/maxherrmann/blu.git && cd blu && npm i
-```
-
-### Build scripts
-
-#### Build package
-
-```sh
-npm run build
-```
-
-Builds the package with [esbuild](https://esbuild.github.io/) and [DTS Bundle Generator](https://github.com/timocov/dts-bundle-generator).
-
-#### Format code
-
-```sh
-npm run format
-```
-
-Formats the source code with [Prettier](https://prettier.io/).
-
-#### Lint code
-
-```sh
-npm run lint
-```
-
-Lints the source code with [ESLint](https://eslint.org/).
-
-#### Lint and fix code
-
-```sh
-npm run lint:fix
-```
-
-Lints the source code with [ESLint](https://eslint.org/) and fixes all auto-solvable issues.
-
-#### Update dependencies
-
-```sh
-npm run update
-```
-
-Interactively updates all dependencies with [`ncu`](https://github.com/raineorshine/npm-check-updates).
-
-#### Update dependencies
-
-```sh
-npm run update:auto
-```
-
-Automatically updates all dependencies with [`ncu`](https://github.com/raineorshine/npm-check-updates).

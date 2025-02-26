@@ -1,24 +1,24 @@
-import type { BluBluetoothRemoteGATTDescriptor } from "./bluetoothInterface"
-import type BluCharacteristic from "./characteristic"
-import configuration from "./configuration"
-import type { BluDescriptorDescription } from "./descriptions"
-import {
-	BluDescriptorOperationError,
-	BluResponseConstructionError,
-} from "./errors"
-import type { BluEventTarget } from "./eventTarget"
-import BluResponse from "./response"
-import isBufferSource from "./utils/isBufferSource"
+import EventTarget, { type EventMap } from "jaset"
+import type { BluBluetoothRemoteGATTDescriptor } from "./bluetoothInterface.js"
+import type BluCharacteristic from "./characteristic.js"
+import configuration from "./configuration.js"
+import type { BluDescriptorDescription } from "./descriptions.js"
+import { BluDescriptorOperationError } from "./errors.js"
+import BluResponse from "./response.js"
+import isBufferSource from "./utils/isBufferSource.js"
 
 /**
  * Bluetooth descriptor.
  */
-export default class BluDescriptor extends (EventTarget as BluDescriptorEventTarget) {
+export default class BluDescriptor<
+	Characteristic extends BluCharacteristic = BluCharacteristic,
+	Events extends EventMap<Events> = EventMap,
+> extends EventTarget<Events> {
 	/**
 	 * The characteristic associated with this descriptor.
 	 * @readonly
 	 */
-	readonly characteristic: BluCharacteristic
+	readonly characteristic: Characteristic
 
 	/**
 	 * The descriptor's description.
@@ -55,7 +55,7 @@ export default class BluDescriptor extends (EventTarget as BluDescriptorEventTar
 		bluetoothDescriptor,
 		description,
 	}: {
-		characteristic: BluCharacteristic
+		characteristic: Characteristic
 		bluetoothDescriptor: BluBluetoothRemoteGATTDescriptor
 		description: BluDescriptorDescription
 	}) {
@@ -148,7 +148,7 @@ export default class BluDescriptor extends (EventTarget as BluDescriptorEventTar
 			return this.value
 		} catch (error) {
 			throw new BluDescriptorOperationError(
-				this,
+				this as never,
 				"Could not read value.",
 				error,
 			)
@@ -163,7 +163,7 @@ export default class BluDescriptor extends (EventTarget as BluDescriptorEventTar
 	async write(value: BufferSource) {
 		if (!isBufferSource(value)) {
 			throw new BluDescriptorOperationError(
-				this,
+				this as never,
 				`Argument "value" must be a buffer source.`,
 			)
 		}
@@ -189,17 +189,10 @@ export default class BluDescriptor extends (EventTarget as BluDescriptorEventTar
 			)
 		} catch (error) {
 			throw new BluDescriptorOperationError(
-				this,
+				this as never,
 				"Could not write value.",
 				error,
 			)
 		}
 	}
 }
-
-/**
- * Descriptor event target.
- */
-type BluDescriptorEventTarget = BluEventTarget<
-	Record<string, Event | CustomEvent>
->

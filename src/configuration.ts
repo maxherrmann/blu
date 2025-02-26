@@ -1,16 +1,10 @@
 import { z } from "zod"
-import type { BluBluetooth } from "./bluetoothInterface"
-import bluetoothState from "./bluetoothState"
-import type BluCharacteristic from "./characteristic"
-import type {
-	BluInterfaceDescription,
-	BluServiceDescription,
-} from "./descriptions"
-import BluDevice from "./device"
-import { BluConfigurationError } from "./errors"
-import type BluScanner from "./scanner"
-import isBufferSource from "./utils/isBufferSource"
-import isSubclassOrSelf from "./utils/isSubclassOrSelf"
+import type { BluBluetooth } from "./bluetoothInterface.js"
+import bluetoothState from "./bluetoothState.js"
+import BluDevice from "./device.js"
+import { BluConfigurationError } from "./errors.js"
+import isBufferSource from "./utils/isBufferSource.js"
+import isSubclassOrSame from "./utils/isSubclassOrSame.js"
 
 /**
  * Configuration for Blu.
@@ -24,6 +18,7 @@ export class BluConfiguration {
 	/**
 	 * Active Bluetooth interface.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	#bluetoothInterface: BluBluetooth = globalThis?.navigator?.bluetooth
 
 	/**
@@ -129,7 +124,7 @@ export interface BluConfigurationOptions {
 	 * The device type.
 	 * @remarks Will be used to construct device objects for newly scanned
 	 *  devices.
-	 * @defaultValue {@link BluDevice} itself.
+	 * @defaultValue The type of {@link BluDevice}.
 	 */
 	deviceType?: typeof BluDevice
 
@@ -223,8 +218,8 @@ const bluetoothServiceUUIDGuard = z.string().or(z.number())
  * A zod guard for `BluetoothDataFilter`.
  */
 const bluetoothDataFilterGuard = z.object({
-	dataPrefix: z.custom<BufferSource>(x => isBufferSource(x)).optional(),
-	mask: z.custom<BufferSource>(x => isBufferSource(x)).optional(),
+	dataPrefix: z.custom<BufferSource>((x) => isBufferSource(x)).optional(),
+	mask: z.custom<BufferSource>((x) => isBufferSource(x)).optional(),
 })
 
 /**
@@ -292,7 +287,7 @@ const configurationOptionsGuard = z
 		advertisementScannerConfig: bluetoothLEScanOptionsGuard.optional(),
 		deviceScannerConfig: requestDeviceOptionsGuard.optional(),
 		deviceType: z
-			.custom<typeof BluDevice>(x => isSubclassOrSelf(x, BluDevice))
+			.custom<typeof BluDevice>((x) => isSubclassOrSame(x, BluDevice))
 			.optional(),
 		deviceInterfaceMatching: z.boolean().optional(),
 		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
@@ -313,7 +308,7 @@ const configurationOptionsGuard = z
  *
  *  - `deviceScannerConfig`: `{ acceptAllDevices: true }`
  *
- *  - `deviceType`: {@link BluDevice} itself
+ *  - `deviceType`: The type of {@link BluDevice}.
  *
  *  - `deviceInterfaceMatching`: `true`
  *

@@ -1,18 +1,21 @@
-import type { BluBluetoothRemoteGATTService } from "./bluetoothInterface"
-import type BluCharacteristic from "./characteristic"
-import type { BluServiceDescription } from "./descriptions"
-import type BluDevice from "./device"
-import type { BluEventTarget } from "./eventTarget"
+import EventTarget, { type EventMap } from "jaset"
+import type { BluBluetoothRemoteGATTService } from "./bluetoothInterface.js"
+import type BluCharacteristic from "./characteristic.js"
+import type { BluServiceDescription } from "./descriptions.js"
+import type BluDevice from "./device.js"
 
 /**
  * Bluetooth service.
  */
-export default class BluService extends (EventTarget as BluServiceEventTarget) {
+export default class BluService<
+	Device extends BluDevice = BluDevice,
+	Events extends EventMap<Events> = EventMap,
+> extends EventTarget<Events> {
 	/**
 	 * The device associated with this service.
 	 * @readonly
 	 */
-	readonly device: BluDevice
+	readonly device: Device
 
 	/**
 	 * The service's description.
@@ -44,7 +47,7 @@ export default class BluService extends (EventTarget as BluServiceEventTarget) {
 		bluetoothService,
 		description,
 	}: {
-		device: BluDevice
+		device: Device
 		bluetoothService: BluBluetoothRemoteGATTService
 		description: BluServiceDescription
 	}) {
@@ -76,8 +79,3 @@ export default class BluService extends (EventTarget as BluServiceEventTarget) {
 		return
 	}
 }
-
-/**
- * Service event target.
- */
-type BluServiceEventTarget = BluEventTarget<Record<string, Event | CustomEvent>>

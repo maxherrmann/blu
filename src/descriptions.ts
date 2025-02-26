@@ -1,11 +1,10 @@
-import BluCharacteristic from "./characteristic"
-import type { BluConfigurationOptions } from "./configuration"
-import BluDescriptor from "./descriptor"
-import type BluDevice from "./device"
-import { BluInterfaceDescriptionConstructionError } from "./errors"
-import BluService from "./service"
-import isArray from "./utils/isArray"
-import isSubclassOrSelf from "./utils/isSubclassOrSelf"
+import BluCharacteristic from "./characteristic.js"
+import BluDescriptor from "./descriptor.js"
+import BluDevice from "./device.js"
+import { BluInterfaceDescriptionConstructionError } from "./errors.js"
+import BluResponse from "./response.js"
+import BluService from "./service.js"
+import isSubclassOrSame from "./utils/isSubclassOrSame.js"
 
 /**
  * Generic description for a Bluetooth interface component.
@@ -79,32 +78,6 @@ export class BluInterfaceDescription {
 		name?: string
 		optional?: boolean
 	}) {
-		if (typeof uuid !== "string" && typeof uuid !== "number") {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "uuid" must be either of type "string" or ` +
-					`"number".`,
-			)
-		}
-
-		if (typeof identifier !== "string" && identifier !== undefined) {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "identifier" must be either of type "string" ` +
-					`or "undefined".`,
-			)
-		}
-
-		if (typeof name !== "string") {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "name" must be of type "string".`,
-			)
-		}
-
-		if (typeof optional !== "boolean") {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "optional" must be of type "boolean".`,
-			)
-		}
-
 		if (typeof uuid === "string") {
 			uuid = uuid.toLowerCase()
 		}
@@ -122,10 +95,10 @@ export class BluInterfaceDescription {
 export class BluServiceDescription extends BluInterfaceDescription {
 	/**
 	 * The type that represents the described service.
-	 * @defaultValue {@link BluService} itself.
+	 * @defaultValue The type of {@link BluService}.
 	 * @readonly
 	 */
-	readonly type: typeof BluService
+	readonly type: typeof BluService<BluDevice>
 
 	/**
 	 * The {@link BluCharacteristicDescription}s for the described service's
@@ -154,7 +127,8 @@ export class BluServiceDescription extends BluInterfaceDescription {
 	 *  Defaults to `undefined`.
 	 * @param name - The service's name. Used for internal reference. Defaults
 	 *  to "Generic Service".
-	 * @param type - The service's type. Defaults to {@link BluService} itself.
+	 * @param type - The service's type. Defaults to the type of
+	 *  {@link BluService}.
 	 * @param characteristicDescriptions - The descriptions for the service's
 	 *  characteristics. Defaults to `[]`.
 	 * @param advertised - Is the service being advertised by the device?
@@ -175,39 +149,12 @@ export class BluServiceDescription extends BluInterfaceDescription {
 		uuid: BluetoothServiceUUID
 		identifier?: string
 		name?: string
-		type?: typeof BluService
+		type?: typeof BluService<BluDevice>
 		characteristicDescriptions?: BluCharacteristicDescription[]
 		advertised?: boolean
 		optional?: boolean
 	}) {
 		super({ uuid, identifier, name, optional })
-
-		if (!isSubclassOrSelf(type, BluService)) {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "type" must be a class that is or extends ` +
-					`"Service".`,
-			)
-		}
-
-		if (
-			!isArray(characteristicDescriptions) ||
-			!characteristicDescriptions.every(
-				characteristicDescription =>
-					characteristicDescription instanceof
-					BluCharacteristicDescription,
-			)
-		) {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "characteristicDescriptions" must be an array ` +
-					`of "CharacteristicDescription".`,
-			)
-		}
-
-		if (typeof advertised !== "boolean") {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "advertised" must be of type "boolean".`,
-			)
-		}
 
 		this.type = type
 		this.characteristics = characteristicDescriptions
@@ -221,10 +168,10 @@ export class BluServiceDescription extends BluInterfaceDescription {
 export class BluCharacteristicDescription extends BluInterfaceDescription {
 	/**
 	 * The type that represents the described characteristic.
-	 * @defaultValue {@link BluCharacteristic} itself.
+	 * @defaultValue The type of {@link BluCharacteristic}.
 	 * @readonly
 	 */
-	readonly type: typeof BluCharacteristic
+	readonly type: typeof BluCharacteristic<BluService, typeof BluResponse>
 
 	/**
 	 * The {@link BluDescriptorDescription}s for the described characteristic's
@@ -253,8 +200,8 @@ export class BluCharacteristicDescription extends BluInterfaceDescription {
 	 *  characteristic when omitted. Defaults to `undefined`.
 	 * @param name - The characteristic's name. Used for internal reference.
 	 *  Defaults to "Generic Characteristic".
-	 * @param type - The characteristic's type. Defaults to
-	 *  {@link BluCharacteristic} itself.
+	 * @param type - The characteristic's type. Defaults to the type of
+	 *  {@link BluCharacteristic}.
 	 * @param descriptorDescriptions - The descriptions for the characteristic's
 	 *  descriptors. Defaults to `[]`.
 	 * @param expectedProperties - The characteristic's expected properties.
@@ -275,53 +222,12 @@ export class BluCharacteristicDescription extends BluInterfaceDescription {
 		uuid: BluetoothCharacteristicUUID
 		identifier?: string
 		name?: string
-		type?: typeof BluCharacteristic
+		type?: typeof BluCharacteristic<BluService, typeof BluResponse>
 		descriptorDescriptions?: BluDescriptorDescription[]
 		expectedProperties?: Partial<BluetoothCharacteristicProperties>
 		optional?: boolean
 	}) {
 		super({ uuid, identifier, name, optional })
-
-		if (!isSubclassOrSelf(type, BluCharacteristic)) {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "type" must be a class that is or extends ` +
-					`"Characteristic".`,
-			)
-		}
-
-		if (
-			!isArray(descriptorDescriptions) ||
-			!descriptorDescriptions.every(
-				descriptorDescription =>
-					descriptorDescription instanceof BluDescriptorDescription,
-			)
-		) {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "descriptorDescriptions" must be an array ` +
-					`of "DescriptorDescription".`,
-			)
-		}
-
-		if (
-			typeof expectedProperties !== "object" &&
-			expectedProperties !== undefined
-		) {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "expectedProperties" must be either of type ` +
-					`"object" or "undefined".`,
-			)
-		}
-
-		if (
-			typeof expectedProperties !== "undefined" &&
-			!Object.values(expectedProperties).every(
-				value => value === undefined || typeof value === "boolean",
-			)
-		) {
-			throw new BluInterfaceDescriptionConstructionError(
-				`Argument "expectedProperties" has an invalid signature.`,
-			)
-		}
 
 		this.type = type
 		this.descriptors = descriptorDescriptions
@@ -335,10 +241,10 @@ export class BluCharacteristicDescription extends BluInterfaceDescription {
 export class BluDescriptorDescription extends BluInterfaceDescription {
 	/**
 	 * The type that represents the described descriptor.
-	 * @defaultValue {@link BluDescriptor} itself.
+	 * @defaultValue The type of {@link BluDescriptor}.
 	 * @readonly
 	 */
-	readonly type: typeof BluDescriptor
+	readonly type: typeof BluDescriptor<BluCharacteristic>
 
 	/**
 	 * Construct a description for a Bluetooth descriptor.
@@ -349,8 +255,8 @@ export class BluDescriptorDescription extends BluInterfaceDescription {
 	 *  omitted. Defaults to `undefined`.
 	 * @param name - The descriptor's name. Used for internal reference.
 	 *  Defaults to "Generic Descriptor".
-	 * @param type - The descriptor's type. Defaults to {@link BluDescriptor}
-	 *  itself.
+	 * @param type - The descriptor's type. Defaults to the type of
+	 *  {@link BluDescriptor}.
 	 * @param optional - Is the descriptor optional? Defaults to `false`.
 	 * @throws A {@link BluInterfaceDescriptionConstructionError} when invalid
 	 *  arguments were provided.
@@ -365,12 +271,12 @@ export class BluDescriptorDescription extends BluInterfaceDescription {
 		uuid: BluetoothDescriptorUUID
 		identifier?: string
 		name?: string
-		type?: typeof BluDescriptor
+		type?: typeof BluDescriptor<BluCharacteristic>
 		optional?: boolean
 	}) {
 		super({ uuid, identifier, name, optional })
 
-		if (!isSubclassOrSelf(type, BluDescriptor)) {
+		if (!isSubclassOrSame(type, BluDescriptor)) {
 			throw new BluInterfaceDescriptionConstructionError(
 				`Argument "type" must be a class that is or extends ` +
 					`"Descriptor".`,

@@ -35,16 +35,8 @@ jobs:
             - name: Install
               run: npm install
 
-            - name: Lint and format source code
-              run: |
-                  npm run lint:fix
-                  npm run format
-                  git status
-
             - name: Build package
-              run: |
-                  npm install
-                  npm run build
+              run: npm run build
 
             - name: Commit and push changes
               uses: stefanzweifel/git-auto-commit-action@v5
@@ -55,7 +47,7 @@ jobs:
                   skip_checkout: true
 
             - name: Create draft release
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
                   tag_name: ${{ github.event.inputs.versionTag }}
                   prerelease: ${{ contains(github.event.inputs.versionTag, '-rc.') }}

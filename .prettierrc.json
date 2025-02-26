@@ -1,7 +1,0 @@
-{
-	"arrowParens": "avoid",
-	"endOfLine": "auto",
-	"semi": false,
-	"tabWidth": 4,
-	"useTabs": true
-}
