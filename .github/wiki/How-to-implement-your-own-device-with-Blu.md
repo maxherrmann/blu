@@ -15,7 +15,7 @@ An example of an openly accessible Bluetooth interface is the [default Bluetooth
 To get started, install Blu with a package manager of your choice, e.g., `npm`.
 
 ```sh
-npm install @blu.js/blu
+npm i blutooth
 ```
 
 ## Configuration
@@ -29,7 +29,7 @@ First, we create a `myDevice.ts` file and add a device class that extends `BluDe
 ```ts
 // myDevice.ts
 
-import { BluDevice } from "@blu.js/blu"
+import { BluDevice } from "blutooth"
 
 export default class MyDevice extends BluDevice {}
 ```
@@ -45,7 +45,7 @@ import {
 	BluCharacteristicDescription,
 	BluDevice,
 	BluServiceDescription,
-} from "@blu.js/blu"
+} from "blutooth"
 
 export default class MyDevice extends BluDevice {
 	static override interface: BluServiceDescription[] = [
@@ -89,7 +89,7 @@ The device scanner configuration is essentially the same as the Web Bluetooth AP
 ```ts
 // scannerConfig.ts
 
-import type { BluConfigurationOptions } from "@blu.js/blu"
+import type { BluConfigurationOptions } from "blutooth"
 
 export const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"] =
 	{
@@ -104,6 +104,7 @@ export const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"]
 
 Now we create a `button.ts` file and use it to implement our device's button-related service and characteristic.
 
+> [!NOTE]
 > For simplicity, we will implement everything we need in one file. You can, of course, split your code into multiple files if you want.
 
 Let's start with the button service:
@@ -111,13 +112,14 @@ Let's start with the button service:
 ```ts
 // button.ts
 
-import { BluService } from "@blu.js/blu"
+import { BluService } from "blutooth"
 
 export class ButtonService extends BluService {
 	declare buttonStateCharacteristic: ButtonStateCharacteristic
 }
 ```
 
+> [!NOTE]
 > Wondering about the use of `declare` here? There will be an explanation later in the guide.
 
 Our service does not contain any logic and merely acts as a wrapper for its "Button State Characteristic". So let's implement that one next:
@@ -125,7 +127,7 @@ Our service does not contain any logic and merely acts as a wrapper for its "But
 ```ts
 // button.ts
 
-import { BluCharacteristic, BluService } from "@blu.js/blu"
+import { BluCharacteristic, BluService } from "blutooth"
 
 // ...
 
@@ -157,7 +159,7 @@ To put this into code, we create a class that extends `BluResponse` and holds a 
 ```ts
 // button.ts
 
-import { BluCharacteristic, BluResponse, BluService } from "@blu.js/blu"
+import { BluCharacteristic, BluResponse, BluService } from "blutooth"
 
 // ...
 
@@ -222,6 +224,9 @@ The result of `this.read()` resolves to `ButtonStateResponse`, because we instru
 
 Next, we add a listener for our characteristic's `notification` event that updates our `#buttonState` property whenever the device's button state changes.
 
+> [!NOTE]
+> Wondering about `on()`? This function comes from [jaset](https://github.com/maxherrmann/jaset), which Blu uses to provide type-safe events.
+
 ```ts
 // button.ts
 
@@ -236,7 +241,7 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 		// Read the initial button state
 		this.#buttonState = (await this.read<ButtonStateResponse>()).buttonState
 
-		this.addEventListener("notification", event => {
+		this.on("notification", (event) => {
 			if (event.response instanceof ButtonStateResponse) {
 				// Update button state based on response
 				this.#buttonState = event.response.buttonState
@@ -289,7 +294,7 @@ Finally, we can acquire our device, connect to it, and interact with it.
 ```ts
 // app.ts
 
-import { configuration, scanner } from "@blu.js/blu"
+import { configuration, scanner } from "blutooth"
 import MyDevice from "./myDevice"
 import { deviceScannerConfig } from "./scannerConfig"
 
@@ -312,11 +317,11 @@ console.log(device.buttonState)
 
 ### Bluetooth specification
 
--   [Web Bluetooth Registries (Web Bluetooth CG)](https://github.com/WebBluetoothCG/registries)
--   [List of assigned numbers, e.g., GATT UUIDs (Bluetooth SIG)](https://www.bluetooth.com/specifications/assigned-numbers/)
--   [List of public Bluetooth specifications (Bluetooth SIG)](https://www.bluetooth.com/specifications/specs/)
+- [Web Bluetooth Registries (Web Bluetooth CG)](https://github.com/WebBluetoothCG/registries)
+- [List of assigned numbers, e.g., GATT UUIDs (Bluetooth SIG)](https://www.bluetooth.com/specifications/assigned-numbers/)
+- [List of public Bluetooth specifications (Bluetooth SIG)](https://www.bluetooth.com/specifications/specs/)
 
 ### Reverse engineering of Bluetooth protocols
 
--   [Bluetooth Reverse Engineering: Tools and Techniques (YouTube)](https://www.youtube.com/watch?v=gCQ3iSy6R-U)
--   [Reverse Engineering a Bluetooth Lightbulb (Medium)](https://urish.medium.com/reverse-engineering-a-bluetooth-lightbulb-56580fcb7546)
+- [Bluetooth Reverse Engineering: Tools and Techniques (YouTube)](https://www.youtube.com/watch?v=gCQ3iSy6R-U)
+- [Reverse Engineering a Bluetooth Lightbulb (Medium)](https://urish.medium.com/reverse-engineering-a-bluetooth-lightbulb-56580fcb7546)

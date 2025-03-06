@@ -1,12 +1,12 @@
-import configuration from "./configuration"
-import type BluDevice from "./device"
-import { BluDeviceConnectionEvent } from "./device"
-import type { BluEventTarget } from "./eventTarget"
+import configuration from "./configuration.js"
+import type BluDevice from "./device.js"
+import { BluDeviceConnectionEvent } from "./device.js"
+import EventTarget, { type EventMap } from "jaset"
 
 /**
  * Bluetooth state handler.
  */
-export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTarget) {
+export class BluBluetoothState extends EventTarget<BluBluetoothStateEvents> {
 	/**
 	 * Is the Bluetooth state handler initialized?
 	 */
@@ -30,7 +30,7 @@ export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTar
 	 * All connected devices.
 	 * @readonly
 	 */
-	get connectedDevices() {
+	get connectedDevices(): BluDevice[] {
 		return Array.from(this.#connectedDevices)
 	}
 
@@ -39,7 +39,7 @@ export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTar
 	 * connected.
 	 * @readonly
 	 */
-	get connectedDevice() {
+	get connectedDevice(): BluDevice | null {
 		return this.connectedDevices[this.connectedDevices.length - 1] ?? null
 	}
 
@@ -53,32 +53,28 @@ export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTar
 
 		configuration.bluetoothInterface.addEventListener(
 			"availabilitychanged",
-			event => {
-				if ((event as AvailabilityChangedEvent).value) {
-					this.dispatchEvent(
-						new BluBluetoothStateChangeEvent("bluetooth-enabled"),
-					)
-				} else {
-					this.dispatchEvent(
-						new BluBluetoothStateChangeEvent("bluetooth-disabled"),
-					)
-				}
+			(event) => {
+				this.emit(
+					(event as AvailabilityChangedEvent).value
+						? new BluBluetoothEnabledEvent()
+						: new BluBluetoothDisabledEvent(),
+				)
 			},
 		)
 
-		this.addEventListener("bluetooth-disabled", () => {
+		this.on("bluetooth-disabled", () => {
 			this.#connectedDevices.clear()
 		})
 
-		this.addEventListener("connected", event => {
+		this.on("connected", (event) => {
 			this.#connectedDevices.add(event.device)
 		})
 
-		this.addEventListener("disconnected", event => {
+		this.on("disconnected", (event) => {
 			this.#connectedDevices.delete(event.device)
 		})
 
-		this.addEventListener("connection-lost", event => {
+		this.on("connection-lost", (event) => {
 			this.#connectedDevices.delete(event.device)
 		})
 
@@ -106,31 +102,42 @@ export class BluBluetoothState extends (EventTarget as BluBluetoothStateEventTar
 }
 
 /**
- * Bluetooth state change event.
+ * Bluetooth enabled event.
  */
-export class BluBluetoothStateChangeEvent extends Event {
+export class BluBluetoothEnabledEvent extends Event {
 	/**
-	 * Construct a Bluetooth state change event.
-	 * @param type - The event type.
+	 * Construct a Bluetooth enabled event.
 	 */
-	constructor(type: "bluetooth-enabled" | "bluetooth-disabled") {
-		super(type)
+	constructor() {
+		super("bluetooth-enabled")
+	}
+}
+
+/**
+ * Bluetooth disabled event.
+ */
+export class BluBluetoothDisabledEvent extends Event {
+	/**
+	 * Construct a Bluetooth disabled event.
+	 */
+	constructor() {
+		super("bluetooth-disabled")
 	}
 }
 
 /**
  * Bluetooth state event target.
  */
-type BluBluetoothStateEventTarget = BluEventTarget<{
+type BluBluetoothStateEvents = EventMap<{
 	/**
 	 * Bluetooth has been enabled.
 	 */
-	"bluetooth-enabled": BluBluetoothStateChangeEvent
+	"bluetooth-enabled": BluBluetoothEnabledEvent
 
 	/**
 	 * Bluetooth has been disabled.
 	 */
-	"bluetooth-disabled": BluBluetoothStateChangeEvent
+	"bluetooth-disabled": BluBluetoothDisabledEvent
 
 	/**
 	 * A Bluetooth device has been connected.

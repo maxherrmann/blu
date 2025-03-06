@@ -1,23 +1,22 @@
+import EventTarget, { type EventMap } from "jaset"
 import type {
 	BluBluetoothAdvertisingEvent,
 	BluBluetoothLEScan,
-} from "./bluetoothInterface"
-import bluetooth from "./bluetoothState"
-import type { BluConfigurationOptions } from "./configuration"
-import configuration from "./configuration"
-import BluDevice from "./device"
-import BluDeviceAdvertisement from "./deviceAdvertisement"
+} from "./bluetoothInterface.js"
+import bluetooth from "./bluetoothState.js"
+import configuration from "./configuration.js"
+import BluDevice from "./device.js"
+import BluDeviceAdvertisement from "./deviceAdvertisement.js"
 import {
 	BluEnvironmentError,
 	BluScannerError,
 	BluScannerOperationError,
-} from "./errors"
-import type { BluEventTarget } from "./eventTarget"
+} from "./errors.js"
 
 /**
  * Scanner for Bluetooth devices.
  */
-export class BluScanner extends (EventTarget as BluScannerEventTarget) {
+export class BluScanner extends EventTarget<BluScannerEvents> {
 	/**
 	 * An ongoing advertisement scan.
 	 */
@@ -48,9 +47,9 @@ export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 			scannerConfig.optionalServices =
 				configuration.options.deviceType.interface
 					.filter(
-						serviceDescription => !serviceDescription.advertised,
+						(serviceDescription) => !serviceDescription.advertised,
 					)
-					.map(serviceDescription => serviceDescription.uuid)
+					.map((serviceDescription) => serviceDescription.uuid)
 
 			const webBluetoothDevice =
 				await configuration.bluetoothInterface.requestDevice(
@@ -77,7 +76,7 @@ export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 	 *  {@link BluDevice | devices}.
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
-	async getPairedDevices() {
+	async getPairedDevices(): Promise<BluDevice[]> {
 		try {
 			if (!bluetooth.isSupported()) {
 				throw new BluEnvironmentError("Web Bluetooth")
@@ -92,7 +91,7 @@ export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 
 			const devices = await configuration.bluetoothInterface.getDevices()
 
-			return devices.map(device => {
+			return devices.map((device) => {
 				return new BluDevice(device)
 			})
 		} catch (error) {
@@ -132,8 +131,8 @@ export class BluScanner extends (EventTarget as BluScannerEventTarget) {
 
 			configuration.bluetoothInterface.addEventListener(
 				"advertisementreceived",
-				event => {
-					this.dispatchEvent(
+				(event) => {
+					this.emit(
 						new BluScannerAdvertisementEvent(
 							new BluDeviceAdvertisement(
 								event as BluBluetoothAdvertisingEvent,
@@ -197,9 +196,9 @@ export class BluScannerAdvertisementEvent extends Event {
 }
 
 /**
- * Scanner event target.
+ * Scanner event map.
  */
-type BluScannerEventTarget = BluEventTarget<{
+type BluScannerEvents = EventMap<{
 	/**
 	 * ⚠️ An advertisement has been received.
 	 * @remarks Experimental feature. Only supported by some environments. See

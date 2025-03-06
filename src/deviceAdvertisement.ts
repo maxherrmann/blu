@@ -1,4 +1,4 @@
-import { BluBluetoothAdvertisingEvent } from "./bluetoothInterface"
+import { BluBluetoothAdvertisingEvent } from "./bluetoothInterface.js"
 
 /**
  * Bluetooth device advertisement.

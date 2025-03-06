@@ -1,4 +1,4 @@
-import { BluGATTOperationError, BluGATTOperationQueueError } from "./errors"
+import { BluGATTOperationError, BluGATTOperationQueueError } from "./errors.js"
 
 /**
  * Queue for GATT operations.
@@ -38,15 +38,11 @@ export default class BluGATTOperationQueue {
 			}
 
 			this.#queue.push(async () => {
-				let isTimeoutReached = false
-
 				const timeout = setTimeout(() => {
-					isTimeoutReached = true
-
 					reject(
 						new BluGATTOperationError(
 							`GATT operation timed out after ` +
-								`${GATT_OPERATION_TIMEOUT} ms.`,
+								`${String(GATT_OPERATION_TIMEOUT)} ms.`,
 						),
 					)
 				}, GATT_OPERATION_TIMEOUT)
@@ -54,18 +50,10 @@ export default class BluGATTOperationQueue {
 				try {
 					const result = await callback()
 
-					if (isTimeoutReached) {
-						return
-					}
-
 					clearTimeout(timeout)
 
 					resolve(result)
 				} catch (error) {
-					if (isTimeoutReached) {
-						return
-					}
-
 					clearTimeout(timeout)
 
 					reject(
@@ -77,8 +65,8 @@ export default class BluGATTOperationQueue {
 				}
 			})
 
-			this.#processQueue().catch(error => {
-				reject(error)
+			this.#processQueue().catch((error: unknown) => {
+				reject(error as Error)
 			})
 		})
 	}
@@ -95,12 +83,9 @@ export default class BluGATTOperationQueue {
 
 		try {
 			while (this.#queue.length > 0) {
-				const callback = this.#queue.shift()!
-
-				await callback()
+				const callback = this.#queue.shift()
+				await callback?.()
 			}
-		} catch (error) {
-			throw error
 		} finally {
 			this.#isBusy = false
 		}

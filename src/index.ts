@@ -4,48 +4,50 @@
  * @packageDocumentation
  */
 
-import bluetooth from "./bluetoothState"
-import configuration from "./configuration"
-import convert from "./converter"
-import scanner from "./scanner"
-import version from "./version"
+import bluetooth from "./bluetoothState.js"
+import configuration from "./configuration.js"
+import convert from "./converter.js"
+import scanner from "./scanner.js"
 
-export { default as bluetooth } from "./bluetoothState"
+export {
+	BluBluetoothDisabledEvent,
+	BluBluetoothEnabledEvent,
+	default as bluetooth,
+} from "./bluetoothState.js"
 export {
 	default as BluCharacteristic,
-	BluCharacteristicProperties,
-} from "./characteristic"
-export { default as configuration } from "./configuration"
-export { default as convert } from "./converter"
-export * from "./descriptions"
-export { default as BluDescriptor } from "./descriptor"
-export { default as BluDevice, BluDeviceConnectionEvent } from "./device"
-export { default as BluDeviceAdvertisement } from "./deviceAdvertisement"
-export * from "./errors"
-export { default as BluRequest } from "./request"
-export { default as BluResponse } from "./response"
-export { default as scanner } from "./scanner"
-export { default as BluService } from "./service"
-export { default as version } from "./version"
+	BluCharacteristicNotificationEvent,
+} from "./characteristic.js"
+export { default as BluCompoundResponse } from "./compoundResponse.js"
+export { default as configuration } from "./configuration.js"
+export { default as convert } from "./converter.js"
+export * from "./descriptions.js"
+export { default as BluDescriptor } from "./descriptor.js"
+export {
+	default as BluDevice,
+	BluDeviceAdvertisedEvent,
+	BluDeviceConnectionEvent,
+} from "./device.js"
+export * from "./errors.js"
+export { default as BluRequest } from "./request.js"
+export { default as BluResponse } from "./response.js"
+export { default as BluResponseThreadManager } from "./responseThreadManager.js"
+export { BluScannerAdvertisementEvent, default as scanner } from "./scanner.js"
+export { default as BluService } from "./service.js"
 
-export type * from "./bluetoothInterface"
-export type * from "./bluetoothState"
-export type * from "./characteristic"
-export type * from "./configuration"
-export type * from "./converter"
-export type * from "./descriptor"
-export type * from "./device"
-export type * from "./eventTarget"
-export type * from "./scanner"
-export type * from "./service"
+export type * from "./bluetoothInterface.js"
+export type * from "./bluetoothState.js"
+export type * from "./characteristic.js"
+export type * from "./configuration.js"
+export type * from "./converter.js"
+export type * from "./descriptor.js"
+export type * from "./device.js"
+export type * from "./scanner.js"
+export type * from "./service.js"
 
-/**
- * Blu's default export.
- */
 export default {
 	bluetooth: bluetooth,
 	configuration: configuration,
 	convert: convert,
 	scanner: scanner,
-	version: version,
 }

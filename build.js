@@ -1,23 +1,12 @@
-import esbuild from "esbuild"
+import esBuild from "esbuild"
 
 const buildDate = new Date()
 
-await esbuild.build({
-	bundle: true,
-	entryPoints: ["src/index.ts"],
-	external: ["zod"],
-	format: "esm",
-	keepNames: true,
-	minifySyntax: true,
-	minifyWhitespace: true,
-	outfile: "dist/index.js",
-	sourcemap: true,
-	target: "es2020",
-	treeShaking: true,
+await esBuild.build({
 	banner: {
 		js:
 			`/**\n` +
-			` * @blu.js/blu ` +
+			` * Blu (blutooth) ` +
 			`${process.env.npm_package_version}\n` +
 			` * Copyright (c) ${buildDate.getFullYear()} ` +
 			`Max Herrmann\n` +
@@ -25,4 +14,14 @@ await esbuild.build({
 			` * (Built on ${buildDate.toUTCString()})\n` +
 			` */`,
 	},
+	bundle: true,
+	entryPoints: ["src/index.ts"],
+	external: ["zod", "jaset"],
+	format: "esm",
+	keepNames: true,
+	minify: true,
+	outfile: "dist/index.js",
+	sourcemap: true,
+	target: "es2019",
+	treeShaking: true,
 })

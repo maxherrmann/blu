@@ -1,14 +1,20 @@
-#!/bin/bash
+set -e
 
-# Clean
-rm -rf ./build
-rm -rf ./dist
+rm -rf build > /dev/null
+rm -rf dist > /dev/null
 
-# Build
+npm run format
+npm run lint
+
 npx tsc
-node ./build.js
+node build.js
+
 dts-bundle-generator \
     -o ./dist/index.d.ts \
-    --external-inlines "@types/web-bluetooth" \
-    --sort --no-banner \
-    -- ./build/src/index.d.ts
+    --external-imports "jaset" \
+    --external-inlines "web-bluetooth" \
+    --sort \
+    --no-banner \
+    -- ./build/index.d.ts
+
+npx publint --strict

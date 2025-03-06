@@ -1,28 +1,41 @@
-import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetoothInterface"
-import configuration from "./configuration"
-import type { BluCharacteristicDescription } from "./descriptions"
-import type BluDescriptor from "./descriptor"
+import EventTarget, { type EventMap } from "jaset"
+import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetoothInterface.js"
+import BluCompoundResponse from "./compoundResponse.js"
+import configuration from "./configuration.js"
+import type { BluCharacteristicDescription } from "./descriptions.js"
+import type BluDescriptor from "./descriptor.js"
 import {
 	BluCharacteristicNotificationTimeoutError,
 	BluCharacteristicOperationError,
-	BluResponseConstructionError,
-} from "./errors"
-import type { BluEventTarget } from "./eventTarget"
-import BluRequest from "./request"
-import BluResponse from "./response"
-import type BluService from "./service"
-import isArray from "./utils/isArray"
-import isBufferSource from "./utils/isBufferSource"
+} from "./errors.js"
+import BluRequest, { isRequestExpectingCompoundResponse } from "./request.js"
+import BluResponse from "./response.js"
+import type BluService from "./service.js"
+import isArray from "./utils/isArray.js"
+import isBufferSource from "./utils/isBufferSource.js"
 
 /**
  * Bluetooth characteristic.
+ * @typeParam Service - The service associated with this characteristic.
+ * @typeParam ResponseType - The type of the default response for this
+ *  characteristic. Must match the given {@link BluCharacteristic.responseType}.
+ *  Defaults to the type of {@link BluResponse}.
+ * @typeParam EventMap - The characteristic's event map. Defaults to
+ *  {@link BluCharacteristicEvents}.
  */
-export default class BluCharacteristic extends (EventTarget as BluCharacteristicEventTarget) {
+export default class BluCharacteristic<
+	Service extends BluService = BluService,
+	ResponseType extends typeof BluResponse = typeof BluResponse,
+	Events extends Omit<
+		EventMap,
+		keyof BluCharacteristicEvents<ResponseType>
+	> = Omit<EventMap, keyof BluCharacteristicEvents<ResponseType>>,
+> extends EventTarget<BluCharacteristicEvents<ResponseType> & Events> {
 	/**
 	 * The service associated with this characteristic.
 	 * @readonly
 	 */
-	readonly service: BluService
+	readonly service: Service
 
 	/**
 	 * The characteristic's description.
@@ -50,7 +63,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 	 * @readonly
 	 * @virtual
 	 */
-	readonly responseType = BluResponse
+	readonly responseType: ResponseType = BluResponse as ResponseType
 
 	/**
 	 * The characteristic's underlying Bluetooth interface endpoint.
@@ -70,7 +83,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 		bluetoothCharacteristic,
 		description,
 	}: {
-		service: BluService
+		service: Service
 		bluetoothCharacteristic: BluBluetoothRemoteGATTCharacteristic
 		description: BluCharacteristicDescription
 	}) {
@@ -84,7 +97,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 
 		this._bluetoothCharacteristic = bluetoothCharacteristic
 
-		this.addEventListener("notification", event => {
+		this.on("notification", (event) => {
 			if (
 				configuration.options.logging &&
 				configuration.options.dataTransferLogging
@@ -175,19 +188,18 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 
 	/**
 	 * Read from the characteristic.
-	 * @remarks Constructs a dummy, i.e. fake, {@link BluResponse} of the
-	 *  {@link BluCharacteristic.responseType} with the characteristic's value as
-	 *  data. This is meant as a convenience method and can also be done
+	 * @remarks Constructs a dummy response of the
+	 *  {@link BluCharacteristic.responseType} with the characteristic's value
+	 *  as data. This is meant as a convenience method and can also be done
 	 *  manually.
-	 * @typeParam ResponseType - The type of the expected response. Defaults to
-	 *  {@link BluResponse}.
-	 * @returns A `Promise` that resolves with a {@link BluResponse} of the given
-	 *  `ResponseType`.
-	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
-	 * @throws A {@link BluResponseConstructionError} when the response could not
-	 *  be constructed.
+	 * @returns A `Promise` that resolves with a response of the given
+	 *  {@link BluCharacteristic.responseType}.
+	 * @throws A {@link BluCharacteristicOperationError} when something went
+	 *  wrong.
+	 * @throws A {@link BluResponseConstructionError} when the response could
+	 *  not be constructed.
 	 */
-	async read<ResponseType extends BluResponse = BluResponse>() {
+	async read() {
 		return new this.responseType(await this.readValue()) as ResponseType
 	}
 
@@ -198,7 +210,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 	async readValue() {
 		if (!this.properties.read) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not read from a non-readable characteristic.",
 			)
 		}
@@ -224,7 +236,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 			return value
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not read value.",
 				error,
 			)
@@ -236,27 +248,28 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 	 * @param value - The value.
 	 * @param withoutResponse - Write without waiting for a
 	 *  response?
-	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
+	 * @throws A {@link BluCharacteristicOperationError} when something went
+	 *  wrong.
 	 */
 	async write(value: BufferSource, withoutResponse = false) {
 		if (withoutResponse && !this.properties.writeWithoutResponse) {
 			throw new BluCharacteristicOperationError(
-				this,
-				"Could not write without response to a characteristic " +
-					"that is not writable without response.",
+				this as never,
+				`Cannot write without response to a characteristic ` +
+					`that is does not have the "writeWithoutResponse" property.`,
 			)
 		}
 
 		if (!withoutResponse && !this.properties.write) {
 			throw new BluCharacteristicOperationError(
-				this,
-				"Could not write to a non-writable characteristic.",
+				this as never,
+				"Cannot write to a non-writable characteristic.",
 			)
 		}
 
 		if (!isBufferSource(value)) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				`Argument "value" must be of type "BufferSource".`,
 			)
 		}
@@ -289,7 +302,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 			}
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not write.",
 				error,
 			)
@@ -298,42 +311,32 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 
 	/**
 	 * Send a request to the characteristic.
-	 * @typeParam ResponseType - The type of the expected response. Defaults to
+	 * @typeParam Response - The type of the expected response. Must match
+	 *  the given {@link BluRequest.responseType}. Defaults to
 	 *  {@link BluResponse}.
 	 * @param request - The request.
-	 * @param timeout - The time to wait for an answer
-	 *  (a notification) in milliseconds before the request fails. Defaults to
-	 *  5000 milliseconds.
-	 * @returns A `Promise` that resolves with a {@link BluResponse} of the given
+	 * @param timeout - The time to wait for a response in milliseconds
+	 *  before the request fails. Defaults to 5000 milliseconds.
+	 * @returns A `Promise` that resolves with a response of the given
 	 *  {@link BluRequest.responseType}.
-	 * @throws A {@link BluCharacteristicOperationError} when something went wrong.
-	 * @throws A {@link BluCharacteristicNotificationTimeoutError} when the request
-	 *  timed out.
-	 * @throws A {@link BluResponseConstructionError} when a response could not be
-	 *  constructed.
+	 * @throws A {@link BluCharacteristicOperationError} when something went
+	 *  wrong.
+	 * @throws A {@link BluCharacteristicNotificationTimeoutError} when the
+	 *  request timed out.
+	 * @throws A {@link BluResponseConstructionError} when
+	 *  the response could not be constructed.
 	 */
-	request<ResponseType extends BluResponse = BluResponse>(
+	request<Response extends BluResponse | BluCompoundResponse = BluResponse>(
 		request: BluRequest,
 		timeout = 5000,
 	) {
-		return new Promise<ResponseType>((resolve, reject) => {
+		return new Promise<Response>((resolve, reject) => {
 			if (!(request instanceof BluRequest)) {
 				reject(
 					new BluCharacteristicOperationError(
-						this,
-						`Argument "request" must be a valid instance of "BluRequest".`,
-					),
-				)
-
-				return
-			}
-
-			if (timeout !== undefined && typeof timeout !== "number") {
-				reject(
-					new BluCharacteristicOperationError(
-						this,
-						`Argument "timeout" must be either "undefined" or of type` +
-							`"number".`,
+						this as never,
+						`Argument "request" must be a valid instance of ` +
+							`"BluRequest".`,
 					),
 				)
 
@@ -355,64 +358,123 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 				)
 			}
 
-			const onResponse = (event: BluCharacteristicNotificationEvent) => {
-				if (
-					!isTimeoutReached &&
-					request.responseType.validatorFunction(event.response)
-				) {
-					clearTimeout(timeoutTimer)
+			let onResponse: (event: BluCharacteristicNotificationEvent) => void
 
-					this.removeEventListener("notification", onResponse)
+			if (isRequestExpectingCompoundResponse(request)) {
+				const compoundResponse = new request.responseType()
 
-					const response = new request.responseType(
-						event.response.data,
-					) as ResponseType
-
+				onResponse = (event: BluCharacteristicNotificationEvent) => {
 					if (
-						configuration.options.logging &&
-						configuration.options.dataTransferLogging
+						!isTimeoutReached &&
+						request.responseType.validator(event.response)
 					) {
-						console.debug(
-							`${this.service.device.name} ` +
-								`(${this.service.device.constructor.name}): ` +
-								`${this.description.name}: Response:`,
-							response,
+						const partialResponse = new BluResponse(
+							event.response.data,
 						)
-					}
 
-					resolve(response)
+						compoundResponse.addPartialResponse(partialResponse)
+
+						if (
+							configuration.options.logging &&
+							configuration.options.dataTransferLogging
+						) {
+							console.debug(
+								`${this.service.device.name} ` +
+									`(${this.service.device.constructor.name}): ` +
+									`${this.description.name}: ` +
+									`Partial response:`,
+								partialResponse,
+							)
+						}
+
+						if (
+							!compoundResponse.hasFollowUpResponseValidator(
+								event.response,
+							)
+						) {
+							// No more follow-up responses expected.
+
+							clearTimeout(timeoutTimer)
+							this.off("notification", onResponse)
+
+							if (
+								configuration.options.logging &&
+								configuration.options.dataTransferLogging
+							) {
+								console.debug(
+									`${this.service.device.name} ` +
+										`(${this.service.device.constructor.name}): ` +
+										`${this.description.name}: ` +
+										`Compound response:`,
+									compoundResponse,
+								)
+							}
+
+							resolve(compoundResponse as Response)
+						}
+					}
+				}
+			} else {
+				onResponse = (event: BluCharacteristicNotificationEvent) => {
+					if (
+						!isTimeoutReached &&
+						request.responseType.validator(event.response)
+					) {
+						clearTimeout(timeoutTimer)
+
+						this.off("notification", onResponse)
+
+						const response =
+							new (request.responseType as typeof BluResponse)(
+								event.response.data,
+							) as Response
+
+						if (
+							configuration.options.logging &&
+							configuration.options.dataTransferLogging
+						) {
+							console.debug(
+								`${this.service.device.name} ` +
+									`(${this.service.device.constructor.name}): ` +
+									`${this.description.name}: Response:`,
+								response,
+							)
+						}
+
+						resolve(response)
+					}
 				}
 			}
 
-			this.addEventListener("notification", onResponse)
+			this.on("notification", onResponse)
 
 			if (timeout) {
 				timeoutTimer = setTimeout(() => {
 					isTimeoutReached = true
 
-					this.removeEventListener("notification", onResponse)
+					this.off("notification", onResponse)
 
 					reject(
 						new BluCharacteristicNotificationTimeoutError(
 							`Did not receive an expected notification ` +
-								`from the device within ${timeout} ms.`,
+								`from the device within ${String(timeout)} ms.`,
 						),
 					)
 				}, timeout)
 			}
 
-			this.write(request.data).catch(error => {
+			this.write(request.data).catch((error: unknown) => {
 				if (isTimeoutReached) {
 					return
 				}
 
 				clearTimeout(timeoutTimer)
 
-				this.removeEventListener("notification", onResponse)
+				this.off("notification", onResponse)
 
 				reject(
 					new BluCharacteristicOperationError(
-						this,
+						this as never,
 						"Could not request from characteristic.",
 						error,
 					),
@@ -423,16 +485,15 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 
 	/**
 	 * Send multiple requests to the characteristic.
-	 * @typeParam ResponseTypes - The types of the expected responses. Defaults
-	 *  to {@link BluResponse}[]. The order of response types matches the order
-	 *  of requests.
+	 * @typeParam Responses - The types of the expected responses. Must match
+	 *  the {@link BluRequest.responseType}s of the given requests in order.
+	 *  Defaults to {@link BluResponse}[].
 	 * @param requests - The requests.
-	 * @param timeout - The time to wait for each answer
-	 *  (notification) in milliseconds before the respective request fails.
-	 *  Defaults to 5000 milliseconds.
-	 * @returns A `Promise` that resolves with an array of {@link BluResponse}s
-	 *  of their respectively given {@link BluRequest.responseType}s. The order
-	 *  of responses matches the order of requests.
+	 * @param timeout - The time to wait for a response to each request in
+	 *  milliseconds before a request fails. Defaults to 5000 milliseconds.
+	 * @returns A `Promise` that resolves with an array of responses of the
+	 *  given {@link BluRequest.responseType}s associated with the respective
+	 *  requests.
 	 * @throws A {@link BluCharacteristicOperationError} when something went
 	 *  wrong.
 	 * @throws A {@link BluCharacteristicNotificationTimeoutError} when a
@@ -440,25 +501,16 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 	 * @throws A {@link BluResponseConstructionError} when a response could not
 	 *  be constructed.
 	 */
-	async requestAll<ResponseTypes extends BluResponse[] = BluResponse[]>(
-		requests: BluRequest[],
-		timeout = 5000,
-	) {
+	async requestAll<
+		Responses extends (BluResponse | BluCompoundResponse)[] = BluResponse[],
+	>(requests: BluRequest[], timeout = 5000) {
 		if (
 			!isArray(requests) ||
-			!requests.every(request => request instanceof BluRequest)
+			!requests.every((request) => request instanceof BluRequest)
 		) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				`Argument "requests" must be an array of "BluRequest".`,
-			)
-		}
-
-		if (timeout !== undefined && typeof timeout !== "number") {
-			throw new BluCharacteristicOperationError(
-				this,
-				`Argument "timeout" must be either "undefined", or of type` +
-					`"number".`,
 			)
 		}
 
@@ -468,7 +520,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 			responses.push(await this.request(request, timeout))
 		}
 
-		return responses as ResponseTypes
+		return responses as Responses
 	}
 
 	/**
@@ -479,7 +531,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 	async startListeningForNotifications() {
 		if (!this.properties.notify) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not start listening for notifications on a " +
 					"non-notifying characteristic.",
 			)
@@ -487,7 +539,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 
 		if (this.properties.isListening) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not start listening for notifications on a " +
 					"characteristic that is already listening for " +
 					"notifications.",
@@ -516,7 +568,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 			}
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not start listening for notifications.",
 				error,
 			)
@@ -531,7 +583,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 	async stopListeningForNotifications() {
 		if (!this.properties.isListening) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not stop listening for notifications on a " +
 					"characteristic that is not yet listening for " +
 					"notifications.",
@@ -560,7 +612,7 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 			}
 		} catch (error) {
 			throw new BluCharacteristicOperationError(
-				this,
+				this as never,
 				"Could not stop listening for notifications.",
 				error,
 			)
@@ -571,10 +623,10 @@ export default class BluCharacteristic extends (EventTarget as BluCharacteristic
 	 * Event handler that is invoked whenever a notification is received.
 	 */
 	#onNotification() {
-		this.dispatchEvent(
-			new BluCharacteristicNotificationEvent(
-				new this.responseType(this.value),
-			),
+		this.emit(
+			new BluCharacteristicNotificationEvent<ResponseType>(
+				new this.responseType(this.value) as InstanceType<ResponseType>,
+			) as never,
 		)
 	}
 }
@@ -670,20 +722,24 @@ export class BluCharacteristicProperties
 
 /**
  * Characteristic notification event.
+ * @typeParam ResponseType - The type of the response that is constructed from
+ *  the characteristic's new value. Defaults to the type of {@link BluResponse}.
  */
-export class BluCharacteristicNotificationEvent extends Event {
+export class BluCharacteristicNotificationEvent<
+	ResponseType extends typeof BluResponse = typeof BluResponse,
+> extends Event {
 	/**
 	 * The response, constructed from the characteristic's new value.
 	 * @readonly
 	 */
-	readonly response: BluResponse
+	readonly response: InstanceType<ResponseType>
 
 	/**
 	 * Construct a characteristic notification event.
 	 * @param response - The response, constructed from the characteristic's new
 	 *  value.
 	 */
-	constructor(response: BluResponse) {
+	constructor(response: InstanceType<ResponseType>) {
 		super("notification")
 
 		this.response = response
@@ -691,16 +747,12 @@ export class BluCharacteristicNotificationEvent extends Event {
 }
 
 /**
- * Characteristic event target.
+ * Characteristic event map.
  */
-type BluCharacteristicEventTarget = BluEventTarget<{
-	/**
-	 * A notification has been received from the characteristic.
-	 */
-	notification: BluCharacteristicNotificationEvent
-
-	/**
-	 * Custom event.
-	 */
-	[key: string]: Event | CustomEvent
-}>
+export type BluCharacteristicEvents<ResponseType extends typeof BluResponse> =
+	EventMap<{
+		/**
+		 * A notification has been received from the characteristic.
+		 */
+		notification: BluCharacteristicNotificationEvent<ResponseType>
+	}>
