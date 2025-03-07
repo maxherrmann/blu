@@ -606,95 +606,101 @@ export default class BluDevice<
 				)
 			}
 
-			// Discover additional services.
+			if (configuration.options.deviceInterfaceExtensiveDiscovery) {
+				// Discover additional services.
 
-			const _services =
-				await this._bluetoothDevice.gatt.getPrimaryServices()
+				const _services =
+					await this._bluetoothDevice.gatt.getPrimaryServices()
 
-			for (const _service of _services) {
-				const service = new BluService({
-					device: this as never,
-					bluetoothService: _service,
-					description: new BluServiceDescription({
-						uuid: _service.uuid,
-					}),
-				})
-
-				if (
-					this.services.find((knownService) => {
-						return knownService.uuid === service.uuid
-					}) === undefined
-				) {
-					this.services.push(service)
-				}
-
-				// Discover additional characteristics.
-
-				const _characteristics =
-					await service._bluetoothService.getCharacteristics()
-
-				for (const _characteristic of _characteristics) {
-					const characteristic = new BluCharacteristic({
-						service,
-						bluetoothCharacteristic: _characteristic,
-						description: new BluCharacteristicDescription({
-							uuid: _characteristic.uuid,
+				for (const _service of _services) {
+					const service = new BluService({
+						device: this as never,
+						bluetoothService: _service,
+						description: new BluServiceDescription({
+							uuid: _service.uuid,
 						}),
 					})
 
 					if (
-						service.characteristics.find((knownCharacteristic) => {
-							return (
-								knownCharacteristic.uuid === characteristic.uuid
-							)
+						this.services.find((knownService) => {
+							return knownService.uuid === service.uuid
 						}) === undefined
 					) {
-						service.characteristics.push(characteristic)
+						this.services.push(service)
 					}
 
-					// Discover additional descriptors.
+					// Discover additional characteristics.
 
-					let _descriptors: BluBluetoothRemoteGATTDescriptor[]
+					const _characteristics =
+						await service._bluetoothService.getCharacteristics()
 
-					try {
-						_descriptors =
-							await characteristic._bluetoothCharacteristic.getDescriptors()
-					} catch (error) {
-						if (
-							error instanceof Error &&
-							error.name === "NotFoundError"
-						) {
-							_descriptors = []
-						} else {
-							throw new BluDeviceInterfaceDiscoveryError(
-								this as never,
-								`Could not discover descriptors of ` +
-									`characteristic with UUID ` +
-									`"${characteristic.uuid}".`,
-								error,
-							)
-						}
-					}
-
-					for (const _descriptor of _descriptors) {
-						const descriptor = new BluDescriptor({
-							characteristic,
-							bluetoothDescriptor: _descriptor,
-							description: new BluDescriptorDescription({
-								uuid: _descriptor.uuid,
+					for (const _characteristic of _characteristics) {
+						const characteristic = new BluCharacteristic({
+							service,
+							bluetoothCharacteristic: _characteristic,
+							description: new BluCharacteristicDescription({
+								uuid: _characteristic.uuid,
 							}),
 						})
 
 						if (
-							characteristic.descriptors.find(
-								(knownDescriptor) => {
+							service.characteristics.find(
+								(knownCharacteristic) => {
 									return (
-										knownDescriptor.uuid === descriptor.uuid
+										knownCharacteristic.uuid ===
+										characteristic.uuid
 									)
 								},
 							) === undefined
 						) {
-							characteristic.descriptors.push(descriptor)
+							service.characteristics.push(characteristic)
+						}
+
+						// Discover additional descriptors.
+
+						let _descriptors: BluBluetoothRemoteGATTDescriptor[]
+
+						try {
+							_descriptors =
+								await characteristic._bluetoothCharacteristic.getDescriptors()
+						} catch (error) {
+							if (
+								error instanceof Error &&
+								error.name === "NotFoundError"
+							) {
+								_descriptors = []
+							} else {
+								throw new BluDeviceInterfaceDiscoveryError(
+									this as never,
+									`Could not discover descriptors of ` +
+										`characteristic with UUID ` +
+										`"${characteristic.uuid}".`,
+									error,
+								)
+							}
+						}
+
+						for (const _descriptor of _descriptors) {
+							const descriptor = new BluDescriptor({
+								characteristic,
+								bluetoothDescriptor: _descriptor,
+								description: new BluDescriptorDescription({
+									uuid: _descriptor.uuid,
+								}),
+							})
+
+							if (
+								characteristic.descriptors.find(
+									(knownDescriptor) => {
+										return (
+											knownDescriptor.uuid ===
+											descriptor.uuid
+										)
+									},
+								) === undefined
+							) {
+								characteristic.descriptors.push(descriptor)
+							}
 						}
 					}
 				}

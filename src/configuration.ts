@@ -135,7 +135,10 @@ export interface BluConfigurationOptions {
 	 *  expected and actual Bluetooth interfaces of devices when trying to
 	 *  connect them. The expected Bluetooth interface is inferred from the
 	 *  {@link BluDevice.interface} of the configured
-	 *  {@link BluConfigurationOptions.deviceType}.
+	 *  {@link BluConfigurationOptions.deviceType}. Components discovered
+	 *  through
+	 *  {@link BluConfigurationOptions.deviceInterfaceExtensiveDiscovery} will
+	 *  not be considered when evaluating discrepancies.
 	 *
 	 *  **Available options**
 	 *
@@ -156,6 +159,20 @@ export interface BluConfigurationOptions {
 	 * @defaultValue `true`
 	 */
 	deviceInterfaceMatching?: boolean
+
+	/**
+	 * Enable extensive device interface discovery?
+	 * @remarks When enabled, Blu will discover all services, characteristics
+	 *  and descriptors of a device during interface discovery using
+	 *  [`BluetoothRemoteGATTServer.getPrimaryServices()`](https://developer.mozilla.org/en-US/docs/Web/API/BluetoothRemoteGATTServer/getPrimaryServices).
+	 *  This may lead to the discovery of services, characteristics
+	 *  and descriptors that are not described in the
+	 *  {@link BluDevice.interface}. Since this is a time-consuming operation
+	 *  that may lead to a significant increase in connection time, it is
+	 *  disabled by default.
+	 * @defaultValue `false`
+	 */
+	deviceInterfaceExtensiveDiscovery?: boolean
 
 	/**
 	 * The time to wait for a device connection to be established in
@@ -203,6 +220,7 @@ const defaultOptions: Required<BluConfigurationOptions> = {
 	deviceScannerConfig: { acceptAllDevices: true },
 	deviceType: BluDevice,
 	deviceInterfaceMatching: true,
+	deviceInterfaceExtensiveDiscovery: false,
 	deviceConnectionTimeout: false,
 	autoEnableNotifications: true,
 	logging: true,
@@ -290,6 +308,7 @@ const configurationOptionsGuard = z
 			.custom<typeof BluDevice>((x) => isSubclassOrSame(x, BluDevice))
 			.optional(),
 		deviceInterfaceMatching: z.boolean().optional(),
+		deviceInterfaceExtensiveDiscovery: z.boolean().optional(),
 		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
 		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
 		logging: z.boolean().optional(),
@@ -311,6 +330,8 @@ const configurationOptionsGuard = z
  *  - `deviceType`: The type of {@link BluDevice}.
  *
  *  - `deviceInterfaceMatching`: `true`
+ *
+ *  - `deviceInterfaceExtensiveDiscovery`: `false`
  *
  *  - `autoEnableNotifications`: `true`
  *
