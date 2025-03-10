@@ -205,7 +205,9 @@ export interface BluConfigurationOptions {
 	 * milliseconds before a connection attempt with {@link BluDevice.connect}
 	 * fails.
 	 * @remarks Can be `false` (no timeout, i.e. wait indefinitely) or a
-	 *  `number` of milliseconds.
+	 *  `number` of milliseconds. Keep in mind that the device connection
+	 *  time can vary depending on what tasks you run within the device's,
+	 *  service's, characteristic's or descriptor's `beforeReady()` hooks.
 	 * @defaultValue `false`
 	 */
 	deviceConnectionTimeout?: number | false
