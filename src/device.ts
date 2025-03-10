@@ -484,11 +484,12 @@ export default class BluDevice<
 
 			let interfaceIncomplete = false
 
-			if (!this.isConnected) {
-				// Sometimes GATT server is reported as disconnected at this
-				// point. If that is the case, we try to reconnect first.
-				await this._bluetoothDevice.gatt?.connect()
-			}
+			// Sometimes GATT server is reported as disconnected at this
+			// point. If that is the case, we try to reconnect first.
+			// No need to check for `this.isConnected` here, because the
+			// `connect()` function resolves early when the device is already
+			// connected.
+			await this._bluetoothDevice.gatt?.connect()
 
 			if (this._bluetoothDevice.gatt === undefined) {
 				throw new BluDeviceInterfaceDiscoveryError(
