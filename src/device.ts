@@ -90,6 +90,11 @@ export default class BluDevice<
 	#willDisconnect = false
 
 	/**
+	 * Has the connection timeout been reached?
+	 */
+	#connectionTimeoutReached = false
+
+	/**
 	 * The number of interface discovery attempts.
 	 */
 	#interfaceDiscoveryAttempts = 0
@@ -179,9 +184,9 @@ export default class BluDevice<
 	 */
 	async connect() {
 		return new Promise<void>((resolve, reject) => {
-			const timeout = configuration.options.deviceConnectionTimeout
 			let timeoutTimer: ReturnType<typeof setTimeout>
-			let isTimeoutReached = false
+
+			this.#connectionTimeoutReached = false
 
 			const rejectWithError = (error: unknown) => {
 				try {
@@ -212,18 +217,22 @@ export default class BluDevice<
 				return
 			}
 
-			if (timeout) {
+			if (configuration.options.deviceConnectionTimeout) {
 				timeoutTimer = setTimeout(() => {
 					rejectWithError(
 						new BluDeviceConnectionTimeoutError(
 							this as never,
 							`Connection attempt timed out after ` +
-								`${String(timeout)} ms.`,
+								String(
+									configuration.options
+										.deviceConnectionTimeout,
+								) +
+								` ms.`,
 						),
 					)
 
-					isTimeoutReached = true
-				}, timeout)
+					this.#connectionTimeoutReached = true
+				}, configuration.options.deviceConnectionTimeout)
 			}
 
 			if (configuration.options.logging) {
@@ -235,13 +244,13 @@ export default class BluDevice<
 			this._bluetoothDevice.gatt
 				.connect()
 				.then(() => {
-					if (isTimeoutReached) {
+					if (this.#connectionTimeoutReached) {
 						return
 					}
 
 					this.#discoverInterface()
 						.then(async () => {
-							if (isTimeoutReached) {
+							if (this.#connectionTimeoutReached) {
 								return
 							}
 
@@ -451,6 +460,10 @@ export default class BluDevice<
 	 */
 	async #discoverInterface() {
 		try {
+			if (this.#connectionTimeoutReached) {
+				return
+			}
+
 			this.#interfaceDiscoveryAttempts++
 
 			if (configuration.options.logging) {
