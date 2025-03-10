@@ -26,6 +26,7 @@ import {
 import BluGATTOperationQueue from "./gattOperationQueue.js"
 import BluService from "./service.js"
 import isArray from "./utils/isArray.js"
+import delay from "./utils/delay.js"
 
 /**
  * Bluetooth device.
@@ -87,6 +88,11 @@ export default class BluDevice<
 	 * @remarks Used for identifying intentional disconnection events.
 	 */
 	#willDisconnect = false
+
+	/**
+	 * The number of interface discovery attempts.
+	 */
+	#interfaceDiscoveryAttempts = 0
 
 	/**
 	 * Construct a Bluetooth device.
@@ -255,7 +261,21 @@ export default class BluDevice<
 							)
 
 							try {
+								if (configuration.options.logging) {
+									console.debug(
+										`${this.name} (${this.constructor.name}): ` +
+											`Initializing...`,
+									)
+								}
+
 								await this.beforeReady()
+
+								if (configuration.options.logging) {
+									console.debug(
+										`${this.name} (${this.constructor.name}): ` +
+											`Initialized.`,
+									)
+								}
 							} catch (error) {
 								rejectWithError(error)
 								return
@@ -288,6 +308,9 @@ export default class BluDevice<
 						})
 						.catch((error: unknown) => {
 							rejectWithError(error)
+						})
+						.finally(() => {
+							this.#interfaceDiscoveryAttempts = 0
 						})
 				})
 				.catch((error: unknown) => {
@@ -428,6 +451,24 @@ export default class BluDevice<
 	 */
 	async #discoverInterface() {
 		try {
+			this.#interfaceDiscoveryAttempts++
+
+			if (configuration.options.logging) {
+				console.debug(
+					`${this.name} (${this.constructor.name}): ` +
+						`Discovering Bluetooth interface...` +
+						(this.#interfaceDiscoveryAttempts > 1
+							? ` (Attempt ${String(this.#interfaceDiscoveryAttempts)})`
+							: ""),
+				)
+			}
+
+			if (this.#interfaceDiscoveryAttempts > 1) {
+				await delay(
+					configuration.options.deviceInterfaceDiscoveryAttemptDelay,
+				)
+			}
+
 			let interfaceIncomplete = false
 
 			if (!this.isConnected) {
@@ -451,37 +492,66 @@ export default class BluDevice<
 			for (const serviceDescription of (
 				this.constructor as typeof BluDevice
 			).interface) {
-				let service: BluService | undefined
+				let service: BluService | undefined = this.services.find(
+					(service) => service.uuid === serviceDescription.uuid,
+				)
 
-				try {
-					service = new serviceDescription.type({
-						device: this as never,
-						bluetoothService:
-							await this._bluetoothDevice.gatt.getPrimaryService(
-								serviceDescription.uuid,
-							),
-						description: serviceDescription,
-					})
+				if (!service) {
+					try {
+						service = new serviceDescription.type({
+							device: this as never,
+							bluetoothService:
+								await this._bluetoothDevice.gatt.getPrimaryService(
+									serviceDescription.uuid,
+								),
+							description: serviceDescription,
+						})
 
-					if (service.description.identifier) {
-						Object.defineProperty(
-							this,
-							service.description.identifier,
-							{ value: service, writable: false },
-						)
-					}
-
-					this.services.push(service)
-				} catch {
-					if (!serviceDescription.optional) {
-						interfaceIncomplete = true
-
-						if (configuration.options.logging) {
-							console.warn(
-								`${this.name} (${this.constructor.name}): ` +
-									`Could not discover "${serviceDescription.name}" ` +
-									`(UUID: ${String(serviceDescription.uuid)}).`,
+						if (service.description.identifier) {
+							Object.defineProperty(
+								this,
+								service.description.identifier,
+								{
+									value: service,
+									configurable: true,
+									writable: false,
+								},
 							)
+						}
+
+						this.services.push(service)
+					} catch (error) {
+						if ((error as Error).name !== "NotFoundError") {
+							if (configuration.options.logging) {
+								console.warn(
+									new BluDeviceInterfaceDiscoveryError(
+										this as never,
+										`Could not discover ` +
+											(serviceDescription.optional
+												? "optional "
+												: "") +
+											`service "${serviceDescription.name}" ` +
+											`(UUID: ${String(serviceDescription.uuid)}).`,
+										error,
+									),
+								)
+							}
+
+							throw error
+						} else {
+							if (configuration.options.logging) {
+								console.debug(
+									`${this.name} (${this.constructor.name}): ` +
+										`Optional service ` +
+										`"${serviceDescription.name}" ` +
+										`(UUID: ${String(serviceDescription.uuid)}) ` +
+										`has not been discovered.`,
+								)
+							}
+						}
+
+						if (!serviceDescription.optional) {
+							interfaceIncomplete = true
 						}
 					}
 				}
@@ -490,53 +560,85 @@ export default class BluDevice<
 					// Discover described characteristics.
 
 					for (const characteristicDescription of serviceDescription.characteristics) {
-						let characteristic: BluCharacteristic | undefined
-
-						try {
-							characteristic = new characteristicDescription.type(
-								{
-									service,
-									bluetoothCharacteristic:
-										await service._bluetoothService.getCharacteristic(
-											characteristicDescription.uuid,
-										),
-									description: characteristicDescription,
-								},
+						let characteristic: BluCharacteristic | undefined =
+							service.characteristics.find(
+								(characteristic) =>
+									characteristic.uuid ===
+									characteristicDescription.uuid,
 							)
 
-							if (!characteristic.hasExpectedProperties) {
-								if (configuration.options.logging) {
-									console.warn(
-										`${this.name} (${this.constructor.name}): ` +
-											`"${characteristicDescription.name}" ` +
-											`(${String(characteristicDescription.uuid)}) ` +
-											`has unexpected properties.`,
+						if (!characteristic) {
+							try {
+								characteristic =
+									new characteristicDescription.type({
+										service,
+										bluetoothCharacteristic:
+											await service._bluetoothService.getCharacteristic(
+												characteristicDescription.uuid,
+											),
+										description: characteristicDescription,
+									})
+
+								if (!characteristic.hasExpectedProperties) {
+									if (configuration.options.logging) {
+										console.warn(
+											`${this.name} (${this.constructor.name}): ` +
+												`"${characteristicDescription.name}" ` +
+												`(${String(characteristicDescription.uuid)}) ` +
+												`has unexpected properties.`,
+										)
+									}
+								}
+
+								if (characteristic.description.identifier) {
+									Object.defineProperty(
+										service,
+										characteristic.description.identifier,
+										{
+											value: characteristic,
+											configurable: true,
+											writable: false,
+										},
 									)
 								}
-							}
 
-							if (characteristic.description.identifier) {
-								Object.defineProperty(
-									service,
-									characteristic.description.identifier,
-									{ value: characteristic, writable: false },
-								)
-							}
+								service.characteristics.push(characteristic)
+							} catch (error) {
+								if ((error as Error).name !== "NotFoundError") {
+									if (configuration.options.logging) {
+										console.warn(
+											new BluDeviceInterfaceDiscoveryError(
+												this as never,
+												`Could not discover ` +
+													(serviceDescription.optional
+														? "optional "
+														: "") +
+													`characteristic "${characteristicDescription.name}" ` +
+													`(UUID: ${String(characteristicDescription.uuid)}) ` +
+													`in service "${serviceDescription.name}" ` +
+													`(UUID: ${String(serviceDescription.uuid)}).`,
+												error,
+											),
+										)
+									}
 
-							service.characteristics.push(characteristic)
-						} catch {
-							if (!characteristicDescription.optional) {
-								interfaceIncomplete = true
+									throw error
+								} else {
+									if (configuration.options.logging) {
+										console.debug(
+											`${this.name} (${this.constructor.name}): ` +
+												`Optional characteristic ` +
+												`"${characteristicDescription.name}" ` +
+												`(UUID: ${String(characteristicDescription.uuid)}) ` +
+												`has not been discovered in ` +
+												`service "${serviceDescription.name}" ` +
+												`(UUID: ${String(serviceDescription.uuid)}).`,
+										)
+									}
+								}
 
-								if (configuration.options.logging) {
-									console.warn(
-										`${this.name} (${this.constructor.name}): ` +
-											`Could not discover ` +
-											`"${characteristicDescription.name}" ` +
-											`(UUID: ${String(characteristicDescription.uuid)}) ` +
-											`in "${serviceDescription.name}" ` +
-											`(UUID: ${String(serviceDescription.uuid)}).`,
-									)
+								if (!characteristicDescription.optional) {
+									interfaceIncomplete = true
 								}
 							}
 						}
@@ -545,45 +647,81 @@ export default class BluDevice<
 							// Discover described descriptors.
 
 							for (const descriptorDescription of characteristicDescription.descriptors) {
-								let descriptor: BluDescriptor | undefined
-
-								try {
-									descriptor = new descriptorDescription.type(
-										{
-											characteristic,
-											bluetoothDescriptor:
-												await characteristic._bluetoothCharacteristic.getDescriptor(
-													descriptorDescription.uuid,
-												),
-											description: descriptorDescription,
-										},
+								let descriptor: BluDescriptor | undefined =
+									characteristic.descriptors.find(
+										(descriptor) =>
+											descriptor.uuid ===
+											descriptorDescription.uuid,
 									)
 
-									if (descriptor.description.identifier) {
-										Object.defineProperty(
-											characteristic,
-											descriptor.description.identifier,
-											{
-												value: descriptor,
-												writable: false,
-											},
-										)
-									}
+								if (!descriptor) {
+									try {
+										descriptor =
+											new descriptorDescription.type({
+												characteristic,
+												bluetoothDescriptor:
+													await characteristic._bluetoothCharacteristic.getDescriptor(
+														descriptorDescription.uuid,
+													),
+												description:
+													descriptorDescription,
+											})
 
-									characteristic.descriptors.push(descriptor)
-								} catch {
-									if (!descriptorDescription.optional) {
-										interfaceIncomplete = true
-
-										if (configuration.options.logging) {
-											console.warn(
-												`${this.name} (${this.constructor.name}): ` +
-													`Could not discover ` +
-													`"${descriptorDescription.name}" ` +
-													`(UUID: ${String(descriptorDescription.uuid)}) ` +
-													`in "${characteristicDescription.name}" ` +
-													`(UUID: ${String(characteristicDescription.uuid)}).`,
+										if (descriptor.description.identifier) {
+											Object.defineProperty(
+												characteristic,
+												descriptor.description
+													.identifier,
+												{
+													value: descriptor,
+													configurable: true,
+													writable: false,
+												},
 											)
+										}
+
+										characteristic.descriptors.push(
+											descriptor,
+										)
+									} catch (error) {
+										if (
+											(error as Error).name !==
+											"NotFoundError"
+										) {
+											if (configuration.options.logging) {
+												console.warn(
+													new BluDeviceInterfaceDiscoveryError(
+														this as never,
+														`Could not discover ` +
+															(descriptorDescription.optional
+																? "optional "
+																: "") +
+															`descriptor "${descriptorDescription.name}" ` +
+															`(UUID: ${String(descriptorDescription.uuid)}) ` +
+															`in characteristic "${characteristicDescription.name}" ` +
+															`(UUID: ${String(characteristicDescription.uuid)}).`,
+														error,
+													),
+												)
+											}
+
+											throw error
+										} else {
+											if (configuration.options.logging) {
+												console.debug(
+													`${this.name} (${this.constructor.name}): ` +
+														`Optional descriptor ` +
+														`"${descriptorDescription.name}" ` +
+														`(UUID: ${String(descriptorDescription.uuid)}) ` +
+														`has not been discovered in ` +
+														`characteristic "${characteristicDescription.name}" ` +
+														`(UUID: ${String(characteristicDescription.uuid)}).`,
+												)
+											}
+										}
+
+										if (!descriptorDescription.optional) {
+											interfaceIncomplete = true
 										}
 									}
 								}
@@ -706,6 +844,13 @@ export default class BluDevice<
 				}
 			}
 
+			if (configuration.options.logging) {
+				console.debug(
+					`${this.name} (${this.constructor.name}): ` +
+						`Discovered Bluetooth interface.`,
+				)
+			}
+
 			// Initialize services, characteristics and descriptors.
 
 			for (const service of this.services) {
@@ -727,20 +872,89 @@ export default class BluDevice<
 					}
 
 					for (const descriptor of characteristic.descriptors) {
+						if (configuration.options.logging) {
+							console.debug(
+								`${this.name} (${this.constructor.name}): ` +
+									`${descriptor.description.name}: ` +
+									`Initializing...`,
+							)
+						}
+
 						await descriptor.beforeReady()
+
+						if (configuration.options.logging) {
+							console.debug(
+								`${this.name} (${this.constructor.name}): ` +
+									`${descriptor.description.name}: ` +
+									`Initialized.`,
+							)
+						}
+					}
+
+					if (configuration.options.logging) {
+						console.debug(
+							`${this.name} (${this.constructor.name}): ` +
+								`${characteristic.description.name}: ` +
+								`Initializing...`,
+						)
 					}
 
 					await characteristic.beforeReady()
+
+					if (configuration.options.logging) {
+						console.debug(
+							`${this.name} (${this.constructor.name}): ` +
+								`${characteristic.description.name}: ` +
+								`Initialized.`,
+						)
+					}
+				}
+
+				if (configuration.options.logging) {
+					console.debug(
+						`${this.name} (${this.constructor.name}): ` +
+							`${service.description.name}: ` +
+							`Initializing...`,
+					)
 				}
 
 				await service.beforeReady()
+
+				if (configuration.options.logging) {
+					console.debug(
+						`${this.name} (${this.constructor.name}): ` +
+							`${service.description.name}: ` +
+							`Initialized.`,
+					)
+				}
 			}
 		} catch (error) {
-			throw new BluDeviceInterfaceDiscoveryError(
-				this as never,
-				"Could not discover the device's Bluetooth interface.",
-				error,
-			)
+			if (
+				this.#interfaceDiscoveryAttempts <
+				configuration.options.deviceInterfaceDiscoveryAttempts
+			) {
+				if (configuration.options.logging) {
+					console.warn(
+						`${this.name} (${this.constructor.name}): ` +
+							`Could not discover or initialize the device's ` +
+							`Bluetooth interface.` +
+							(this.#interfaceDiscoveryAttempts > 1
+								? ` (Attempt ${String(this.#interfaceDiscoveryAttempts)})`
+								: ""),
+					)
+				}
+
+				await this.#discoverInterface()
+			} else {
+				throw new BluDeviceInterfaceDiscoveryError(
+					this as never,
+					`Could not discover or initialize the device's ` +
+						`Bluetooth interface in ` +
+						`${String(this.#interfaceDiscoveryAttempts)} ` +
+						`attempts.`,
+					error,
+				)
+			}
 		}
 	}
 

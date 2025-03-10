@@ -161,6 +161,32 @@ export interface BluConfigurationOptions {
 	deviceInterfaceMatching?: boolean
 
 	/**
+	 * The number of available attempts to discover a device's interface.
+	 * @remarks When a device's interface cannot be discovered, Blu will retry
+	 *  the discovery process up to the specified number of attempts. This can
+	 *  be useful when a device's interface is not fully discoverable after
+	 *  connecting to it. This can happen due to communication interference or
+	 *  other disruptive factors.
+	 *
+	 *  The given number must be greater than 0 and less than or equal to 10.
+	 * @defaultValue `2`
+	 */
+	deviceInterfaceDiscoveryAttempts?: number
+
+	/**
+	 * The delay between subsequent device interface discovery attempts in
+	 * milliseconds.
+	 * @remarks See
+	 *  {@link BluConfigurationOptions.deviceInterfaceDiscoveryAttempts}. Can be
+	 *  useful to prevent flooding the Bluetooth stack with requests when a
+	 *  device's interface is not fully discoverable after connecting to it.
+	 *  This can happen due to communication interference or other disruptive
+	 *  factors.
+	 *  @defaultValue `100`
+	 */
+	deviceInterfaceDiscoveryAttemptDelay?: number
+
+	/**
 	 * Enable extensive device interface discovery?
 	 * @remarks When enabled, Blu will discover all services, characteristics
 	 *  and descriptors of a device during interface discovery using
@@ -220,6 +246,8 @@ const defaultOptions: Required<BluConfigurationOptions> = {
 	deviceScannerConfig: { acceptAllDevices: true },
 	deviceType: BluDevice,
 	deviceInterfaceMatching: true,
+	deviceInterfaceDiscoveryAttempts: 2,
+	deviceInterfaceDiscoveryAttemptDelay: 100,
 	deviceInterfaceExtensiveDiscovery: false,
 	deviceConnectionTimeout: false,
 	autoEnableNotifications: true,
@@ -308,6 +336,8 @@ const configurationOptionsGuard = z
 			.custom<typeof BluDevice>((x) => isSubclassOrSame(x, BluDevice))
 			.optional(),
 		deviceInterfaceMatching: z.boolean().optional(),
+		deviceInterfaceDiscoveryAttempts: z.number().min(1).max(10).optional(),
+		deviceInterfaceDiscoveryAttemptDelay: z.number().optional(),
 		deviceInterfaceExtensiveDiscovery: z.boolean().optional(),
 		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
 		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
@@ -330,6 +360,10 @@ const configurationOptionsGuard = z
  *  - `deviceType`: The type of {@link BluDevice}.
  *
  *  - `deviceInterfaceMatching`: `true`
+ *
+ *  - `deviceInterfaceDiscoveryAttempts`: `2`
+ *
+ *  - `deviceInterfaceDiscoveryAttemptDelay`: `100`
  *
  *  - `deviceInterfaceExtensiveDiscovery`: `false`
  *
