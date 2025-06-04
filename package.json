@@ -1,6 +1,6 @@
 {
 	"name": "blutooth",
-	"version": "4.2.1",
+	"version": "4.2.2",
 	"description": "The type-safe framework for interacting with Bluetooth Low Energy devices from the web.",
 	"keywords": [
 		"blu",
