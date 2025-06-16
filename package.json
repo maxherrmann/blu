@@ -36,7 +36,7 @@
 		"@tsconfig/recommended": "^1.0.8",
 		"@types/eslint": "^9.6.1",
 		"@types/eslint-config-prettier": "^6.11.3",
-		"@types/node": "^22.13.9",
+		"@types/node": "^24.0.1",
 		"@types/web-bluetooth": "^0.0.21",
 		"dts-bundle-generator": "^9.5.1",
 		"esbuild": "^0.25.0",
