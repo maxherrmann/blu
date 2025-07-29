@@ -28,7 +28,7 @@
 	},
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "./build.sh",
+		"build": "sh ./build.sh",
 		"format": "prettier --write .",
 		"lint": "eslint ."
 	},
