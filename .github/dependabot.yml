@@ -3,13 +3,19 @@ updates:
     - package-ecosystem: "npm"
       directory: "/"
       schedule:
-          interval: "weekly"
+          interval: "monthly"
       versioning-strategy: increase-if-necessary
       labels:
           - "type: dependencies"
+      groups:
+          patch-and-minor-rollup:
+              update-types:
+                  - "patch"
+                  - "minor"
+
     - package-ecosystem: "github-actions"
       directory: "/"
       schedule:
-          interval: "weekly"
+          interval: "monthly"
       labels:
           - "type: ci/cd"
