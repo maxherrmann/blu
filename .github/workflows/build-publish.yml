@@ -39,7 +39,7 @@ jobs:
               run: npm run build
 
             - name: Commit and push changes
-              uses: stefanzweifel/git-auto-commit-action@v6
+              uses: stefanzweifel/git-auto-commit-action@v7
               with:
                   commit_message: "Build ${{ github.event.inputs.versionTag }}"
                   tagging_message: ${{ github.event.inputs.versionTag }}
