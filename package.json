@@ -40,7 +40,7 @@
 		"@types/web-bluetooth": "^0.0.21",
 		"dts-bundle-generator": "^9.5.1",
 		"esbuild": "^0.27.0",
-		"eslint": "^9.35.0",
+		"eslint": "^10.0.2",
 		"eslint-config-prettier": "^10.1.8",
 		"prettier": "^3.6.2",
 		"publint": "^0.3.12",
