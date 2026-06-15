@@ -1,9 +1,14 @@
-import esBuild from "esbuild"
+import { defineConfig } from "tsdown"
 
 const buildDate = new Date()
 
-await esBuild.build({
+export default defineConfig({
+	attw: {
+		level: "error",
+		profile: "esm-only",
+	},
 	banner: {
+		dts: `/// <reference types="web-bluetooth" />`,
 		js:
 			`/**\n` +
 			` * Blu (blutooth) ` +
@@ -14,14 +19,13 @@ await esBuild.build({
 			` * (Built on ${buildDate.toUTCString()})\n` +
 			` */`,
 	},
-	bundle: true,
-	entryPoints: ["src/index.ts"],
-	external: ["zod", "jaset"],
-	format: "esm",
-	keepNames: true,
-	minify: true,
-	outfile: "dist/index.js",
+	clean: true,
+	entry: ["./src/index.ts", "./src/index.node.ts"],
+	outDir: "./dist",
+	platform: "neutral",
+	publint: {
+		level: "error",
+		strict: true,
+	},
 	sourcemap: true,
-	target: "es2019",
-	treeShaking: true,
 })

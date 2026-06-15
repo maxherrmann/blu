@@ -2,13 +2,13 @@
 
 ### Get familiar with the concepts of Bluetooth and the Web Bluetooth API
 
-[A Developer's Guide to Bluetooth Technology](https://www.bluetooth.com/blog/a-developers-guide-to-bluetooth/) is a great article from the Bluetooth SIG that should get you started with the basic concepts of Bluetooth. The [Web Bluetooth specification](https://webbluetoothcg.github.io/web-bluetooth/#introduction) and this [article from web.dev](https://web.dev/bluetooth/) provide you with information about Web Bluetooth and its implementation.
+[A Developer’s Guide to Bluetooth Technology](https://www.bluetooth.com/blog/a-developers-guide-to-bluetooth/) is a great article from the Bluetooth SIG that should get you started with the basic concepts of Bluetooth. The [Web Bluetooth specification](https://webbluetoothcg.github.io/web-bluetooth/#introduction) and this [article from web.dev](https://web.dev/bluetooth/) provide you with information about Web Bluetooth and its implementation.
 
 ### Get familiar with your device
 
-It is necessary that you know your device's Bluetooth interface to effectively use it with Blu. You need to know the specifications for all Bluetooth services, characteristics, and descriptors you want to implement.
+It is necessary that you know your device’s Bluetooth interface to effectively use it with Blu. You need to know the specifications for all Bluetooth services, characteristics, and descriptors you want to implement.
 
-An example of an openly accessible Bluetooth interface is the [default Bluetooth profile for the BBC micro:bit](https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html). If your device's specification is not public, you could try to reverse engineer it. Take a look at the [useful links section](#useful-links) for further reading material.
+An example of an openly accessible Bluetooth interface is the [default Bluetooth profile for the BBC micro:bit](https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html). If your device’s specification is not public, you could try to reverse engineer it. Take a look at the [useful links section](#useful-links) for further reading material.
 
 ## Setup
 
@@ -20,7 +20,7 @@ npm i blutooth
 
 ## Configuration
 
-For this guide, let's assume that our device's physical interface contains a button that can be pressed. Our device's Bluetooth interface features a "Button Service" that contains a single "Button State Characteristic," which indicates the state of the button, i.e., whether it is pressed or not.
+For this guide, let’s assume that our device’s physical interface contains a button that can be pressed. Our device’s Bluetooth interface features a “Button Service” that contains a single “Button State Characteristic,” which indicates the state of the button, i.e., whether it is pressed or not.
 
 ### Create a device class
 
@@ -34,9 +34,9 @@ import { BluDevice } from "blutooth"
 export default class MyDevice extends BluDevice {}
 ```
 
-### Describe the device's Bluetooth interface
+### Describe the device’s Bluetooth interface
 
-Next, we need to describe our device's Bluetooth interface to let Blu (and ultimately the Web Bluetooth API) know what capabilities it has. To do this, we combine `BluServiceDescription`s, `BluCharacteristicDescription`s, and `BluDescriptorDescription`s (not in our example) to form a descriptive representation of our interface.
+Next, we need to describe our device’s Bluetooth interface to let Blu (and ultimately the Web Bluetooth API) know what capabilities it has. To do this, we combine `BluServiceDescription`s, `BluCharacteristicDescription`s, and `BluDescriptorDescription`s (not in our example) to form a descriptive representation of our interface.
 
 ```ts
 // myDevice.ts
@@ -84,14 +84,14 @@ export default class MyDevice extends BluDevice {
 
 We need to make sure that browsers are able to scan our device and filter out all other unrelated Bluetooth devices that may be located in the vicinity. To do that, we provide a device scanner configuration.
 
-The device scanner configuration is essentially the same as the Web Bluetooth API's [requestDevice() options](https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#options), except that it infers the `optionalServices` property from our device's `interface`.
+The device scanner configuration is essentially the same as the Web Bluetooth API’s [requestDevice() options](https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#options), except that it automatically infers the `optionalServices` property from our device’s `interface`.
 
 ```ts
 // scannerConfig.ts
 
 import type { BluConfigurationOptions } from "blutooth"
 
-export const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"] =
+export const deviceScannerConfiguration: BluConfigurationOptions["deviceScannerConfiguration"] =
 	{
 		filters: [
 			// Only scan for devices with the name "My Device"
@@ -100,14 +100,14 @@ export const deviceScannerConfig: BluConfigurationOptions["deviceScannerConfig"]
 	}
 ```
 
-### Implement the device's services and characteristics
+### Implement the device’s services and characteristics
 
-Now we create a `button.ts` file and use it to implement our device's button-related service and characteristic.
+Now we create a `button.ts` file and use it to implement our device’s button-related service and characteristic.
 
 > [!NOTE]
 > For simplicity, we will implement everything we need in one file. You can, of course, split your code into multiple files if you want.
 
-Let's start with the button service:
+Let’s start with the button service:
 
 ```ts
 // button.ts
@@ -122,24 +122,24 @@ export class ButtonService extends BluService {
 > [!NOTE]
 > Wondering about the use of `declare` here? There will be an explanation later in the guide.
 
-Our service does not contain any logic and merely acts as a wrapper for its "Button State Characteristic". So let's implement that one next:
+Our service does not contain any logic and merely acts as a wrapper for its “Button State Characteristic”. So let’s implement that one next:
 
 ```ts
 // button.ts
 
 import { BluCharacteristic, BluService } from "blutooth"
 
-// ...
+// …
 
 export class ButtonStateCharacteristic extends BluCharacteristic {}
 ```
 
-Now we should add our own logic to the characteristic. First, we need to implement a getter for our device button's state. For this, we make use of [private properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields) and [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get), as the button state should be read-only when accessed from outside the `ButtonStateCharacteristic`...
+Now we should add our own logic to the characteristic. First, we need to implement a getter for our device button’s state. For this, we make use of [private properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields) and [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get), as the button state should be read-only when accessed from outside the `ButtonStateCharacteristic`…
 
 ```ts
 // button.ts
 
-// ...
+// …
 
 export class ButtonStateCharacteristic extends BluCharacteristic {
 	#buttonState?: unknown // `unknown` for now
@@ -150,9 +150,9 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 }
 ```
 
-Now that we have a property that holds the button's state, we need to update its value based on notifications from the characteristic. This is where requests and responses come into play.
+Now that we have a property that holds the button’s state, we need to update its value based on notifications from the characteristic. This is where requests and responses come into play.
 
-As we _described_ earlier, the "Button State Characteristic" has read and notify properties. This means that we can read the characteristic and have it send notifications to us. In our case, we can read the button's state and get notified when the button's state changes.
+As we _described_ earlier, the “Button State Characteristic” has read and notify properties. This means that we can read the characteristic and have it send notifications to us. In our case, we can read the button’s state and get notified when the button’s state changes.
 
 To put this into code, we create a class that extends `BluResponse` and holds a single `buttonState` getter.
 
@@ -161,7 +161,7 @@ To put this into code, we create a class that extends `BluResponse` and holds a 
 
 import { BluCharacteristic, BluResponse, BluService } from "blutooth"
 
-// ...
+// …
 
 class ButtonStateResponse extends BluResponse {
 	get buttonState() {
@@ -173,12 +173,12 @@ class ButtonStateResponse extends BluResponse {
 
 Within the `buttonState` getter, we could further transform the value we read from the `data` buffer. An example would be creating a custom object that holds further information about the button state. This is entirely optional, but it allows us to create an interface that exactly fits our needs. For the sake of simplicity, we will just return the raw value in this example.
 
-Now we instruct our characteristic to treat all incoming notifications, i.e., responses, as `ButtonStateResponse`s by overriding its `responseType` property. We can now also infer the `buttonState` type from our response type. Here's how our characteristic looks now:
+Now we instruct our characteristic to treat all incoming notifications, i.e., responses, as `ButtonStateResponse`s by overriding its `responseType` property. We can now also infer the `buttonState` type from our response type. Here’s how our characteristic looks now:
 
 ```ts
 // button.ts
 
-// ...
+// …
 
 export class ButtonStateCharacteristic extends BluCharacteristic {
 	override responseType = ButtonStateResponse
@@ -190,17 +190,17 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 	}
 }
 
-// ...
+// …
 ```
 
-The last thing we need to do to finish our implementation of the "Button State Characteristic" is to react to the notifications it sends. For this, we can utilize the `BluCharacteristic`s `beforeReady` hook. `beforeReady` is a virtual function that can be used to execute asynchronous tasks before the characteristic is deemed ready to use.
+The last thing we need to do to finish our implementation of the “Button State Characteristic” is to react to the notifications it sends. For this, we can utilize the `BluCharacteristic`s `beforeReady` hook. `beforeReady` is a virtual function that can be used to execute asynchronous tasks before the characteristic is deemed ready to use.
 
-We first need to read the initial button state from the device to pre-populate the characteristic's `#buttonState` property:
+We first need to read the initial button state from the device to pre-populate the characteristic’s `#buttonState` property:
 
 ```ts
 // button.ts
 
-// ...
+// …
 
 export class ButtonStateCharacteristic extends BluCharacteristic {
 	override responseType = ButtonStateResponse
@@ -217,12 +217,12 @@ export class ButtonStateCharacteristic extends BluCharacteristic {
 	}
 }
 
-// ...
+// …
 ```
 
 The result of `this.read()` resolves to `ButtonStateResponse`, because we instructed the characteristic to treat notifications as `ButtonStateResponse`s by overriding its `responseType` earlier. `this.read<ButtonStateResponse>()` is just the same as `this.read() as ButtonStateResponse`.
 
-Next, we add a listener for our characteristic's `notification` event that updates our `#buttonState` property whenever the device's button state changes.
+Next, we add a listener for our characteristic’s `notification` event that updates our `#buttonState` property whenever the device’s button state changes.
 
 > [!NOTE]
 > Wondering about `on()`? This function comes from [jaset](https://github.com/maxherrmann/jaset), which Blu uses to provide type-safe events.
@@ -230,7 +230,7 @@ Next, we add a listener for our characteristic's `notification` event that updat
 ```ts
 // button.ts
 
-// ...
+// …
 
 export class ButtonStateCharacteristic extends BluCharacteristic {
 	override responseType = ButtonStateResponse
@@ -259,21 +259,21 @@ One thing that might seem odd about our implementation at first glance is the fa
 
 We have now successfully implemented all of our services and characteristics and can move on to the device itself.
 
-### Implement the device's interface
+### Implement the device’s interface
 
-In the same file, we alter the `MyDevice` class to provide a better API to our consumers. Let's add a `buttonState` getter that relays the current button state from the `ButtonStateCharacteristic`.
+In the same file, we alter the `MyDevice` class to provide a better API to our consumers. Let’s add a `buttonState` getter that relays the current button state from the `ButtonStateCharacteristic`.
 
 > You can, of course, choose not to implement a custom device class and only control your device through its services and characteristics. However, this will unnecessarily complicate things for consumers of our API.
 
-Here's an example:
+Here’s an example:
 
 ```ts
 // myDevice.ts
 
-// ...
+// …
 
 class MyDevice extends BluDevice {
-	// ...
+	// …
 
 	declare buttonService: ButtonService
 
@@ -285,7 +285,7 @@ class MyDevice extends BluDevice {
 
 The properties `buttonService` and `buttonService.buttonStateCharacteristic` are dynamically added by Blu when connecting the device. Blu infers the property names from the `identifier` property of their respective interface descriptions. When using TypeScript, we need to make sure our compiler does not complain about this by using `declare` on these properties.
 
-**And that's it! We've successfully implemented our device interface.**
+**And that’s it! We’ve successfully implemented our device interface.**
 
 ## Scan and connect
 
@@ -296,22 +296,37 @@ Finally, we can acquire our device, connect to it, and interact with it.
 
 import { configuration, scanner } from "blutooth"
 import MyDevice from "./myDevice"
-import { deviceScannerConfig } from "./scannerConfig"
+import { deviceScannerConfiguration } from "./scannerConfig"
 
-// Configure Blu
+// Configure Blu.
 configuration.set({
-	// Instruct Blu that it should treat scanned devices as our device
-	deviceType: MyDevice,
-	// Instruct Blu that it should only scan for our device
-	deviceScannerConfig: deviceScannerConfig,
+	// Instruct Blu that it should only scan for our device.
+	deviceScannerConfiguration,
+	devices: [
+		// Register our device class, so that Blu knows what to construct.
+		{
+			type: MyDevice,
+		},
+	],
 })
 
+// Scan for our device,
 const device = await scanner.getDevice<MyDevice>()
 
+// Connect the selected device.
 await device.connect()
 
+// Log the initial button state.
 console.log(device.buttonState)
+
+// The is not `undefined` because we used the `beforeReady` hook to read it
+// from device while connecting.
 ```
+
+> [!NOTE]
+> The logged button state in this example is already known at this point –
+> even without an explicit read. To achieve this, we implemented reading the
+> initial button state in the characteristic’s `beforeReady` hook.
 
 ## Useful links
 

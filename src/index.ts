@@ -1,10 +1,10 @@
 /**
  * Blu: The type-safe framework for interacting with Bluetooth Low Energy
- * devices from the web.
+ * devices from the browser and Node.js.
  * @packageDocumentation
  */
 
-import bluetooth from "./bluetoothState.js"
+import bluetooth from "./bluetooth-state.js"
 import configuration from "./configuration.js"
 import convert from "./converter.js"
 import scanner from "./scanner.js"
@@ -13,12 +13,12 @@ export {
 	BluBluetoothDisabledEvent,
 	BluBluetoothEnabledEvent,
 	default as bluetooth,
-} from "./bluetoothState.js"
+} from "./bluetooth-state.js"
 export {
 	default as BluCharacteristic,
 	BluCharacteristicNotificationEvent,
 } from "./characteristic.js"
-export { default as BluCompoundResponse } from "./compoundResponse.js"
+export { default as BluCompoundResponse } from "./compound-response.js"
 export { default as configuration } from "./configuration.js"
 export { default as convert } from "./converter.js"
 export * from "./descriptions.js"
@@ -30,13 +30,13 @@ export {
 } from "./device.js"
 export * from "./errors.js"
 export { default as BluRequest } from "./request.js"
+export { default as BluResponseThreadManager } from "./response-thread-manager.js"
 export { default as BluResponse } from "./response.js"
-export { default as BluResponseThreadManager } from "./responseThreadManager.js"
 export { BluScannerAdvertisementEvent, default as scanner } from "./scanner.js"
 export { default as BluService } from "./service.js"
 
-export type * from "./bluetoothInterface.js"
-export type * from "./bluetoothState.js"
+export type * from "./bluetooth-interface.js"
+export type * from "./bluetooth-state.js"
 export type * from "./characteristic.js"
 export type * from "./configuration.js"
 export type * from "./converter.js"

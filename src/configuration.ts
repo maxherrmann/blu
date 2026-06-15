@@ -1,10 +1,20 @@
 import { z } from "zod"
-import type { BluBluetooth } from "./bluetoothInterface.js"
-import bluetoothState from "./bluetoothState.js"
+import type { BluBluetooth, BluBluetoothDevice } from "./bluetooth-interface.js"
+import bluetoothState from "./bluetooth-state.js"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type BluCharacteristic from "./characteristic.js"
+import type {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	BluInterfaceDescription,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	BluServiceDescription,
+} from "./descriptions.js"
 import BluDevice from "./device.js"
 import { BluConfigurationError } from "./errors.js"
-import isBufferSource from "./utils/isBufferSource.js"
-import isSubclassOrSame from "./utils/isSubclassOrSame.js"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { BluScanner } from "./scanner.js"
+import isBufferSource from "./utils/is-buffer-source.js"
+import isSubclassOrSame from "./utils/is-subclass-or-same.js"
 
 /**
  * Configuration for Blu.
@@ -13,12 +23,11 @@ export class BluConfiguration {
 	/**
 	 * Active configuration options.
 	 */
-	#options = defaultOptions
+	#options = defaultConfigurationOptions
 
 	/**
 	 * Active Bluetooth interface.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	#bluetoothInterface: BluBluetooth = globalThis?.navigator?.bluetooth
 
 	/**
@@ -45,30 +54,25 @@ export class BluConfiguration {
 	 */
 	set(options: BluConfigurationOptions) {
 		try {
-			options = configurationOptionsGuard.parse(options)
+			this.#options = configurationOptionsGuard.parse({
+				...this.options,
+				...options,
+			})
 		} catch (error) {
-			if (error instanceof Error) {
-				error.name = "BluParseError"
-			}
+			;(error as Error).name = "BluParseError"
 
 			throw new BluConfigurationError(
 				`Argument "options" contains invalid configuration options.`,
 				error,
 			)
 		}
-
-		this.#options = {
-			...this.#options,
-			...options,
-		}
 	}
 
 	/**
 	 * Use a different Bluetooth interface.
 	 * @remarks The interface provided will be used for all Bluetooth
-	 *  operations. It can be useful to provide a custom interface for utilizing
-	 *  Web Bluetooth polyfills. This can potentially allow you to use Blu in
-	 *  environments in which Web Bluetooth is not supported by default.
+	 *  operations. Useful for registering Web Bluetooth polyfills that allow
+	 *  you to use Blu in environments in which Web Bluetooth is not supported..
 	 */
 	useBluetoothInterface(bluetoothInterface: BluBluetooth) {
 		this.#bluetoothInterface = bluetoothInterface
@@ -87,148 +91,209 @@ export class BluConfiguration {
 	 * Restore the default configuration.
 	 */
 	restoreDefaults() {
-		this.#options = defaultOptions
+		this.#options = defaultConfigurationOptions
 	}
+}
+
+/**
+ * Default configuration options for Blu.
+ */
+export const defaultConfigurationOptions: BluRequiredConfigurationOptions = {
+	advertisementScannerConfiguration: { acceptAllAdvertisements: true },
+	deviceScannerConfiguration: { acceptAllDevices: true },
+	devices: [
+		{
+			type: BluDevice,
+			validator: () => true,
+			interfaceMatching: true,
+			interfaceDiscoveryAttempts: 2,
+			interfaceDiscoveryAttemptDelay: 100,
+			interfaceExtensiveDiscovery: false,
+			connectionTimeout: false,
+			automaticallyEnableNotifications: true,
+		},
+	],
+	logging: true,
+	dataTransferLogging: false,
 }
 
 /**
  * Configuration options.
  */
-export interface BluConfigurationOptions {
+export interface BluRequiredConfigurationOptions {
 	/**
 	 * The advertisement scanner configuration.
 	 * @remarks Only relevant when you intend to use the experimental
 	 *  {@link BluScanner.startScanningForAdvertisements} function.
 	 *  You can find an explanation for each property in the
 	 *  {@link https://webbluetoothcg.github.io/web-bluetooth/scanning.html#scanning | Web Bluetooth Scanning draft}.
-	 * @defaultValue A configuration that instructs the scanner to scan
-	 *  for all advertisements.
+	 * @defaultValue `{ acceptAllAdvertisements: true }`
 	 */
-	advertisementScannerConfig?: BluetoothLEScanOptions
+	advertisementScannerConfiguration: BluetoothLEScanOptions
 
 	/**
 	 * The device scanner configuration.
 	 * @remarks You can find an explanation for each property in the
 	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#parameters | MDN documentation}.
-	 *  Setting the `optionalServices` property here has no effect, as it will
-	 *  be automatically populated by Blu with services that are **not** marked
-	 *  as {@link BluServiceDescription.advertised | advertised} in the
-	 *  {@link BluDevice.interface} of the configured
-	 *  {@link BluConfigurationOptions.deviceType}.
-	 * @defaultValue A configuration that instructs the scanner to scan for all
-	 *  devices.
-	 */
-	deviceScannerConfig?: RequestDeviceOptions
-
-	/**
-	 * The device type.
-	 * @remarks Will be used to construct device objects for newly scanned
-	 *  devices.
-	 * @defaultValue The type of {@link BluDevice}.
-	 */
-	deviceType?: typeof BluDevice
-
-	/**
-	 * The device interface matching type.
-	 * @remarks Will be evaluated during interface discovery, when connecting
-	 *  new devices. Instructs Blu how to handle discrepancies between the
-	 *  expected and actual Bluetooth interfaces of devices when trying to
-	 *  connect them. The expected Bluetooth interface is inferred from the
-	 *  {@link BluDevice.interface} of the configured
-	 *  {@link BluConfigurationOptions.deviceType}. Components discovered
-	 *  through
-	 *  {@link BluConfigurationOptions.deviceInterfaceExtensiveDiscovery} will
-	 *  not be considered when evaluating discrepancies.
 	 *
-	 *  **Available options**
+	 *  The `optionalServices` property is omitted, as it will be automatically
+	 *  populated by Blu with services that are **not** marked
+	 *  as {@link BluServiceDescription.advertised | advertised} in
+	 *  the interfaces of all device types from the {@link devices | devices configuration}.
 	 *
-	 *  - `true`: The device's Bluetooth interface must exactly match all
-	 *  expectations, but can include additional services, characteristics or
-	 *  descriptors. A connection attempt will fail if any of the device's
-	 *  expected endpoints are missing or if any characteristic has mismatching
-	 *  "read", "write", "write witout response" and "notify" properties.
-	 *
-	 *  - `false`: The device's Bluetooth interface must not match any
-	 *  expectations. Not recommended for production environments.
-	 *
-	 *  **Example**
-	 *
-	 *  - A Bluetooth device is expected to have a battery service. This service
-	 *  is somehow missing from the device's actual Bluetooth interface. A
-	 *  connection attempt would fail when `deviceInterfaceMatching` is `true`.
-	 * @defaultValue `true`
+	 *  Please make sure that the options you provide enable the discovery of
+	 *  all devices in your {@link devices | devices configuration}.
+	 * @defaultValue `{ acceptAllDevices: true }`
 	 */
-	deviceInterfaceMatching?: boolean
+	deviceScannerConfiguration:
+		| {
+				filters: BluetoothLEScanFilter[]
+				optionalManufacturerData?: number[] | undefined
+		  }
+		| {
+				acceptAllDevices: boolean
+				optionalManufacturerData?: number[] | undefined
+		  }
 
 	/**
-	 * The number of available attempts to discover a device's interface.
-	 * @remarks When a device's interface cannot be discovered, Blu will retry
-	 *  the discovery process up to the specified number of attempts. This can
-	 *  be useful when a device's interface is not fully discoverable after
-	 *  connecting to it. This can happen due to communication interference or
-	 *  other disruptive factors.
+	 * The supported devices.
+	 * @remarks When multiple devices are provided, the `validator` function of
+	 *  each device will be evaluated in the order of devices in this array.
+	 *  This means that if a scanned device matches the `validator` function of
+	 *  multiple devices, it will be considered a match for the first device
+	 *  with a `validator` function that returns `true`.
 	 *
-	 *  The given number must be greater than 0 and less than or equal to 10.
-	 * @defaultValue `2`
+	 *  By default, all scanned devices will be constructed as generic
+	 *  {@link BluDevice} instances with default options.
 	 */
-	deviceInterfaceDiscoveryAttempts?: number
+	devices: {
+		/**
+		 * The device type.
+		 * @remarks Will be used to construct a device object if the scanned
+		 *  device passes the `validator` function.
+		 * @defaultValue {@link BluDevice}
+		 */
+		type: typeof BluDevice
 
-	/**
-	 * The delay between subsequent device interface discovery attempts in
-	 * milliseconds.
-	 * @remarks See
-	 *  {@link BluConfigurationOptions.deviceInterfaceDiscoveryAttempts}. Can be
-	 *  useful to prevent flooding the Bluetooth stack with requests when a
-	 *  device's interface is not fully discoverable after connecting to it.
-	 *  This can happen due to communication interference or other disruptive
-	 *  factors.
-	 *  @defaultValue `100`
-	 */
-	deviceInterfaceDiscoveryAttemptDelay?: number
+		/**
+		 * A validator function for scanned devices, that is used to validate
+		 * incoming scanned devices in order to match them to a given device
+		 * type.
+		 * @remarks If it returns `true` the scanned device is considered a
+		 *  match for the given device type. If it returns `false` the scanned
+		 *  device is considered to not be a match and is ignored. Returns
+		 *  `true` by default.
+		 * @param bluetoothDevice - The incoming scanned Bluetooth device to
+		 *  validate.
+		 * @returns The validation result.
+		 * @defaultValue `() => true`
+		 */
+		validator: (bluetoothDevice: BluBluetoothDevice) => boolean
 
-	/**
-	 * Enable extensive device interface discovery?
-	 * @remarks When enabled, Blu will discover all services, characteristics
-	 *  and descriptors of a device during interface discovery using
-	 *  [`BluetoothRemoteGATTServer.getPrimaryServices()`](https://developer.mozilla.org/en-US/docs/Web/API/BluetoothRemoteGATTServer/getPrimaryServices).
-	 *  This may lead to the discovery of services, characteristics
-	 *  and descriptors that are not described in the
-	 *  {@link BluDevice.interface}. Since this is a time-consuming operation
-	 *  that may lead to a significant increase in connection time, it is
-	 *  disabled by default.
-	 * @defaultValue `false`
-	 */
-	deviceInterfaceExtensiveDiscovery?: boolean
+		/**
+		 * The device interface matching type.
+		 * @remarks Instructs Blu how to handle discrepancies between the
+		 *  expected and actual Bluetooth interfaces of the device when trying
+		 *  to connect it. The expected Bluetooth interface is inferred from
+		 *  the {@link BluDevice.["interface"] | interface} of the configured
+		 *  `deviceType`. Components discovered through extensive interface
+		 *  discovery (when `interfaceExtensiveDiscovery` is `true`) will not be
+		 *  considered when evaluating discrepancies.
+		 *
+		 *  **Available options**
+		 *
+		 *  - `true`: The device's Bluetooth interface must exactly match all
+		 *  expectations, but can include additional services, characteristics
+		 *  or descriptors. A connection attempt will fail if any of the
+		 *  device's expected endpoints are missing or if any characteristic has
+		 *  mismatching "read", "write", "write witout response" and "notify"
+		 *  properties.
+		 *
+		 *  - `false`: The device's Bluetooth interface must not match any
+		 *  expectations. Not recommended for production environments.
+		 *
+		 *  **Example**
+		 *
+		 *  - A Bluetooth device is expected to have a battery service. This
+		 *  service is somehow missing from the device's actual Bluetooth
+		 *  interface. A connection attempt would fail when `interfaceMatching`
+		 *  is `true`.
+		 * @defaultValue `true`
+		 */
+		interfaceMatching: boolean
 
-	/**
-	 * The time to wait for a device connection to be established in
-	 * milliseconds before a connection attempt with {@link BluDevice.connect}
-	 * fails.
-	 * @remarks Can be `false` (no timeout, i.e. wait indefinitely) or a
-	 *  `number` of milliseconds. Keep in mind that the device connection
-	 *  time can vary depending on what tasks you run within the device's,
-	 *  service's, characteristic's or descriptor's `beforeReady()` hooks.
-	 * @defaultValue `false`
-	 */
-	deviceConnectionTimeout?: number | false
+		/**
+		 * The number of available attempts to discover the device's interface.
+		 * @remarks When a device's interface cannot be discovered, Blu will
+		 *  retry the discovery process up to the specified number of attempts.
+		 *  This can be useful when a device's interface is not fully
+		 *  discoverable after connecting to it. This can happen due to
+		 *  communication interference or other disruptive factors.
+		 *
+		 *  The given number must be greater than 0 and less than or equal to
+		 *  10.
+		 * @defaultValue `2`
+		 */
+		interfaceDiscoveryAttempts: number
 
-	/**
-	 * Automatically listen to notifiable characteristics?
-	 * @remarks Will be evaluated during interface discovery, when connecting
-	 *  new devices. Can be a `boolean` value or an array of
-	 *  {@link BluInterfaceDescription.identifier | characteristic identifiers}.
-	 *  If `false`, notifications have to be manually "enabled" for each
-	 *  characteristic by invoking
-	 *  {@link BluCharacteristic.startListeningForNotifications}.
-	 * @defaultValue `true`
-	 */
-	autoEnableNotifications?: boolean | string[]
+		/**
+		 * The delay between subsequent device interface discovery attempts in
+		 * milliseconds.
+		 * @remarks See `interfaceDiscoveryAttempts`.
+		 *
+		 *  Can be useful to prevent flooding the Bluetooth stack with requests
+		 *  when a device's interface is not fully discoverable after connecting
+		 *  to it. This can happen due to communication interference or other
+		 *  disruptive factors.
+		 *  @defaultValue `100`
+		 */
+		interfaceDiscoveryAttemptDelay: number
+
+		/**
+		 * Enable extensive device interface discovery?
+		 * @remarks When enabled, Blu will discover all services,
+		 *  characteristics and descriptors of a device during interface
+		 *  discovery using
+		 *  [`BluetoothRemoteGATTServer.getPrimaryServices()`](https://developer.mozilla.org/en-US/docs/Web/API/BluetoothRemoteGATTServer/getPrimaryServices).
+		 *  This may lead to the discovery of services, characteristics and
+		 *  descriptors that are not described in the device's
+		 *  {@link BluDevice.["interface"] | interface}. Since this is a
+		 *  time-consuming operation that may lead to a significant increase in
+		 *  connection time, it is disabled by default.
+		 * @defaultValue `false`
+		 */
+		interfaceExtensiveDiscovery: boolean
+
+		/**
+		 * The time to wait for a device connection to be established in
+		 * milliseconds before a connection attempt fails.
+		 * @remarks Can be `false` (no timeout, i.e. wait indefinitely) or a
+		 *  `number` (timeout in milliseconds).
+		 *
+		 *  Keep in mind that the connection time can vary drastically,
+		 *  depending on what tasks you run within the `beforeReady()` hooks
+		 *  across the device's interface.
+		 * @defaultValue `false`
+		 */
+		connectionTimeout: number | false
+
+		/**
+		 * Automatically listen to notifiable characteristics?
+		 * @remarks Can be a `boolean` value or an array of
+		 *  {@link BluInterfaceDescription.identifier | characteristic identifiers}.
+		 *  If `false`, notification listening has to be manually enabled for
+		 *  each characteristic by invoking
+		 *  {@link BluCharacteristic.startListeningForNotifications}.
+		 * @defaultValue `true`
+		 */
+		automaticallyEnableNotifications: boolean | string[]
+	}[]
 
 	/**
 	 * Enable logging?
 	 * @defaultValue `true`
 	 */
-	logging?: boolean
+	logging: boolean
 
 	/**
 	 * Enable data transfer logging?
@@ -237,24 +302,11 @@ export interface BluConfigurationOptions {
 	 *  disabled.
 	 * @defaultValue `false`
 	 */
-	dataTransferLogging?: boolean
+	dataTransferLogging: boolean
 }
 
-/**
- * Default configuration options for Blu.
- */
-const defaultOptions: Required<BluConfigurationOptions> = {
-	advertisementScannerConfig: { acceptAllAdvertisements: true },
-	deviceScannerConfig: { acceptAllDevices: true },
-	deviceType: BluDevice,
-	deviceInterfaceMatching: true,
-	deviceInterfaceDiscoveryAttempts: 2,
-	deviceInterfaceDiscoveryAttemptDelay: 100,
-	deviceInterfaceExtensiveDiscovery: false,
-	deviceConnectionTimeout: false,
-	autoEnableNotifications: true,
-	logging: true,
-	dataTransferLogging: false,
+type DeepPartial<T> = {
+	[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
 }
 
 /**
@@ -301,13 +353,11 @@ const bluetoothLEScanFilterGuard = z.object({
 const requestDeviceOptionsGuard = z
 	.object({
 		filters: z.array(bluetoothLEScanFilterGuard),
-		optionalServices: z.array(bluetoothServiceUUIDGuard).optional(),
 		optionalManufacturerData: z.array(z.number()).optional(),
 	})
 	.or(
 		z.object({
 			acceptAllDevices: z.boolean(),
-			optionalServices: z.array(bluetoothServiceUUIDGuard).optional(),
 			optionalManufacturerData: z.array(z.number()).optional(),
 		}),
 	)
@@ -322,7 +372,7 @@ const bluetoothLEScanOptionsGuard = z
 	})
 	.or(
 		z.object({
-			acceptAllAdvertisements: z.boolean(),
+			acceptAllAdvertisements: z.boolean().optional(),
 			keepRepeatedDevices: z.boolean().optional(),
 		}),
 	)
@@ -330,50 +380,89 @@ const bluetoothLEScanOptionsGuard = z
 /**
  * A zod guard for configuration options.
  */
-const configurationOptionsGuard = z
-	.object({
-		advertisementScannerConfig: bluetoothLEScanOptionsGuard.optional(),
-		deviceScannerConfig: requestDeviceOptionsGuard.optional(),
-		deviceType: z
-			.custom<typeof BluDevice>((x) => isSubclassOrSame(x, BluDevice))
-			.optional(),
-		deviceInterfaceMatching: z.boolean().optional(),
-		deviceInterfaceDiscoveryAttempts: z.number().min(1).max(10).optional(),
-		deviceInterfaceDiscoveryAttemptDelay: z.number().optional(),
-		deviceInterfaceExtensiveDiscovery: z.boolean().optional(),
-		deviceConnectionTimeout: z.number().or(z.literal(false)).optional(),
-		autoEnableNotifications: z.boolean().or(z.array(z.string())).optional(),
-		logging: z.boolean().optional(),
-		dataTransferLogging: z.boolean().optional(),
-	})
-	.strict()
+const configurationOptionsGuard = z.strictObject({
+	advertisementScannerConfiguration: bluetoothLEScanOptionsGuard.default(
+		defaultConfigurationOptions.advertisementScannerConfiguration,
+	),
+	deviceScannerConfiguration: requestDeviceOptionsGuard.default(
+		defaultConfigurationOptions.deviceScannerConfiguration,
+	),
+	devices: z
+		.array(
+			z.strictObject({
+				type: z
+					.custom<
+						typeof BluDevice
+					>((x) => isSubclassOrSame(x, BluDevice))
+					.default(defaultConfigurationOptions.devices[0].type),
+				validator: z
+					.function({
+						input: [
+							z.custom<BluBluetoothDevice>(
+								(x) => x instanceof Object,
+							),
+						],
+						output: z.boolean(),
+					})
+					.default(defaultConfigurationOptions.devices[0].validator),
+				interfaceMatching: z
+					.boolean()
+					.default(
+						defaultConfigurationOptions.devices[0]
+							.interfaceMatching,
+					),
+				interfaceDiscoveryAttempts: z
+					.number()
+					.min(1)
+					.max(10)
+					.default(
+						defaultConfigurationOptions.devices[0]
+							.interfaceDiscoveryAttempts,
+					),
+				interfaceDiscoveryAttemptDelay: z
+					.number()
+					.default(
+						defaultConfigurationOptions.devices[0]
+							.interfaceDiscoveryAttemptDelay,
+					),
+				interfaceExtensiveDiscovery: z
+					.boolean()
+					.default(
+						defaultConfigurationOptions.devices[0]
+							.interfaceExtensiveDiscovery,
+					),
+				connectionTimeout: z
+					.union([z.number(), z.literal(false)])
+					.default(
+						defaultConfigurationOptions.devices[0]
+							.connectionTimeout,
+					),
+				automaticallyEnableNotifications: z
+					.union([z.boolean(), z.array(z.string())])
+					.default(
+						defaultConfigurationOptions.devices[0]
+							.automaticallyEnableNotifications,
+					),
+			}),
+		)
+		.min(1)
+		.default(defaultConfigurationOptions.devices),
+	logging: z.boolean().default(defaultConfigurationOptions.logging),
+	dataTransferLogging: z
+		.boolean()
+		.default(defaultConfigurationOptions.dataTransferLogging),
+})
+
+/**
+ * Blu's configuration options.
+ */
+export type BluConfigurationOptions =
+	DeepPartial<BluRequiredConfigurationOptions>
 
 /**
  * Blu's global configuration.
  * @remarks Handles everything related to the configuration of the Blu
  *  framework.
- *
- *  **Default configuration**
- *
- *  - `advertisementScannerConfig`: `{ acceptAllAdvertisements: true }`
- *
- *  - `deviceScannerConfig`: `{ acceptAllDevices: true }`
- *
- *  - `deviceType`: The type of {@link BluDevice}.
- *
- *  - `deviceInterfaceMatching`: `true`
- *
- *  - `deviceInterfaceDiscoveryAttempts`: `2`
- *
- *  - `deviceInterfaceDiscoveryAttemptDelay`: `100`
- *
- *  - `deviceInterfaceExtensiveDiscovery`: `false`
- *
- *  - `autoEnableNotifications`: `true`
- *
- *  - `logging`: `true`
- *
- *  - `dataTransferLogging`: `false`
  */
 const configuration = new BluConfiguration()
 export default configuration

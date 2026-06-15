@@ -1,6 +1,6 @@
 import EventTarget, { type EventMap } from "jaset"
-import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetoothInterface.js"
-import BluCompoundResponse from "./compoundResponse.js"
+import type { BluBluetoothRemoteGATTCharacteristic } from "./bluetooth-interface.js"
+import BluCompoundResponse from "./compound-response.js"
 import configuration from "./configuration.js"
 import type { BluCharacteristicDescription } from "./descriptions.js"
 import type BluDescriptor from "./descriptor.js"
@@ -11,8 +11,8 @@ import {
 import BluRequest, { isRequestExpectingCompoundResponse } from "./request.js"
 import BluResponse from "./response.js"
 import type BluService from "./service.js"
-import isArray from "./utils/isArray.js"
-import isBufferSource from "./utils/isBufferSource.js"
+import isArray from "./utils/is-array.js"
+import isBufferSource from "./utils/is-buffer-source.js"
 
 /**
  * Bluetooth characteristic.
@@ -26,10 +26,8 @@ import isBufferSource from "./utils/isBufferSource.js"
 export default class BluCharacteristic<
 	Service extends BluService = BluService,
 	ResponseType extends typeof BluResponse = typeof BluResponse,
-	Events extends Omit<
-		EventMap,
-		keyof BluCharacteristicEvents<ResponseType>
-	> = Omit<EventMap, keyof BluCharacteristicEvents<ResponseType>>,
+	Events extends Omit<EventMap, keyof BluCharacteristicEvents<ResponseType>> =
+		Omit<EventMap, keyof BluCharacteristicEvents<ResponseType>>,
 > extends EventTarget<BluCharacteristicEvents<ResponseType> & Events> {
 	/**
 	 * The service associated with this characteristic.
@@ -192,7 +190,7 @@ export default class BluCharacteristic<
 	 *  {@link BluCharacteristic.responseType} with the characteristic's value
 	 *  as data. This is meant as a convenience method and can also be done
 	 *  manually.
-	 * @returns A `Promise` that resolves with a response of the given
+	 * @returns A `Promise` that resolves to a response of the given
 	 *  {@link BluCharacteristic.responseType}.
 	 * @throws A {@link BluCharacteristicOperationError} when something went
 	 *  wrong.
@@ -200,7 +198,9 @@ export default class BluCharacteristic<
 	 *  not be constructed.
 	 */
 	async read() {
-		return new this.responseType(await this.readValue()) as ResponseType
+		return new this.responseType(
+			await this.readValue(),
+		) as InstanceType<ResponseType>
 	}
 
 	/**
@@ -317,7 +317,7 @@ export default class BluCharacteristic<
 	 * @param request - The request.
 	 * @param timeout - The time to wait for a response in milliseconds
 	 *  before the request fails. Defaults to 5000 milliseconds.
-	 * @returns A `Promise` that resolves with a response of the given
+	 * @returns A `Promise` that resolves to a response of the given
 	 *  {@link BluRequest.responseType}.
 	 * @throws A {@link BluCharacteristicOperationError} when something went
 	 *  wrong.
@@ -491,7 +491,7 @@ export default class BluCharacteristic<
 	 * @param requests - The requests.
 	 * @param timeout - The time to wait for a response to each request in
 	 *  milliseconds before a request fails. Defaults to 5000 milliseconds.
-	 * @returns A `Promise` that resolves with an array of responses of the
+	 * @returns A `Promise` that resolves to an array of responses of the
 	 *  given {@link BluRequest.responseType}s associated with the respective
 	 *  requests.
 	 * @throws A {@link BluCharacteristicOperationError} when something went
@@ -553,7 +553,7 @@ export default class BluCharacteristic<
 
 			this._bluetoothCharacteristic.addEventListener(
 				"characteristicvaluechanged",
-				this.#onNotification.bind(this),
+				this.#onNotification,
 			)
 
 			this.properties.isListening = true
@@ -597,7 +597,7 @@ export default class BluCharacteristic<
 
 			this._bluetoothCharacteristic.removeEventListener(
 				"characteristicvaluechanged",
-				this.#onNotification.bind(this),
+				this.#onNotification,
 			)
 
 			this.properties.isListening = false
@@ -622,7 +622,7 @@ export default class BluCharacteristic<
 	/**
 	 * Event handler that is invoked whenever a notification is received.
 	 */
-	#onNotification() {
+	readonly #onNotification = () => {
 		this.emit(
 			new BluCharacteristicNotificationEvent<ResponseType>(
 				new this.responseType(this.value) as InstanceType<ResponseType>,
@@ -634,9 +634,7 @@ export default class BluCharacteristic<
 /**
  * Properties of a characteristic.
  */
-export class BluCharacteristicProperties
-	implements BluetoothCharacteristicProperties
-{
+export class BluCharacteristicProperties implements BluetoothCharacteristicProperties {
 	/**
 	 * Has the characteristic the "read" property?
 	 * @readonly

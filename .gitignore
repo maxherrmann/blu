@@ -3,8 +3,10 @@
 Thumbs.db
 
 # Build
-build/
 dist/
+
+# Coverage
+coverage/
 
 # NPM
 node_modules/

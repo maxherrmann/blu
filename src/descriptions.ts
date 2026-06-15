@@ -4,7 +4,7 @@ import BluDevice from "./device.js"
 import { BluInterfaceDescriptionConstructionError } from "./errors.js"
 import BluResponse from "./response.js"
 import BluService from "./service.js"
-import isSubclassOrSame from "./utils/isSubclassOrSame.js"
+import isSubclassOrSame from "./utils/is-subclass-or-same.js"
 
 /**
  * Generic description for a Bluetooth interface component.
@@ -34,7 +34,7 @@ export class BluInterfaceDescription {
 	/**
 	 * The component's name.
 	 * @remarks Used for internal reference.
-	 * @defaultValue "Generic Interface Component"
+	 * @defaultValue `"Generic Interface Component"`
 	 * @readonly
 	 */
 	readonly name: string
@@ -95,7 +95,7 @@ export class BluInterfaceDescription {
 export class BluServiceDescription extends BluInterfaceDescription {
 	/**
 	 * The type that represents the described service.
-	 * @defaultValue The type of {@link BluService}.
+	 * @defaultValue {@link BluService}
 	 * @readonly
 	 */
 	readonly type: typeof BluService<BluDevice>
@@ -110,7 +110,7 @@ export class BluServiceDescription extends BluInterfaceDescription {
 
 	/**
 	 * Is the service being advertised by the device?
-	 * @remarks If set to `true` the service will be added to the
+	 * @remarks If set to `false` the service will be added to the
 	 *  `optionalServices` property of the Web Bluetooth API's
 	 *  {@link https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#options | requestDevice() options}.
 	 * @defaultValue `false`
@@ -156,6 +156,13 @@ export class BluServiceDescription extends BluInterfaceDescription {
 	}) {
 		super({ uuid, identifier, name, optional })
 
+		if (!isSubclassOrSame(type, BluService)) {
+			throw new BluInterfaceDescriptionConstructionError(
+				`Argument "type" must be a class that is or extends ` +
+					`"Service".`,
+			)
+		}
+
 		this.type = type
 		this.characteristics = characteristicDescriptions
 		this.advertised = advertised
@@ -168,7 +175,7 @@ export class BluServiceDescription extends BluInterfaceDescription {
 export class BluCharacteristicDescription extends BluInterfaceDescription {
 	/**
 	 * The type that represents the described characteristic.
-	 * @defaultValue The type of {@link BluCharacteristic}.
+	 * @defaultValue {@link BluCharacteristic}
 	 * @readonly
 	 */
 	readonly type: typeof BluCharacteristic<BluService, typeof BluResponse>
@@ -182,10 +189,9 @@ export class BluCharacteristicDescription extends BluInterfaceDescription {
 	readonly descriptors: BluDescriptorDescription[]
 
 	/**
-	 * The described characteristic's expected properties. `undefined` if there
-	 * are no expectations.
-	 * @remarks Each property can be `undefined` as well to mark it as not being
-	 * expected.
+	 * The described characteristic's expected properties.
+	 * @remarks `undefined` if there are no expectations at all. If a specific
+	 *  property is `undefined` there are no expectations for that property.
 	 * @defaultValue `undefined`
 	 * @readonly
 	 */
@@ -229,6 +235,13 @@ export class BluCharacteristicDescription extends BluInterfaceDescription {
 	}) {
 		super({ uuid, identifier, name, optional })
 
+		if (!isSubclassOrSame(type, BluCharacteristic)) {
+			throw new BluInterfaceDescriptionConstructionError(
+				`Argument "type" must be a class that is or extends ` +
+					`"Characteristic".`,
+			)
+		}
+
 		this.type = type
 		this.descriptors = descriptorDescriptions
 		this.expectedProperties = expectedProperties
@@ -241,7 +254,7 @@ export class BluCharacteristicDescription extends BluInterfaceDescription {
 export class BluDescriptorDescription extends BluInterfaceDescription {
 	/**
 	 * The type that represents the described descriptor.
-	 * @defaultValue The type of {@link BluDescriptor}.
+	 * @defaultValue {@link BluDescriptor}
 	 * @readonly
 	 */
 	readonly type: typeof BluDescriptor<BluCharacteristic>

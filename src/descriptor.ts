@@ -1,18 +1,18 @@
 import EventTarget, { type EventMap } from "jaset"
-import type { BluBluetoothRemoteGATTDescriptor } from "./bluetoothInterface.js"
+import type { BluBluetoothRemoteGATTDescriptor } from "./bluetooth-interface.js"
 import type BluCharacteristic from "./characteristic.js"
 import configuration from "./configuration.js"
 import type { BluDescriptorDescription } from "./descriptions.js"
 import { BluDescriptorOperationError } from "./errors.js"
 import BluResponse from "./response.js"
-import isBufferSource from "./utils/isBufferSource.js"
+import isBufferSource from "./utils/is-buffer-source.js"
 
 /**
  * Bluetooth descriptor.
  */
 export default class BluDescriptor<
 	Characteristic extends BluCharacteristic = BluCharacteristic,
-	Events extends EventMap<Events> = EventMap,
+	Events extends EventMap = EventMap,
 > extends EventTarget<Events> {
 	/**
 	 * The characteristic associated with this descriptor.
@@ -110,7 +110,7 @@ export default class BluDescriptor<
 	 *  This is meant as a convenience method and can also be done manually.
 	 * @typeParam ResponseType - The type of the expected response. Defaults to
 	 *  {@link BluResponse}.
-	 * @returns A `Promise` that resolves with a {@link BluResponse} of the given
+	 * @returns A `Promise` that resolves to a {@link BluResponse} of the given
 	 *  `ResponseType`.
 	 * @throws A {@link BluDescriptorOperationError} when something went wrong.
 	 * @throws A {@link BluResponseConstructionError} when the response could not

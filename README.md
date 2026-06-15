@@ -12,26 +12,48 @@
 	<br>
 </p>
 
-Blu is a framework that streamlines the integration of Web Bluetooth into your projects. Designed with ease of use in mind, Blu offers a robust and intuitive interface for interacting with Bluetooth Low Energy devices from the web, as well as native platforms that don't support Web Bluetooth (yet).
+Blu is a framework that streamlines the integration of Web Bluetooth into your projects. Designed with ease of use in mind, Blu offers a robust and intuitive interface for interacting with Bluetooth Low Energy devices from the browser and Node.js.
 
 ## Table of contents
 
 - [**Installation**](#installation)
+- [**Usage**](#usage)
+    - [Import Blu](#import-blu)
+    - [Use Blu in your project](#use-blu-in-your-project)
 - [**Key advantages**](#key-advantages)
     - [Intuitive interface](#intuitive-interface)
     - [Intuitive communication model](#intuitive-communication-model)
     - [Global operation queueing](#global-operation-queueing)
+    - [Running in the browser and Node.js](#running-in-the-browser-and-nodejs)
     - [Support for Web Bluetooth polyfills](#support-for-web-bluetooth-polyfills)
     - [Type-safety](#type-safety)
-- [**Usage**](#usage)
-    - [Import Blu](#import-blu)
-    - [Use Blu in your project](#use-blu-in-your-project)
 
 ## Installation
 
 ```sh
 npm i blutooth
 ```
+
+## Usage
+
+### Import Blu
+
+```js
+import blu from "blutooth"
+
+// blu.bluetooth
+// blu.configuration
+// blu.convert
+// blu.scanner
+```
+
+See [index.ts](https://github.com/maxherrmann/blu/blob/main/src/index.ts) for all exports.
+
+### Use Blu in your project
+
+You can find a detailed guide on how to use Blu here:
+
+[➡ **How to implement your own device with Blu**](https://github.com/maxherrmann/blu/wiki/How-to-implement-your-own-device-with-Blu)
 
 ## Key advantages
 
@@ -63,7 +85,7 @@ return value
 
 ### Intuitive communication model
 
-Blu streamlines interactions with Bluetooth characteristics by implementing an intuitive communication model based on requests and responses. Fetching data from a Bluetooth device is made simple: Just `request` it and `await` a response. No need for dealing with adding and removing listeners, parsing data and – if you're using TypeScript – casting values for type safety.
+Blu streamlines interactions with Bluetooth characteristics by implementing an intuitive communication model based on requests and responses. Fetching data from a Bluetooth device is made simple: Just `request` it and `await` a response. No need for dealing with adding and removing listeners, parsing data and—if you’re using TypeScript—casting values for type safety.
 
 **😕 Web Bluetooth API**
 
@@ -103,7 +125,7 @@ return new Promise(resolve => {
 
 	/**
 	 * Ensure that the device is actually ready to receive and send the data,
-	 * so that it does not throw errors – telling me that it is busy.
+	 * so that it does not throw errors telling me that it is busy.
 	 *
 	 * ¯\_(ツ)_/¯
 	 */
@@ -142,33 +164,23 @@ return response.myData
 
 ### Global operation queueing
 
-Blu automatically queues all GATT (Generic Attribute Profile) operations your application triggers. This prevents "device busy" errors and potential data loss and enables you to have truly asynchronous communication with a connected device, globally – across your whole application.
+Blu automatically queues all GATT (Generic Attribute Profile) operations your application triggers. This prevents “device busy” errors and potential data loss and enables you to have truly asynchronous communication with a connected device, globally – across your whole application.
 
-### Support for Web Bluetooth polyfills
+### Running in the browser and Node.js
 
-Blu can also be used in environments where Web Bluetooth is not natively available, i.e. where `globalThis.navigator.bluetooth` is missing, by allowing you to register a custom polyfill. You could, for example take the [bluetooth-le](https://github.com/capacitor-community/bluetooth-le) plugin for [Capacitor](https://capacitorjs.com/) and to run your Blu-based application on iOS devices, where Web Bluetooth support is still lacking due to WebKit.
+Blu can run in the browser and Node.js out of the box. No special setup required.
+
+> [!NOTE]
+> Node.js support is only available in Blu >=5.0.0. When running on Node.js, Blu utilizes the [`webbluetooth`](https://www.npmjs.com/package/webbluetooth) library for Bluetooth communication. The library must be installed manually. Since it offers multiple licensing options, we recommend installing the MIT-licensed version `webbluetooth@latest`.
+
+### Running in browsers that do not support Web Bluetooth
+
+Blu can be used in browser environments where Web Bluetooth is not natively supported by utilizing polyfills. The `blu.configuration.useBluetoothInterface()` allows clients to easily switch to a different Bluetooth interface, in case the default interface (`globalThis.navigator.bluetooth`) is missing.
+
+#### WebKit (`WKWebView`)
+
+To get an application that integrates Blu up and running in WebKit (`WKWebView`), you could—for example—use the [bluetooth-le](https://github.com/capacitor-community/bluetooth-le) plugin for [Capacitor](https://capacitorjs.com/). Just configure Blu to use the plugin’s Bluetooth interface and you’re able to ship your cross-platform app to Apple devices.
 
 ### Type-safety
 
 Blu is built with TypeScript, offering you a strongly typed and safely extendable interface.
-
-## Usage
-
-### Import Blu
-
-```js
-import blu from "blutooth"
-
-// blu.bluetooth
-// blu.configuration
-// blu.convert
-// blu.scanner
-```
-
-See [index.ts](https://github.com/maxherrmann/blu/blob/main/src/index.ts) for all exports.
-
-### Use Blu in your project
-
-You can find a detailed guide on how to use Blu here:
-
-[➡ **How to implement your own device with Blu**](https://github.com/maxherrmann/blu/wiki/How-to-implement-your-own-device-with-Blu)
