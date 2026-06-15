@@ -33,7 +33,7 @@ fix a bug. Please create a minimal verifiable setup that reproduces the bug.
 
 <!-- Add the Blu version you are using. -->
 
-4.0.0
+5.0.0
 
 #### Environment
 

@@ -22,25 +22,6 @@ export default class BluResponse {
 	}
 
 	/**
-	 * ⚠️ **Deprecated: Override {@link validator} instead.**
-	 *
-	 * A validator function for this response, that is used to validate incoming
-	 * responses in order to match them to a given request.
-	 * @remarks Meant to be overridden by class extensions. If it returns `true`
-	 *  the response is considered a matching response for the given request.
-	 *  If it returns `false` the response is considered to not be a match and is
-	 *  ignored. Returns `true` by default.
-	 * @param response - The incoming response to validate.
-	 * @returns The validation result.
-	 * @virtual
-	 * @deprecated Override {@link validator} instead.
-	 */
-	static validatorFunction(response: BluResponse) {
-		void response
-		return true
-	}
-
-	/**
 	 * The response's raw data. `undefined` when there is no data.
 	 */
 	readonly data?: DataView

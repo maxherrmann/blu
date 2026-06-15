@@ -1,14 +1,19 @@
 import EventTarget, { type EventMap } from "jaset"
 import type {
+	BluBluetooth,
 	BluBluetoothAdvertisingEvent,
 	BluBluetoothLEScan,
-} from "./bluetoothInterface.js"
-import bluetooth from "./bluetoothState.js"
+} from "./bluetooth-interface.js"
+import bluetooth from "./bluetooth-state.js"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { BluConfigurationOptions } from "./configuration.js"
 import configuration from "./configuration.js"
+import BluDeviceAdvertisement from "./device-advertisement.js"
 import BluDevice from "./device.js"
-import BluDeviceAdvertisement from "./deviceAdvertisement.js"
 import {
+	BluDeviceConstructionError,
 	BluEnvironmentError,
+	BluError,
 	BluScannerError,
 	BluScannerOperationError,
 } from "./errors.js"
@@ -23,17 +28,39 @@ export class BluScanner extends EventTarget<BluScannerEvents> {
 	#advertisementScan?: BluBluetoothLEScan
 
 	/**
+	 * The Bluetooth interface that the ongoing advertisement scan's event
+	 * listener is attached to.
+	 */
+	#advertisementScanInterface?: BluBluetooth
+
+	/**
+	 * Event handler that is invoked whenever an advertisement has been received.
+	 */
+	readonly #onAdvertisementReceived = (event: Event) => {
+		this.emit(
+			new BluScannerAdvertisementEvent(
+				new BluDeviceAdvertisement(
+					event as BluBluetoothAdvertisingEvent,
+				),
+			),
+		)
+	}
+
+	/**
 	 * Get a Bluetooth device.
 	 * @remarks Displays the browser's device chooser to the user, instructing
 	 *  them to pair a device. Filters advertising devices according to the
-	 *  {@link BluConfigurationOptions.deviceScannerConfig | `deviceScannerConfig`}
-	 *  from the active {@link configuration}.
+	 *  active {@link BluConfigurationOptions.deviceScannerConfiguration}.
 	 * @typeParam DeviceType - The type of the returned device. Defaults to
 	 *  {@link BluDevice}.
-	 * @returns A `Promise` that resolves with the selected
-	 *  {@link BluDevice | device} of the
-	 *  {@link BluConfigurationOptions.deviceType | `deviceType`} from the
-	 *  active {@link configuration}.
+	 * @returns A `Promise` that resolves to the selected
+	 *  {@link BluDevice | device}. The type of the device is determined through
+	 *  the active {@link BluConfigurationOptions.devices} configuration.
+	 * @throws A {@link BluEnvironmentError} when the environment does not
+	 *  support the operation.
+	 * @throws A {@link BluDeviceConstructionError} when the device was selected
+	 *  but an error occurred during the construction of the corresponding
+	 *  {@link BluDevice}.
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
 	async getDevice<DeviceType extends BluDevice = BluDevice>() {
@@ -42,24 +69,38 @@ export class BluScanner extends EventTarget<BluScannerEvents> {
 				throw new BluEnvironmentError("Web Bluetooth")
 			}
 
-			const scannerConfig = configuration.options.deviceScannerConfig
+			const optionalServices = configuration.options.devices
+				.map((device) => device.type.interface)
+				.flat()
+				.filter((serviceDescription) => !serviceDescription.advertised)
+				.map((serviceDescription) => serviceDescription.uuid)
+				.filter((uuid, index, self) => self.indexOf(uuid) === index)
 
-			scannerConfig.optionalServices =
-				configuration.options.deviceType.interface
-					.filter(
-						(serviceDescription) => !serviceDescription.advertised,
-					)
-					.map((serviceDescription) => serviceDescription.uuid)
+			const requestDeviceOptions: RequestDeviceOptions = {
+				...configuration.options.deviceScannerConfiguration,
+				optionalServices,
+			}
 
-			const webBluetoothDevice =
+			const genericDevice =
 				await configuration.bluetoothInterface.requestDevice(
-					scannerConfig,
+					requestDeviceOptions,
 				)
 
-			return new configuration.options.deviceType(
-				webBluetoothDevice,
-			) as DeviceType
+			for (const device of configuration.options.devices) {
+				if (device.validator(genericDevice)) {
+					return new device.type(genericDevice) as DeviceType
+				}
+			}
+
+			throw new BluDeviceConstructionError(
+				new BluDevice(genericDevice),
+				"Could not find a matching device type for the selected device.",
+			)
 		} catch (error) {
+			if (error instanceof BluError) {
+				throw error
+			}
+
 			throw new BluScannerError("Could not get device.", error)
 		}
 	}
@@ -72,11 +113,17 @@ export class BluScanner extends EventTarget<BluScannerEvents> {
 	 *  of `getDevices()` for details. Paired devices are devices that the user
 	 *  has granted access to. They include devices that are not available at
 	 *  the moment, due to being out of range or switched off.
-	 * @returns A `Promise` that resolves with the paired
+	 * @typeParam DeviceType - The type of the returned devices. Defaults to
+	 *  {@link BluDevice}.
+	 * @returns A `Promise` that resolves to the paired
 	 *  {@link BluDevice | devices}.
+	 * @throws A {@link BluEnvironmentError} when the environment does not
+	 *  support the operation.
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
-	async getPairedDevices(): Promise<BluDevice[]> {
+	async getPairedDevices<DeviceType extends BluDevice = BluDevice>(): Promise<
+		DeviceType[]
+	> {
 		try {
 			if (!bluetooth.isSupported()) {
 				throw new BluEnvironmentError("Web Bluetooth")
@@ -89,12 +136,28 @@ export class BluScanner extends EventTarget<BluScannerEvents> {
 				throw new BluEnvironmentError("Paired device retrieval")
 			}
 
-			const devices = await configuration.bluetoothInterface.getDevices()
+			const genericDevices =
+				await configuration.bluetoothInterface.getDevices()
 
-			return devices.map((device) => {
-				return new BluDevice(device)
-			})
+			const devices: DeviceType[] = []
+
+			for (const genericDevice of genericDevices) {
+				for (const device of configuration.options.devices) {
+					if (device.validator(genericDevice)) {
+						devices.push(
+							new device.type(genericDevice) as DeviceType,
+						)
+						break
+					}
+				}
+			}
+
+			return devices
 		} catch (error) {
+			if (error instanceof BluError) {
+				throw error
+			}
+
 			throw new BluScannerError("Could not get paired devices.", error)
 		}
 	}
@@ -108,6 +171,10 @@ export class BluScanner extends EventTarget<BluScannerEvents> {
 	 *  user for permission to scan for devices. Once the permission has been
 	 *  granted, {@link BluScannerEvents.advertisement | `advertisement`}
 	 *  events will be emitted.
+	 * @throws A {@link BluEnvironmentError} when the environment does not
+	 *  support the operation.
+	 * @throws A {@link BluScannerOperationError} when the scanner is already
+	 *  scanning for advertisements.
 	 * @throws A {@link BluScannerError} when something went wrong.
 	 */
 	async startScanningForAdvertisements() {
@@ -122,31 +189,26 @@ export class BluScanner extends EventTarget<BluScannerEvents> {
 				throw new BluEnvironmentError("Web Bluetooth")
 			}
 
-			if (
-				typeof configuration.bluetoothInterface.requestLEScan !==
-				"function"
-			) {
+			const bluetoothInterface = configuration.bluetoothInterface
+
+			if (typeof bluetoothInterface.requestLEScan !== "function") {
 				throw new BluEnvironmentError("Advertisement scanning")
 			}
 
-			configuration.bluetoothInterface.addEventListener(
+			bluetoothInterface.addEventListener(
 				"advertisementreceived",
-				(event) => {
-					this.emit(
-						new BluScannerAdvertisementEvent(
-							new BluDeviceAdvertisement(
-								event as BluBluetoothAdvertisingEvent,
-							),
-						),
-					)
-				},
+				this.#onAdvertisementReceived,
 			)
 
-			this.#advertisementScan =
-				await configuration.bluetoothInterface.requestLEScan(
-					configuration.options.advertisementScannerConfig,
-				)
+			this.#advertisementScanInterface = bluetoothInterface
+			this.#advertisementScan = await bluetoothInterface.requestLEScan(
+				configuration.options.advertisementScannerConfiguration,
+			)
 		} catch (error) {
+			if (error instanceof BluError) {
+				throw error
+			}
+
 			throw new BluScannerError(
 				"Could not start scanning for advertisements.",
 				error,
@@ -170,8 +232,14 @@ export class BluScanner extends EventTarget<BluScannerEvents> {
 			)
 		}
 
+		this.#advertisementScanInterface?.removeEventListener(
+			"advertisementreceived",
+			this.#onAdvertisementReceived,
+		)
+
 		this.#advertisementScan.stop()
 		this.#advertisementScan = undefined
+		this.#advertisementScanInterface = undefined
 	}
 }
 

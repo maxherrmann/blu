@@ -19,11 +19,10 @@ export default class BluGATTOperationQueue {
 	 * @remarks A GATT operation times out when it takes more than 5000
 	 *  milliseconds.
 	 * @param callback - The GATT operation.
-	 * @returns A `Promise` that resolves with the GATT operation's result.
+	 * @returns A `Promise` that resolves to the GATT operation's result.
 	 * @throws A {@link BluGATTOperationQueueError} when invalid arguments were
 	 *  provided.
-	 * @throws A {@link BluGATTOperationError} when something went wrong during
-	 *  the GATT operation or when it timed out.
+	 * @throws A {@link BluGATTOperationError} when something went wrong.
 	 */
 	async add<ResultType>(callback: () => Promise<ResultType>) {
 		return new Promise<ResultType>((resolve, reject) => {
@@ -38,17 +37,26 @@ export default class BluGATTOperationQueue {
 			}
 
 			this.#queue.push(async () => {
-				const timeout = setTimeout(() => {
-					reject(
-						new BluGATTOperationError(
-							`GATT operation timed out after ` +
-								`${String(GATT_OPERATION_TIMEOUT)} ms.`,
-						),
-					)
-				}, GATT_OPERATION_TIMEOUT)
+				let timeout: ReturnType<typeof setTimeout> | undefined
 
 				try {
-					const result = await callback()
+					// Race the operation against a timeout so that the queue
+					// can advance even when the operation never settles, e.g.
+					// when the underlying Bluetooth stack hangs.
+					const result = await Promise.race([
+						callback(),
+						new Promise<never>((_, rejectOperation) => {
+							timeout = setTimeout(() => {
+								rejectOperation(
+									new BluGATTOperationError(
+										`GATT operation timed out after ` +
+											GATT_OPERATION_TIMEOUT +
+											` ms.`,
+									),
+								)
+							}, GATT_OPERATION_TIMEOUT)
+						}),
+					])
 
 					clearTimeout(timeout)
 
@@ -56,18 +64,20 @@ export default class BluGATTOperationQueue {
 				} catch (error) {
 					clearTimeout(timeout)
 
-					reject(
-						new BluGATTOperationError(
-							"GATT operation failed.",
-							error,
-						),
-					)
+					if (error instanceof BluGATTOperationError) {
+						reject(error)
+					} else {
+						reject(
+							new BluGATTOperationError(
+								"GATT operation failed.",
+								error,
+							),
+						)
+					}
 				}
 			})
 
-			this.#processQueue().catch((error: unknown) => {
-				reject(error as Error)
-			})
+			this.#processQueue()
 		})
 	}
 

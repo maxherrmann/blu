@@ -1,5 +1,5 @@
 import EventTarget, { type EventMap } from "jaset"
-import type { BluBluetoothRemoteGATTService } from "./bluetoothInterface.js"
+import type { BluBluetoothRemoteGATTService } from "./bluetooth-interface.js"
 import type BluCharacteristic from "./characteristic.js"
 import type { BluServiceDescription } from "./descriptions.js"
 import type BluDevice from "./device.js"
@@ -9,7 +9,7 @@ import type BluDevice from "./device.js"
  */
 export default class BluService<
 	Device extends BluDevice = BluDevice,
-	Events extends EventMap<Events> = EventMap,
+	Events extends EventMap = EventMap,
 > extends EventTarget<Events> {
 	/**
 	 * The device associated with this service.

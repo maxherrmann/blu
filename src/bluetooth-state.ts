@@ -1,66 +1,40 @@
+import EventTarget, { type EventMap } from "jaset"
+import type { BluBluetooth } from "./bluetooth-interface.js"
 import configuration from "./configuration.js"
 import type BluDevice from "./device.js"
 import { BluDeviceConnectionEvent } from "./device.js"
-import EventTarget, { type EventMap } from "jaset"
 
 /**
  * Bluetooth state handler.
  */
 export class BluBluetoothState extends EventTarget<BluBluetoothStateEvents> {
 	/**
-	 * Is the Bluetooth state handler initialized?
-	 */
-	#initialized = false
-
-	/**
 	 * Collection of connected devices.
 	 */
 	readonly #connectedDevices = new Set<BluDevice>()
+
+	/**
+	 * The Bluetooth interface that the `availabilitychanged` event listener is
+	 * currently attached to.
+	 */
+	#bluetoothInterfaceWithListener?: BluBluetooth
+
+	/**
+	 * Event handler that is invoked whenever Bluetooth availability changes.
+	 */
+	readonly #onAvailabilityChanged = (event: Event) => {
+		this.emit(
+			(event as AvailabilityChangedEvent).value
+				? new BluBluetoothEnabledEvent()
+				: new BluBluetoothDisabledEvent(),
+		)
+	}
 
 	/**
 	 * Construct a Bluetooth state handler.
 	 */
 	constructor() {
 		super()
-
-		this.initialize()
-	}
-
-	/**
-	 * All connected devices.
-	 * @readonly
-	 */
-	get connectedDevices(): BluDevice[] {
-		return Array.from(this.#connectedDevices)
-	}
-
-	/**
-	 * The primary, i.e. first connected, device. `null` if there is no device
-	 * connected.
-	 * @readonly
-	 */
-	get connectedDevice(): BluDevice | null {
-		return this.connectedDevices[this.connectedDevices.length - 1] ?? null
-	}
-
-	/**
-	 * Initialize the Bluetooth state handler.
-	 */
-	initialize() {
-		if (this.#initialized || !this.isSupported()) {
-			return
-		}
-
-		configuration.bluetoothInterface.addEventListener(
-			"availabilitychanged",
-			(event) => {
-				this.emit(
-					(event as AvailabilityChangedEvent).value
-						? new BluBluetoothEnabledEvent()
-						: new BluBluetoothDisabledEvent(),
-				)
-			},
-		)
 
 		this.on("bluetooth-disabled", () => {
 			this.#connectedDevices.clear()
@@ -78,7 +52,51 @@ export class BluBluetoothState extends EventTarget<BluBluetoothStateEvents> {
 			this.#connectedDevices.delete(event.device)
 		})
 
-		this.#initialized = true
+		this.initialize()
+	}
+
+	/**
+	 * All connected devices.
+	 * @readonly
+	 */
+	get connectedDevices(): BluDevice[] {
+		return Array.from(this.#connectedDevices)
+	}
+
+	/**
+	 * The primary, i.e. last connected, device.
+	 * @remarks `null` if there is no device connected.
+	 * @readonly
+	 */
+	get connectedDevice(): BluDevice | null {
+		return this.connectedDevices[this.connectedDevices.length - 1] ?? null
+	}
+
+	/**
+	 * Initialize the Bluetooth state handler.
+	 */
+	initialize() {
+		if (!this.isSupported()) {
+			return
+		}
+
+		const bluetoothInterface = configuration.bluetoothInterface
+
+		if (this.#bluetoothInterfaceWithListener === bluetoothInterface) {
+			return
+		}
+
+		this.#bluetoothInterfaceWithListener?.removeEventListener(
+			"availabilitychanged",
+			this.#onAvailabilityChanged,
+		)
+
+		bluetoothInterface.addEventListener(
+			"availabilitychanged",
+			this.#onAvailabilityChanged,
+		)
+
+		this.#bluetoothInterfaceWithListener = bluetoothInterface
 	}
 
 	/**
@@ -90,7 +108,7 @@ export class BluBluetoothState extends EventTarget<BluBluetoothStateEvents> {
 
 	/**
 	 * Is Bluetooth available?
-	 * @returns A `Promise` that resolves with the availability.
+	 * @returns A `Promise` that resolves to the availability.
 	 */
 	async isAvailable() {
 		if (this.isSupported()) {

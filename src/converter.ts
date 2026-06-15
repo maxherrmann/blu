@@ -22,16 +22,15 @@ export class BluConverter {
 	 * @param data - The data.
 	 */
 	toUint8Array(data: number[] | number | string) {
+		if (typeof data === "string") {
+			return textEncoder.encode(data)
+		}
+
 		if (typeof data === "number") {
 			data = [data]
 		}
 
-		switch (typeof data) {
-			case "string":
-				return textEncoder.encode(data)
-			case "object":
-				return new Uint8Array(data)
-		}
+		return new Uint8Array(data)
 	}
 
 	/**

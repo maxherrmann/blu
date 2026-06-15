@@ -1,22 +1,24 @@
-import esLint from "@eslint/js"
-import prettierEsLintConfig from "eslint-config-prettier"
+import js from "@eslint/js"
+import eslintConfigPrettier from "eslint-config-prettier/flat"
 import { defineConfig } from "eslint/config"
-import tsEsLint from "typescript-eslint"
+import globals from "globals"
+import tseslint from "typescript-eslint"
+import { includeIgnoreFile } from "@eslint/compat"
+import { fileURLToPath } from "node:url"
+import tsdoc from "eslint-plugin-tsdoc"
 
-export default defineConfig(
+export default defineConfig([
+	includeIgnoreFile(fileURLToPath(new URL(".gitignore", import.meta.url))),
 	{
-		ignores: ["*.js", "**/build/", "**/dist/"],
-	},
-	esLint.configs.recommended,
-	tsEsLint.configs.strictTypeChecked,
-	prettierEsLintConfig,
-	{
-		languageOptions: {
-			parserOptions: {
-				projectService: true,
-				warnOnUnsupportedTypeScriptVersion: false,
-				tsconfigRootDir: import.meta.dirname,
-			},
+		files: ["**/*.{ts,mts,cts}"],
+		ignores: ["*", "!src/**/*"],
+		plugins: { js, tsdoc },
+		extends: ["js/recommended"],
+		languageOptions: { globals: globals.browser },
+		rules: {
+			"tsdoc/syntax": "error",
 		},
 	},
-)
+	tseslint.configs.recommended,
+	eslintConfigPrettier,
+])

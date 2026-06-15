@@ -1,7 +1,7 @@
 {
 	"name": "blutooth",
-	"version": "4.2.3",
-	"description": "The type-safe framework for interacting with Bluetooth Low Energy devices from the web.",
+	"version": "5.0.0",
+	"description": "The type-safe framework for interacting with Bluetooth Low Energy devices from the browser and Node.js.",
 	"keywords": [
 		"blu",
 		"bluetooth",
@@ -23,32 +23,67 @@
 	},
 	"funding": "https://github.com/sponsors/maxherrmann",
 	"type": "module",
-	"exports": {
-		".": "./dist/index.js"
+	"engines": {
+		"node": ">=20"
 	},
-	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"node": {
+				"types": "./dist/index.node.d.ts",
+				"default": "./dist/index.node.js"
+			},
+			"default": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist"
+	],
 	"scripts": {
-		"build": "sh ./build.sh",
+		"build": "tsdown",
 		"format": "prettier --write .",
-		"lint": "eslint ."
+		"lint": "eslint . && tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage"
 	},
 	"devDependencies": {
-		"@tsconfig/recommended": "^1.0.10",
-		"@types/eslint": "^9.6.1",
-		"@types/eslint-config-prettier": "^6.11.3",
-		"@types/node": "^25.0.3",
-		"@types/web-bluetooth": "^0.0.21",
-		"dts-bundle-generator": "^9.5.1",
-		"esbuild": "^0.27.0",
-		"eslint": "^9.35.0",
+		"@arethetypeswrong/core": "^0.18.4",
+		"@eslint/compat": "^2.1.0",
+		"@eslint/js": "^10.0.1",
+		"@tsconfig/recommended": "^1.0.13",
+		"@types/node": "^26.0.0",
+		"@vitest/coverage-v8": "^4.1.9",
+		"eslint": "^10.5.0",
 		"eslint-config-prettier": "^10.1.8",
-		"prettier": "^3.6.2",
-		"publint": "^0.3.12",
-		"typescript": "^5.9.2",
-		"typescript-eslint": "^8.43.0"
+		"eslint-plugin-tsdoc": "^0.5.2",
+		"globals": "^17.7.0",
+		"prettier": "^3.8.4",
+		"publint": "^0.3.21",
+		"tsdown": "^0.22.3",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.62.0",
+		"vitest": "^4.1.9",
+		"webbluetooth": "^3.7.0"
 	},
 	"dependencies": {
-		"jaset": "^1.1.0",
-		"zod": "^4.1.8"
+		"@types/web-bluetooth": "^0.0.21",
+		"jaset": "^2.0.0",
+		"zod": "^4.4.3"
+	},
+	"peerDependencies": {
+		"webbluetooth": ">=3"
+	},
+	"peerDependenciesMeta": {
+		"webbluetooth": {
+			"optional": true
+		}
+	},
+	"allowScripts": {
+		"webbluetooth@3.7.0": true,
+		"fsevents@2.3.3": true
 	}
 }

@@ -1,8 +1,8 @@
-import BluCompoundResponse from "./compoundResponse.js"
+import BluCompoundResponse from "./compound-response.js"
 import { BluRequestConstructionError } from "./errors.js"
 import BluResponse from "./response.js"
-import isBufferSource from "./utils/isBufferSource.js"
-import isSubclassOrSame from "./utils/isSubclassOrSame.js"
+import isBufferSource from "./utils/is-buffer-source.js"
+import isSubclassOrSame from "./utils/is-subclass-or-same.js"
 
 /**
  * Request that may be sent to a Bluetooth characteristic or descriptor.
@@ -13,7 +13,7 @@ export default class BluRequest {
 	 * The request's response type.
 	 * @remarks Will be used to construct the response to this request. Meant to
 	 *  be overridden by class extensions.
-	 * @defaultValue The type of {@link BluResponse}.
+	 * @defaultValue {@link BluResponse}
 	 * @readonly
 	 * @virtual
 	 */
