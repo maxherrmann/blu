@@ -1,6 +1,6 @@
 {
 	"name": "blutooth",
-	"version": "5.0.1",
+	"version": "5.0.2",
 	"description": "The type-safe framework for interacting with Bluetooth Low Energy devices from the browser and Node.js.",
 	"keywords": [
 		"blu",
