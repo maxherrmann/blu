@@ -4,10 +4,20 @@
  * @packageDocumentation
  */
 
-import { bluetooth } from "webbluetooth"
-import blu from "./index.js"
+import blu, { BluError } from "./index.js"
 
 export * from "./index.js"
 export { default as default } from "./index.js"
 
-blu.configuration.useBluetoothInterface(bluetooth)
+import("webbluetooth")
+	.then(({ bluetooth }) => blu.configuration.useBluetoothInterface(bluetooth))
+	.catch((error) => {
+		console.warn(
+			new BluError(
+				"Warning: Could not initialize the Node.js version of Blu in " +
+					"the current environment. This warning can be ignored if " +
+					"you are seeing it in an SSR context.",
+				error,
+			).message,
+		)
+	})
