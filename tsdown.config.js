@@ -20,6 +20,9 @@ export default defineConfig({
 			` */`,
 	},
 	clean: true,
+	deps: {
+		neverBundle: [/^node:/],
+	},
 	entry: ["./src/index.ts", "./src/index.node.ts"],
 	outDir: "./dist",
 	platform: "neutral",
