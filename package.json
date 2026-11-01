@@ -70,7 +70,7 @@
 		"webbluetooth": "^3.7.0"
 	},
 	"dependencies": {
-		"@types/web-bluetooth": "^0.0.21",
+		"@types/web-bluetooth": "^0.0.22",
 		"jaset": "^2.0.0",
 		"zod": "^4.5.4"
 	},
