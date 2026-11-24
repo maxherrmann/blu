@@ -67,7 +67,7 @@
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.74.0",
 		"vitest": "^5.1.1",
-		"webbluetooth": "^3.7.0"
+		"webbluetooth": "^7.1.1"
 	},
 	"dependencies": {
 		"@types/web-bluetooth": "^0.0.22",
